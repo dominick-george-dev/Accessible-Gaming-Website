@@ -13,6 +13,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Game model representing a video game
 model Game {
   id          Int      @id @default(autoincrement())
   title       String
@@ -26,7 +27,33 @@ model Game {
   rating      Float
 
   reviews Review[]
+
+  gameAccessibilityTags GameAccessibilityTags[]
 }
+
+// AccessibilityTags model representing various accessibility features
+model AccessibilityTags {
+  id        Int      @id @default(autoincrement())
+  tag       String
+  category  String   // e.g., Visual, Auditory, Motor, Cognitive
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  gameAccessibilityTags GameAccessibilityTags[]
+}
+
+// Junction table for many-to-many relationship between Game and AccessibilityTags
+model GameAccessibilityTags {
+  gameId             Int
+  accessibilityTagsId Int
+
+  game Game @relation(fields: [gameId], references: [id])
+  accessibilityTags AccessibilityTags @relation(fields: [accessibilityTagsId], references: [id])
+
+  @@id([gameId, accessibilityTagsId])
+}
+
+
+// Review model representing user reviews for games
 model Review {
   id        Int      @id @default(autoincrement())
   gameId    Int   

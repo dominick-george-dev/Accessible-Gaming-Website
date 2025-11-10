@@ -1,4 +1,3 @@
-import { accessibilityTags } from "../data/mockData";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Card } from "../components/ui/card";
@@ -26,22 +25,22 @@ import { useParams, useNavigate } from "react-router-dom";
 // Helper function to get category color and icon
 const getCategoryStyle = (category: string) => {
     switch (category) {
-        case 'visual':
+        case 'Visual':
         return { 
             color: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800',
             icon: Eye 
         };
-        case 'hearing':
+        case 'Hearing':
         return { 
             color: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800',
             icon: Ear 
         };
-        case 'dexterity':
+        case 'Dexterity':
         return { 
             color: 'bg-green-100 text-green-700 border-green-300 dark:bg-green-950 dark:text-green-300 dark:border-green-800',
             icon: Hand 
         };
-        case 'cognitive':
+        case 'Cognitive':
         return { 
             color: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800',
             icon: Brain 
@@ -59,6 +58,7 @@ export function GameDetailPage() {
   const navigate = useNavigate();
 
   const [game, setGame] = useState<Game | null>(null);
+  const [accessibilityTags, setAccessibilityTags] = useState<any[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -74,6 +74,7 @@ export function GameDetailPage() {
   useEffect(() => {
     if (!id) return;
     fetchGameDetails(id);
+    fetchAccessibilityTags(id);
   }, [id]);
 
   const fetchGameDetails = async (gameId: string) => {
@@ -89,6 +90,18 @@ export function GameDetailPage() {
       toast.error("Failed to load game details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAccessibilityTags = async (gameId: string) => {
+    try {
+        const response = await fetch(`http://localhost:3000/accessibility-tags/game/${gameId}`);
+        if (!response.ok) throw new Error("Failed to fetch accessibility tags");
+        const data = await response.json();
+        setAccessibilityTags(data);
+    } catch (error) {
+        console.error("Error fetching accessibility tags:", error);
+        toast.error("Failed to load accessibility tags");
     }
   };
 
@@ -306,7 +319,7 @@ export function GameDetailPage() {
             {/* Full Description */}
             <section aria-labelledby="description-heading">
             <h2 id="description-heading" className="mb-3 lg:mb-4">Detailed Description</h2>
-            <p className="text-muted-foreground">{game.detailedDescription}</p>
+            <p className="text-muted-foreground">{game.description}</p>
             </section>
         <Separator />
         
@@ -320,16 +333,17 @@ export function GameDetailPage() {
             <h2 id="accessibility-heading" className="mb-3 lg:mb-4">
             Accessibility Features
             </h2>
-            {/* <div className="grid gap-3 lg:gap-4">
-            {['visual', 'hearing', 'dexterity', 'cognitive'].map((category) => {
-                const categoryTags = game.accessibilityTags.filter(
+            <div className="grid gap-3 lg:gap-4">
+            {/* Filtering/Sorting accessibility tags */}
+            {['Visual', 'Hearing', 'Dexterity', 'Cognitive'].map((category) => {
+                const categoryTags = accessibilityTags.filter(
                 (tag) => tag.category === category
                 );
+                // Skip rendering if no tags found for this category
                 if (categoryTags.length === 0) return null;
-
+                // Get category style & icon
                 const categoryStyle = getCategoryStyle(category);
                 const CategoryIcon = categoryStyle.icon;
-
                 return (
                 <Card key={category} className="p-4">
                     <div className="flex items-center gap-2 mb-3">
@@ -337,6 +351,7 @@ export function GameDetailPage() {
                     <h3 className="capitalize">{category}</h3>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                    {/* Render tags for this category */}
                     {categoryTags.map((tag) => {
                         const style = getCategoryStyle(tag.category);
                         const Icon = style.icon;
@@ -348,7 +363,7 @@ export function GameDetailPage() {
                         >
                             <Icon className="w-3 h-3" aria-hidden="true" />
                             {tag.verified && <Check className="w-3 h-3" aria-label="Verified" />}
-                            {tag.name}
+                            {tag.tag}
                         </Badge>
                         );
                     })}
@@ -356,7 +371,7 @@ export function GameDetailPage() {
                 </Card>
                 );
             })}
-            </div> */}
+            </div>
         </section>
 
         <Separator />
