@@ -185,6 +185,8 @@ export function GameDetailPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
             gameId: game?.id,
+            userId: 1, // To be implemented with auth system
+            userName: "Anonymous", // Replace with actual user name from auth
             rating: userRating,
             comment: reviewText,
             accessibilityFeedback: selectedAccessibilityTags,
