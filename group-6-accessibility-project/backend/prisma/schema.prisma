@@ -58,10 +58,13 @@ model Review {
   id        Int      @id @default(autoincrement())
   gameId    Int   
   userId    Int
+  userName  String
   rating    Int
   comment   String
+  accessibilityFeedback String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  helpful   Int      @default(0)
 
   game Game @relation(fields: [gameId], references: [id])
 

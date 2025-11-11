@@ -7,7 +7,7 @@ export interface AccessibilityTag {
 
 export interface Game {
   id: string;
-  name: string;
+  title: string;
   description: string;
   thumbnail: string;
   genre: string[];
@@ -21,14 +21,15 @@ export interface Game {
 }
 
 export interface Review {
-  id: string;
+  id: number;
   gameId: string;
   userId: string;
   userName: string;
   rating: number;
   comment: string;
   accessibilityFeedback: string[];
-  date: string;
+  createdAt: Date;
+  updatedAt: Date;
   helpful: number;
 }
 
