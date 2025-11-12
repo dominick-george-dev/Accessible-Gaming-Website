@@ -179,8 +179,14 @@ export function GameDetailPage() {
         return;
         }
 
+        // If user has already made a review for this game, prevent multiple reviews
+        if(reviews.find((r) => r.userId === 1)){
+            toast.error("You have already submitted a review for this game");
+            return;
+        }; // Replace "1" with actual user ID from auth
+
         try {
-        const res = await fetch(`http://localhost:3000/reviews`, {
+            const res = await fetch(`http://localhost:3000/reviews`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

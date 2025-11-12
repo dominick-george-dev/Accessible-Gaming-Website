@@ -23,7 +23,7 @@ export interface Game {
 export interface Review {
   id: number;
   gameId: string;
-  userId: string;
+  userId: number;
   userName: string;
   rating: number;
   comment: string;
