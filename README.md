@@ -17,7 +17,7 @@ git clone https://git.cardiff.ac.uk/<your_username>/team-6-accessible-gaming-web
 ## Start backend
 Open up a terminal in your IDE, and ensure you are in the project directory.
 ```
-cd group-6-accessible-project\backend
+cd .\group-6-accessibility-project\backend\
 ```
 
 Install all dependencies via the terminal.
