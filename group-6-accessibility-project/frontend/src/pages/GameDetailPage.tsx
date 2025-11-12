@@ -56,7 +56,6 @@ const getCategoryStyle = (category: string) => {
 export function GameDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-
     const [game, setGame] = useState<Game | null>(null);
     const [accessibilityTags, setAccessibilityTags] = useState<any[]>([]);
     const [reviews, setReviews] = useState<Review[]>([]);
@@ -72,11 +71,27 @@ export function GameDetailPage() {
     const isLoggedIn = true; // You can hook this up to your auth system later
 
     useEffect(() => {
-        if (!id) return;
-        fetchGameDetails(id);
-        fetchAccessibilityTags(id);
-        fetchReviews(id);
+        if (!id) return; // wait until id is available
+
+        const loadData = async () => {
+            setLoading(true);
+            try {
+            await Promise.all([
+                fetchGameDetails(id),
+                fetchAccessibilityTags(id),
+                fetchReviews(id),
+            ]);
+            } catch (error) {
+            console.error("Error loading game data:", error);
+            } finally {
+            setLoading(false);
+            }
+        };
+
+        loadData();
     }, [id]);
+
+    console.log('reviews:', reviews);
 
     const fetchGameDetails = async (gameId: string) => {
         try {
@@ -85,12 +100,9 @@ export function GameDetailPage() {
         const data = await response.json();
 
         setGame(data);
-        setReviews(data.reviews || []);
         } catch (error) {
         console.error("Error fetching game details:", error);
         toast.error("Failed to load game details");
-        } finally {
-        setLoading(false);
         }
     };
 
@@ -162,7 +174,7 @@ export function GameDetailPage() {
         } catch (err) {
             toast.error("Failed to update review");
         }
-        };
+    };
     const handleSubmitReview = async () => {
         if (!isLoggedIn) {
         toast.error("Please sign in to submit a review");
@@ -187,29 +199,29 @@ export function GameDetailPage() {
 
         try {
             const res = await fetch(`http://localhost:3000/reviews`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-            gameId: game?.id,
-            userId: 1, // To be implemented with auth system
-            userName: "Anonymous", // Replace with actual user name from auth
-            rating: userRating,
-            comment: reviewText,
-            accessibilityFeedback: selectedAccessibilityTags,
-            }),
-        });
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                gameId: game?.id,
+                userId: 1, // To be implemented with auth system
+                userName: "Anonymous", // Replace with actual user name from auth
+                rating: userRating,
+                comment: reviewText,
+                accessibilityFeedback: selectedAccessibilityTags,
+                }),
+            });
 
-        if (!res.ok) throw new Error("Failed to submit review");
-        const newReview = await res.json();
-        setReviews((prev) => [...prev, newReview]);
-        toast.success("Review submitted!");
+            if (!res.ok) throw new Error("Failed to submit review");
+            const newReview = await res.json();
+            setReviews((prev) => [...prev, newReview]);
+            toast.success("Review submitted!");
 
-        setUserRating(0);
-        setReviewText("");
-        setSelectedAccessibilityTags([]);
+            setUserRating(0);
+            setReviewText("");
+            setSelectedAccessibilityTags([]);
         } catch (error) {
-        toast.error("Error submitting review");
-        console.error(error);
+            toast.error("Error submitting review");
+            console.error(error);
         }
     };
 
