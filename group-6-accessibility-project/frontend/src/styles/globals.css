@@ -1,0 +1,729 @@
+/* Enhanced Global CSS with OKLCH Colors and Advanced Accessibility Features */
+
+/* CSS Variables for Theming with OKLCH Color Space */
+:root {
+  /* Font size variable for accessibility */
+  --font-size: 16px;
+  
+  /* Light theme with OKLCH colors for better color accuracy */
+  --primary: oklch(0.61 0.25 264.05);         /* Blue with proper contrast */
+  --primary-foreground: oklch(1 0 0);         /* Pure white */
+  --primary-hover: oklch(0.55 0.25 264.05);   /* Darker blue for hover */
+  
+  --background: oklch(1 0 0);                 /* Pure white */
+  --background-secondary: oklch(0.98 0 0);    /* Off-white */
+  --foreground: oklch(0.15 0 0);              /* Near black */
+  --foreground-secondary: oklch(0.45 0 0);    /* Medium gray */
+  
+  --muted: oklch(0.97 0 0);                   /* Light gray */
+  --muted-foreground: oklch(0.55 0 0);        /* Medium gray */
+  
+  --border: oklch(0.9 0 0);                   /* Light border */
+  --border-hover: oklch(0.8 0 0);             /* Darker border on hover */
+  
+  --ring: oklch(0.61 0.25 264.05);            /* Focus ring */
+  
+  --success: oklch(0.55 0.15 145);            /* Green */
+  --warning: oklch(0.7 0.2 85);               /* Orange */
+  --error: oklch(0.6 0.25 25);                /* Red */
+  --info: oklch(0.6 0.2 240);                 /* Cyan */
+  
+  /* Shadows for depth */
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.1);
+  --shadow: 0 4px 6px oklch(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px oklch(0 0 0 / 0.1);
+}
+
+.dark {
+  /* Dark theme with OKLCH colors */
+  --primary: oklch(0.7 0.25 264.05);          /* Lighter blue for dark backgrounds */
+  --primary-foreground: oklch(0.98 0 0);      /* Near white */
+  --primary-hover: oklch(0.75 0.25 264.05);   /* Even lighter blue for hover */
+  
+  --background: oklch(0.1 0 0);               /* Very dark gray */
+  --background-secondary: oklch(0.15 0 0);    /* Slightly lighter dark */
+  --foreground: oklch(0.95 0 0);              /* Light gray text */
+  --foreground-secondary: oklch(0.7 0 0);     /* Medium light gray */
+  
+  --muted: oklch(0.2 0 0);                    /* Dark muted */
+  --muted-foreground: oklch(0.6 0 0);         /* Light muted text */
+  
+  --border: oklch(0.25 0 0);                  /* Dark border */
+  --border-hover: oklch(0.35 0 0);            /* Lighter border on hover */
+  
+  --ring: oklch(0.7 0.25 264.05);             /* Focus ring */
+  
+  --success: oklch(0.65 0.15 145);            /* Brighter green for dark */
+  --warning: oklch(0.75 0.2 85);              /* Brighter orange for dark */
+  --error: oklch(0.7 0.25 25);                /* Brighter red for dark */
+  --info: oklch(0.7 0.2 240);                 /* Brighter cyan for dark */
+}
+
+.deep-space {
+  /* Deep space theme with rich purple gradients */
+  --primary: oklch(0.75 0.3 285);             /* Purple */
+  --primary-foreground: oklch(0.98 0 0);      /* Near white */
+  --primary-hover: oklch(0.8 0.3 285);        /* Lighter purple for hover */
+  
+  --background: linear-gradient(135deg, 
+    oklch(0.1 0.02 260) 0%, 
+    oklch(0.15 0.05 280) 50%, 
+    oklch(0.2 0.08 300) 100%);                /* Purple gradient */
+  --background-secondary: oklch(0.15 0.05 280);
+  --foreground: oklch(0.9 0.02 280);          /* Light purple tint */
+  --foreground-secondary: oklch(0.7 0.05 280);
+  
+  --muted: oklch(0.2 0.05 280);               /* Muted purple */
+  --muted-foreground: oklch(0.65 0.05 280);   /* Light purple text */
+  
+  --border: oklch(0.3 0.1 285);               /* Purple border */
+  --border-hover: oklch(0.4 0.1 285);         /* Lighter purple border */
+  
+  --ring: oklch(0.75 0.3 285);                /* Purple focus ring */
+  
+  --success: oklch(0.7 0.15 145);             /* Green with slight purple tint */
+  --warning: oklch(0.75 0.2 85);              /* Orange */
+  --error: oklch(0.7 0.25 25);                /* Red */
+  --info: oklch(0.75 0.2 240);                /* Cyan */
+}
+
+/* High Contrast Mode with Maximum Accessibility */
+.high-contrast {
+  --primary: oklch(0.85 0.3 85);              /* Bright yellow */
+  --primary-foreground: oklch(0 0 0);         /* Pure black */
+  --primary-hover: oklch(0.9 0.3 85);         /* Brighter yellow */
+  
+  --background: oklch(0 0 0);                 /* Pure black */
+  --background-secondary: oklch(0.1 0 0);     /* Very dark gray */
+  --foreground: oklch(1 0 0);                 /* Pure white */
+  --foreground-secondary: oklch(0.9 0 0);     /* Light gray */
+  
+  --muted: oklch(0.2 0 0);                    /* Dark gray */
+  --muted-foreground: oklch(0.8 0 0);         /* Light gray */
+  
+  --border: oklch(1 0 0);                     /* Pure white border */
+  --border-hover: oklch(0.85 0.3 85);         /* Yellow border on hover */
+  
+  --ring: oklch(0.85 0.3 85);                 /* Yellow focus ring */
+  
+  --success: oklch(0.8 0.4 145);              /* Bright green */
+  --warning: oklch(0.85 0.4 85);              /* Bright yellow */
+  --error: oklch(0.8 0.4 25);                 /* Bright red */
+  --info: oklch(0.8 0.4 240);                 /* Bright cyan */
+}
+
+/* Enhanced Base Styles with Better Accessibility */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: var(--font-size);
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  font-family: 
+    -apple-system, 
+    BlinkMacSystemFont, 
+    'Segoe UI Variable Display', 
+    'Segoe UI', 
+    Roboto, 
+    'Helvetica Neue', 
+    Arial, 
+    sans-serif;
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1, 'pnum' 1, 'tnum' 0, 'onum' 1, 'lnum' 0, 'dlig' 0;
+  line-height: 1.6;
+  color: var(--foreground);
+  background: var(--background);
+  transition: 
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 100vh;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Enhanced Deep Space Theme Background */
+.deep-space body {
+  background: var(--background);
+  min-height: 100vh;
+  position: relative;
+}
+
+.deep-space body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background);
+  z-index: -1;
+}
+
+/* Enhanced Dyslexia-Friendly Font */
+.dyslexia-font,
+.dyslexia-font * {
+  font-family: 
+    'OpenDyslexic', 
+    'Comic Neue', 
+    'Comic Sans MS', 
+    Atkinson,
+    'Arial Rounded MT Bold',
+    Trebuchet MS,
+    Verdana,
+    cursive,
+    sans-serif !important;
+  letter-spacing: 0.05em;
+  word-spacing: 0.16em;
+  line-height: 1.8;
+  font-weight: 500;
+}
+
+/* Enhanced Focus Styles for Better Accessibility */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+  box-shadow: 
+    0 0 0 1px var(--background),
+    0 0 0 4px var(--ring);
+  transition: 
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    outline-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.high-contrast :focus-visible {
+  outline: 4px solid var(--primary);
+  outline-offset: 3px;
+  box-shadow: 
+    0 0 0 2px var(--background),
+    0 0 0 7px var(--primary);
+}
+
+/* Enhanced High Contrast Mode */
+.high-contrast {
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.8);
+  --shadow: 0 4px 6px oklch(0 0 0 / 0.8);
+  --shadow-lg: 0 10px 15px oklch(0 0 0 / 0.8);
+}
+
+.high-contrast a {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.high-contrast a:hover {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: 4px;
+}
+
+.high-contrast button,
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  border: 3px solid var(--primary) !important;
+  border-radius: 6px !important;
+}
+
+/* Advanced Colorblind Filter Support */
+.colorblind-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.colorblind-protanopia {
+  filter: url(#protanopia-filter) contrast(1.1) brightness(1.05);
+}
+
+.colorblind-deuteranopia {
+  filter: url(#deuteranopia-filter) contrast(1.1) brightness(1.05);
+}
+
+.colorblind-tritanopia {
+  filter: url(#tritanopia-filter) contrast(1.1) brightness(1.05);
+}
+
+.colorblind-achromatopsia {
+  filter: grayscale(100%) contrast(1.2) brightness(1.1);
+}
+
+/* Enhanced Typography Scale with Better Hierarchy */
+h1, .h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+}
+
+h2, .h2 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+}
+
+h3, .h3 {
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+}
+
+h4, .h4 {
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+  color: var(--foreground-secondary);
+}
+
+p {
+  margin-bottom: 1rem;
+  color: var(--foreground-secondary);
+  max-width: 70ch;
+}
+
+/* Enhanced Link Styles */
+a {
+  color: var(--primary);
+  text-decoration: none;
+  border-radius: 2px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+/* Enhanced Button Base Styles */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Enhanced Form Elements */
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  background: var(--background);
+  color: var(--foreground);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--border-hover);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px var(--ring) / 0.2;
+}
+
+/* Enhanced Card Styles */
+.card {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .card:hover {
+    transform: none;
+  }
+}
+
+/* Enhanced Utility Classes */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  z-index: 10000;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Enhanced Loading States */
+.loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--muted) / 0.6,
+    transparent
+  );
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Enhanced Print Styles */
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+  
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+  
+  abbr[title]:after {
+    content: " (" attr(title) ")";
+  }
+  
+  pre,
+  blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+  
+  thead {
+    display: table-header-group;
+  }
+  
+  tr,
+  img {
+    page-break-inside: avoid;
+  }
+  
+  img {
+    max-width: 100% !important;
+  }
+  
+  p,
+  h2,
+  h3 {
+    orphans: 3;
+    widows: 3;
+  }
+  
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+}
+
+/* Enhanced Mobile Optimizations */
+@media (max-width: 768px) {
+  html {
+    font-size: calc(var(--font-size) * 0.9);
+  }
+  
+  body {
+    padding: 0 1rem;
+  }
+  
+  .card {
+    margin: 0 -1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  
+  :focus-visible {
+    outline-width: 2px;
+    outline-offset: 1px;
+  }
+}
+
+/* Enhanced Dark Mode Media Query Support */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not(.dark):not(.deep-space):not(.high-contrast) {
+    color-scheme: light;
+  }
+}
+
+/* Enhanced Contrast Support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: var(--foreground);
+    --ring: var(--primary);
+  }
+    button,
+  input,
+  select,
+  textarea {
+    border-width: 2px;
+  }
+}
+
+/* Enhanced Utility Classes */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  h1, .h1 {
+    font-size: 1.875rem;
+  }
+  
+  h2, .h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3, .h3 {
+    font-size: 1.25rem;
+  }
+}
+
+/* Ensure adequate spacing for touch targets */
+@media (max-width: 768px) {
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .colorblind-protanopia,
+  .colorblind-deuteranopia,
+  .colorblind-tritanopia,
+  .colorblind-achromatopsia {
+    filter: none;
+  }
+  
+  .high-contrast {
+    --background: #ffffff;
+    --foreground: #000000;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* SVG Colorblind Filter Definitions */
+/* These filters simulate colorblind vision and should be applied to the entire page */
+/* Usage: Add the colorblind-* class to the body or html element */
+
+/* Note: These SVG filters should be included in the HTML document.
+   Add this to your main HTML file or App component:
+
+<svg className="colorblind-filters" aria-hidden="true">
+  <defs>
+    <!-- Protanopia (Red-blind) Filter -->
+    <filter id="protanopia-filter">
+      <feColorMatrix type="matrix" values="0.567 0.433 0     0 0
+                                           0.558 0.442 0     0 0
+                                           0     0.242 0.758 0 0
+                                           0     0     0     1 0"/>
+    </filter>
+    
+    <!-- Deuteranopia (Green-blind) Filter -->
+    <filter id="deuteranopia-filter">
+      <feColorMatrix type="matrix" values="0.625 0.375 0     0 0
+                                           0.7   0.3   0     0 0
+                                           0     0.3   0.7   0 0
+                                           0     0     0     1 0"/>
+    </filter>
+    
+    <!-- Tritanopia (Blue-blind) Filter -->
+    <filter id="tritanopia-filter">
+      <feColorMatrix type="matrix" values="0.95  0.05  0     0 0
+                                           0     0.433 0.567 0 0
+                                           0     0.475 0.525 0 0
+                                           0     0     0     1 0"/>
+    </filter>
+  </defs>
+</svg>
+
+*/
+
+/* Additional Performance Optimizations */
+.colorblind-protanopia *,
+.colorblind-deuteranopia *,
+.colorblind-tritanopia * {
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* Accessibility Helper Classes */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.visually-hidden-focusable:focus,
+.visually-hidden-focusable:focus-within {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  padding: inherit !important;
+  margin: inherit !important;
+  overflow: visible !important;
+  clip: auto !important;
+  white-space: inherit !important;
+}
+
+/* ARIA Live Region Styles */
+.live-region {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Enhanced Focus Management */
+.focus-trap {
+  position: relative;
+}
+
+.focus-trap:focus-within {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* End of Enhanced Global CSS */
