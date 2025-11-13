@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Enhanced Standalone Toaster Component
 import React from 'react';
 import { toast as sonnerToast, Toaster as SonnerToaster, type ToasterProps } from 'sonner';
@@ -117,9 +118,34 @@ export const Toaster: React.FC<EnhancedToasterProps> = ({
         },
         className: 'sonner-toast',
       }}
+=======
+"use client";
+
+import { useTheme } from "next-themes";
+import { Toaster as Sonner, type ToasterProps } from "sonner";
+
+const Toaster = ({ ...props }: ToasterProps) => {
+  const { theme = "system" } = useTheme();
+
+  return (
+    <Sonner
+      theme={theme as ToasterProps["theme"]}
+      className="toaster group"
+      style={
+        {
+          "--normal-bg": "var(--popover)",
+          "--normal-text": "var(--popover-foreground)",
+          "--normal-border": "var(--border)",
+        } as React.CSSProperties
+      }
+>>>>>>> bf2b40f823912743738040bf48c74e3a33b7fdda
       {...props}
     />
   );
 };
 
+<<<<<<< HEAD
 export default toast;
+=======
+export { Toaster };
+>>>>>>> bf2b40f823912743738040bf48c74e3a33b7fdda
