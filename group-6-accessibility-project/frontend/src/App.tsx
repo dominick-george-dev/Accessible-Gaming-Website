@@ -35,17 +35,52 @@ export function BrowsePage({
     }
   };
 
+  // Security: Sanitize and validate game data
+  const sanitizeString = (str: string | undefined | null): string => {
+    if (!str || typeof str !== 'string') return '';
+    // Remove potentially dangerous characters and limit length
+    return str
+      .replace(/[<>]/g, '') // Remove < and > to prevent XSS
+      .substring(0, 500) // Limit length
+      .trim();
+  };
+
+  const sanitizeUrl = (url: string | undefined | null): string => {
+    if (!url || typeof url !== 'string') return '';
+    try {
+      const parsedUrl = new URL(url);
+      // Only allow http and https protocols
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        return '';
+      }
+      return parsedUrl.toString();
+    } catch {
+      // If URL parsing fails, return empty string
+      return '';
+    }
+  };
+
+  const validateGameId = (id: string | number): boolean => {
+    const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+    return !isNaN(numId) && numId > 0 && Number.isInteger(numId);
+  };
+
   const getGameName = (game: Game) => {
-    return ("name" in game ? (game as any).name : game.title) || "Untitled Game";
+    const name = ("name" in game ? (game as any).name : game.title) || "Untitled Game";
+    return sanitizeString(name);
   };
 
   const getGameThumbnail = (game: Game) => {
-    return ("coverImage" in game ? (game as any).coverImage : game.thumbnail) || "";
+    const thumbnail = ("coverImage" in game ? (game as any).coverImage : game.thumbnail) || "";
+    return sanitizeUrl(thumbnail);
   };
 
   const getGameGenre = (game: Game) => {
     const genre = (game as any).genre;
-    return Array.isArray(genre) ? genre.join(", ") : genre || "";
+    if (Array.isArray(genre)) {
+      return genre.map(g => sanitizeString(g)).filter(Boolean).join(", ");
+    }
+    return sanitizeString(genre);
   };
 
   return (
@@ -83,7 +118,11 @@ export function BrowsePage({
               >
                 <Card
                   className="group h-full flex flex-col cursor-pointer hover:shadow-lg transition-all duration-200 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:outline-none"
-                  onClick={() => onGameClick(game.id)}
+                  onClick={() => {
+                    if (validateGameId(game.id)) {
+                      onGameClick(game.id);
+                    }
+                  }}
                   onKeyDown={(e) => handleCardKeyDown(e, game.id)}
                   tabIndex={0}
                   role="button"
@@ -124,19 +163,30 @@ export function BrowsePage({
 
                   <CardContent className="space-y-3 flex-1 flex flex-col">
                     <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden">
-                      <img
-                        src={gameThumbnail}
-                        alt={`${gameName} game cover image`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
+                      {gameThumbnail ? (
+                        <img
+                          src={gameThumbnail}
+                          alt={`${gameName} game cover image`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={(e) => {
+                            // Fallback to placeholder if image fails to load
+                            (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23ddd" width="400" height="300"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="20" dy="10.5" font-weight="bold" x="50%25" y="50%25" text-anchor="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
+                          }}
+                          crossOrigin="anonymous"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
+                          No Image
+                        </div>
+                      )}
                     </div>
 
                     <p 
                       className="text-sm sm:text-base text-muted-foreground line-clamp-2"
                       id={`game-${game.id}-description`}
                     >
-                      {game.description || "No description available."}
+                      {sanitizeString(game.description || "No description available.")}
                     </p>
 
                     {gameGenre && (
@@ -186,13 +236,17 @@ export function BrowsePage({
                       className="w-full mt-3 focus:ring-2 focus:ring-primary focus:ring-offset-2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onGameClick(game.id);
+                        if (validateGameId(game.id)) {
+                          onGameClick(game.id);
+                        }
                       }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
                           e.stopPropagation();
-                          onGameClick(game.id);
+                          if (validateGameId(game.id)) {
+                            onGameClick(game.id);
+                          }
                         }
                       }}
                       aria-label={`View details for ${gameName}`}
@@ -235,8 +289,15 @@ export default function App() {
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  const handleGameClick = (id: string) => {
-    navigate(`/game/${id}`);
+  const handleGameClick = (id: string | number) => {
+    const gameId = typeof id === 'string' ? id : id.toString();
+    // Validate game ID before navigation to prevent XSS/injection
+    if (/^[0-9]+$/.test(gameId) && parseInt(gameId, 10) > 0) {
+      navigate(`/game/${gameId}`);
+    } else {
+      console.error('Invalid game ID:', gameId);
+      // Optionally show user-friendly error message
+    }
   };
 
   return (
