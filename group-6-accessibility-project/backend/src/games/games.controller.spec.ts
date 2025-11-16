@@ -18,9 +18,7 @@ describe('GamesController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [GamesController],
-      providers: [
-        { provide: GamesService, useValue: mockGamesService },
-      ],
+      providers: [{ provide: GamesService, useValue: mockGamesService }],
     }).compile();
 
     controller = module.get<GamesController>(GamesController);

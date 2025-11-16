@@ -28,9 +28,10 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
-  toast,
 } from '../ui';
+import { toast } from 'sonner';
 import Magnifier from '../Magnifier';
+import { useAccessibilitySettings } from '../../hooks/useAccessibilitySettings';
 
 // ===== TYPES =====
 
@@ -85,9 +86,35 @@ const MOCK_USER: User = {
 export default function ProfilePage() {
   const [user, setUser] = useState<User>(MOCK_USER);
   const [magnifierEnabled, setMagnifierEnabled] = useState(false);
+  
+  // Backend integration for accessibility settings
+  const { settings: backendSettings, updateSettings: updateBackendSettings, loading, saving } = useAccessibilitySettings();
+
+  // Sync backend settings to local user state when loaded
+  React.useEffect(() => {
+    if (!loading && backendSettings) {
+      setUser(prev => ({
+        ...prev,
+        accessibilityPreferences: {
+          ...prev.accessibilityPreferences,
+          textSize: backendSettings.textSize,
+          highContrast: backendSettings.highContrast,
+          dyslexiaFont: backendSettings.fontFamily === 'dyslexic',
+          colorblindFilter: backendSettings.colorBlindMode as ColorblindFilter,
+          theme: backendSettings.colourMode === 'dark-mode' ? 'dark' : 
+                 backendSettings.colourMode === 'deep-space' ? 'deep-space' : 'light',
+          visual: backendSettings.visualAccessibility,
+          hearing: backendSettings.hearingAccessibility,
+          dexterity: backendSettings.motorDexterityAccessibility,
+          cognitive: backendSettings.cognitiveAccessibility,
+        },
+      }));
+      setMagnifierEnabled(backendSettings.screenMagnifier);
+    }
+  }, [backendSettings, loading]);
 
   // Update preferences handler
-  const handleUpdatePreferences = (preferences: User['accessibilityPreferences']) => {
+  const handleUpdatePreferences = async (preferences: User['accessibilityPreferences']) => {
     setUser(prev => ({
       ...prev,
       accessibilityPreferences: preferences,
@@ -105,7 +132,26 @@ export default function ProfilePage() {
     // Apply colorblind filter
     applyColorblindFilter(preferences.colorblindFilter);
 
-    toast.success('Preferences updated');
+    // Save to backend with proper mapping
+    try {
+      await updateBackendSettings({
+        textSize: preferences.textSize,
+        fontFamily: preferences.dyslexiaFont ? 'dyslexic' : 'default',
+        highContrast: preferences.highContrast,
+        colorBlindMode: preferences.colorblindFilter,
+        colourMode: preferences.theme === 'dark' ? 'dark-mode' : 
+                   preferences.theme === 'deep-space' ? 'deep-space' : 'light-mode',
+        visualAccessibility: preferences.visual,
+        hearingAccessibility: preferences.hearing,
+        motorDexterityAccessibility: preferences.dexterity,
+        cognitiveAccessibility: preferences.cognitive,
+        screenMagnifier: magnifierEnabled,
+      });
+      
+      toast.success('Preferences updated and saved!');
+    } catch (error) {
+      toast.error('Failed to save preferences to server');
+    }
   };
 
   // Preference change handler
@@ -143,9 +189,20 @@ export default function ProfilePage() {
   };
 
   // Toggle magnifier
-  const handleToggleMagnifier = () => {
-    setMagnifierEnabled(prev => !prev);
-    toast.success(magnifierEnabled ? 'Magnifier disabled' : 'Magnifier enabled');
+  const handleToggleMagnifier = async () => {
+    const newMagnifierState = !magnifierEnabled;
+    setMagnifierEnabled(newMagnifierState);
+    
+    try {
+      await updateBackendSettings({
+        screenMagnifier: newMagnifierState,
+      });
+      toast.success(newMagnifierState ? 'Magnifier enabled' : 'Magnifier disabled');
+    } catch (error) {
+      toast.error('Failed to save magnifier setting');
+      // Revert on error
+      setMagnifierEnabled(!newMagnifierState);
+    }
   };
 
   // Preference options
@@ -172,6 +229,28 @@ export default function ProfilePage() {
 
   return (
     <main className="max-w-4xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8">
+      {/* Loading State */}
+      {loading && (
+        <Card className="p-8">
+          <div className="flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">Loading accessibility settings...</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Saving Indicator */}
+      {saving && (
+        <Card className="p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+          <div className="flex items-center justify-center text-blue-700 dark:text-blue-300">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
+            <span>Saving accessibility settings...</span>
+          </div>
+        </Card>
+      )}
+
       {/* User Info */}
       <Card className="p-4 lg:p-8">
         <div className="flex items-center gap-4 lg:gap-6">

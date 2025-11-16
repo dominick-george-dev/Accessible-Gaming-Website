@@ -1,18 +1,23 @@
 // Common UI components and utilities
 // This file exports reusable UI components
 
-export { default as Button } from './button';
-export { default as Card } from './card';
-export { default as Switch } from './switch';
-export { default as Label } from './label';
-export { default as Separator } from './separator';
-export { default as Badge } from './badge';
-export { default as Avatar, AvatarFallback } from './avatar';
+export { Button } from './button';
+export { Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent } from './card';
+export { Switch } from './switch';
+export { Label } from './label';
+export { Separator } from './separator';
+export { Badge, badgeVariants } from './badge';
+export { Avatar, AvatarImage, AvatarFallback } from './avatar';
 export { 
-  default as Select, 
-  SelectTrigger, 
-  SelectValue, 
-  SelectContent, 
-  SelectItem 
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue
 } from './select';
-export { toast, Toaster } from './sonner';
+export { Toaster } from './sonner';

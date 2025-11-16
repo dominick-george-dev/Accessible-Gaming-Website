@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend-Backend Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .controls { display: flex; gap: 10px; align-items: center; margin: 10px 0; }
+        label { font-weight: bold; }
+        input[type="number"], select { padding: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Accessibility Settings Frontend-Backend Integration Test</h1>
+    <p>This page tests the connection between frontend buttons and backend database columns.</p>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <div class="controls">
+            <label>User ID:</label>
+            <input type="number" id="userId" value="1" min="1">
+            <button onclick="loadSettings()">Load Settings</button>
+            <button onclick="saveSettings()">Save Settings</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Accessibility Settings</h2>
+        
+        <!-- Text Size Control -->
+        <div class="controls">
+            <label>Text Size (px):</label>
+            <input type="number" id="textSize" value="16" min="10" max="32">
+            <button onclick="changeTextSize(-2)">-</button>
+            <button onclick="changeTextSize(2)">+</button>
+        </div>
+
+        <!-- Font Family -->
+        <div class="controls">
+            <label>Font Family:</label>
+            <select id="fontFamily">
+                <option value="default">Default</option>
+                <option value="dyslexic">Dyslexic-Friendly</option>
+            </select>
+        </div>
+
+        <!-- High Contrast -->
+        <div class="controls">
+            <label>High Contrast:</label>
+            <input type="checkbox" id="highContrast">
+        </div>
+
+        <!-- Color Blind Mode -->
+        <div class="controls">
+            <label>Color Blind Mode:</label>
+            <select id="colorBlindMode">
+                <option value="none">None</option>
+                <option value="protanopia">Protanopia</option>
+                <option value="deuteranopia">Deuteranopia</option>
+                <option value="tritanopia">Tritanopia</option>
+                <option value="achromatopsia">Achromatopsia</option>
+            </select>
+        </div>
+
+        <!-- Color Mode -->
+        <div class="controls">
+            <label>Color Mode:</label>
+            <select id="colourMode">
+                <option value="light-mode">Light Mode</option>
+                <option value="dark-mode">Dark Mode</option>
+                <option value="deep-space">Deep Space</option>
+            </select>
+        </div>
+
+        <!-- Accessibility Categories -->
+        <div class="controls">
+            <label>Visual Accessibility:</label>
+            <input type="checkbox" id="visualAccessibility">
+        </div>
+
+        <div class="controls">
+            <label>Hearing Accessibility:</label>
+            <input type="checkbox" id="hearingAccessibility">
+        </div>
+
+        <div class="controls">
+            <label>Motor/Dexterity Accessibility:</label>
+            <input type="checkbox" id="motorDexterityAccessibility">
+        </div>
+
+        <div class="controls">
+            <label>Cognitive Accessibility:</label>
+            <input type="checkbox" id="cognitiveAccessibility">
+        </div>
+
+        <div class="controls">
+            <label>Screen Magnifier:</label>
+            <input type="checkbox" id="screenMagnifier">
+        </div>
+    </div>
+
+    <div class="test-section" id="status">
+        <h2>Status</h2>
+        <div id="statusMessage">Ready to test...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>API Response</h2>
+        <pre id="apiResponse">No response yet...</pre>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+
+        function updateStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status');
+            const messageDiv = document.getElementById('statusMessage');
+            messageDiv.textContent = message;
+            statusDiv.className = isError ? 'test-section error' : 'test-section success';
+        }
+
+        function updateApiResponse(data) {
+            document.getElementById('apiResponse').textContent = JSON.stringify(data, null, 2);
+        }
+
+        function getFormData() {
+            return {
+                textSize: parseInt(document.getElementById('textSize').value),
+                fontFamily: document.getElementById('fontFamily').value,
+                highContrast: document.getElementById('highContrast').checked,
+                colorBlindMode: document.getElementById('colorBlindMode').value,
+                colourMode: document.getElementById('colourMode').value,
+                visualAccessibility: document.getElementById('visualAccessibility').checked,
+                hearingAccessibility: document.getElementById('hearingAccessibility').checked,
+                motorDexterityAccessibility: document.getElementById('motorDexterityAccessibility').checked,
+                cognitiveAccessibility: document.getElementById('cognitiveAccessibility').checked,
+                screenMagnifier: document.getElementById('screenMagnifier').checked
+            };
+        }
+
+        function setFormData(data) {
+            document.getElementById('textSize').value = data.textSize || 16;
+            document.getElementById('fontFamily').value = data.fontFamily || 'default';
+            document.getElementById('highContrast').checked = data.highContrast || false;
+            document.getElementById('colorBlindMode').value = data.colorBlindMode || 'none';
+            document.getElementById('colourMode').value = data.colourMode || 'light-mode';
+            document.getElementById('visualAccessibility').checked = data.visualAccessibility || false;
+            document.getElementById('hearingAccessibility').checked = data.hearingAccessibility || false;
+            document.getElementById('motorDexterityAccessibility').checked = data.motorDexterityAccessibility || false;
+            document.getElementById('cognitiveAccessibility').checked = data.cognitiveAccessibility || false;
+            document.getElementById('screenMagnifier').checked = data.screenMagnifier || false;
+        }
+
+        async function loadSettings() {
+            const userId = document.getElementById('userId').value;
+            
+            try {
+                updateStatus('Loading settings...');
+                const response = await fetch(`${API_BASE}/user-accessibility-settings/${userId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                setFormData(data);
+                updateApiResponse(data);
+                updateStatus('Settings loaded successfully!');
+            } catch (error) {
+                updateStatus(`Failed to load settings: ${error.message}`, true);
+                updateApiResponse({ error: error.message });
+            }
+        }
+
+        async function saveSettings() {
+            const userId = document.getElementById('userId').value;
+            const settings = getFormData();
+            
+            try {
+                updateStatus('Saving settings...');
+                const response = await fetch(`${API_BASE}/user-accessibility-settings/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(settings)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                updateApiResponse(data);
+                updateStatus('Settings saved successfully!');
+            } catch (error) {
+                updateStatus(`Failed to save settings: ${error.message}`, true);
+                updateApiResponse({ error: error.message });
+            }
+        }
+
+        function changeTextSize(increment) {
+            const textSizeInput = document.getElementById('textSize');
+            const currentSize = parseInt(textSizeInput.value);
+            const newSize = Math.max(10, Math.min(32, currentSize + increment));
+            textSizeInput.value = newSize;
+            
+            // Apply the change visually
+            document.body.style.fontSize = `${newSize}px`;
+        }
+
+        // Auto-save when settings change
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || e.target.type === 'number') {
+                // You can enable this for real-time saving
+                // saveSettings();
+            }
+        });
+
+        // Load initial settings on page load
+        window.addEventListener('load', () => {
+            loadSettings();
+        });
+    </script>
+</body>
+</html>

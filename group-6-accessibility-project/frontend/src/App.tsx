@@ -1,16 +1,11 @@
-<<<<<<< HEAD
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { HomePage, ProfilePageWrapper } from './pages'
 import { Toaster } from './components/ui'
 import React from 'react'
-=======
->>>>>>> bf2b40f823912743738040bf48c74e3a33b7fdda
 import './App.css'
-import { Routes, Route } from 'react-router-dom'
 import { GameDetailPage } from './pages/GameDetailPage'
 
 function App() {
-<<<<<<< HEAD
   // Add colorblind filter SVG to document
   React.useEffect(() => {
     const existingSvg = document.querySelector('.colorblind-filters');
@@ -65,6 +60,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/profile" element={<ProfilePageWrapper />} />
+            <Route path="/games/:id" element={<GameDetailPage />} />
             {/* Add more routes for your other pages */}
           </Routes>
         </main>
@@ -72,14 +68,6 @@ function App() {
         <Toaster />
       </div>
     </Router>
-=======
-  return (
-    <>
-      <Routes>
-        <Route path="/games/:id" element={<GameDetailPage />} />
-      </Routes>
-    </>
->>>>>>> bf2b40f823912743738040bf48c74e3a33b7fdda
   )
 }
 

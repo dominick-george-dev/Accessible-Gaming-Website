@@ -1,23 +1,3 @@
-<<<<<<< HEAD
-import React from 'react';
-
-interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
-  children: React.ReactNode;
-}
-
-export const Label: React.FC<LabelProps> = ({ children, className = '', ...props }) => {
-  return (
-    <label
-      className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className}`}
-      {...props}
-    >
-      {children}
-    </label>
-  );
-};
-
-export default Label;
-=======
 "use client";
 
 import * as React from "react";
@@ -42,4 +22,3 @@ function Label({
 }
 
 export { Label };
->>>>>>> bf2b40f823912743738040bf48c74e3a33b7fdda
