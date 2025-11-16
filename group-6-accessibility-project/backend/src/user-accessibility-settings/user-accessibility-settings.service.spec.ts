@@ -37,8 +37,7 @@ describe('UserAccessibilitySettingsService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
-  describe('getUserAccessibilitySettingsWithDefaults', () => {
-    it('should return default settings when user has no custom settings', async () => {
+  describe('getUserAccessibilitySettingsWithDefaults', () => {    it('should return default settings when user has no custom settings', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       mockDatabaseService.userAccessibilitySettings.findUnique.mockResolvedValue(
         null,
@@ -47,31 +46,31 @@ describe('UserAccessibilitySettingsService', () => {
       const result = await service.getUserAccessibilitySettingsWithDefaults(1);
 
       expect(result).toEqual({
-        textSize: 'medium',
+        textSize: '16',
         fontFamily: 'default',
         highContrast: false,
         colorBlindMode: 'none',
-        darkMode: false,
-        textToSpeech: false,
-        keyboardNavigation: false,
-        voiceCommands: false,
-        simplifiedInterface: false,
+        colourMode: 'light-mode',
+        visualAccessibility: false,
+        hearingAccessibility: false,
+        motorDexterityAccessibility: false,
+        cognitiveAccessibility: false,
+        screenMagnifier: false,
       });
-    });
-
-    it('should return user settings when they exist', async () => {
+    });    it('should return user settings when they exist', async () => {
       const mockSettings = {
         id: 1,
         userId: 1,
-        textSize: 'large',
+        textSize: '18',
         fontFamily: 'dyslexia-friendly',
         highContrast: true,
         colorBlindMode: 'protanopia',
-        darkMode: true,
-        textToSpeech: true,
-        keyboardNavigation: true,
-        voiceCommands: false,
-        simplifiedInterface: true,
+        colourMode: 'dark-mode',
+        visualAccessibility: true,
+        hearingAccessibility: false,
+        motorDexterityAccessibility: true,
+        cognitiveAccessibility: false,
+        screenMagnifier: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
