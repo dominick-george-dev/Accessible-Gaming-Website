@@ -37,7 +37,8 @@ describe('UserAccessibilitySettingsService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
-  describe('getUserAccessibilitySettingsWithDefaults', () => {    it('should return default settings when user has no custom settings', async () => {
+  describe('getUserAccessibilitySettingsWithDefaults', () => {
+    it('should return default settings when user has no custom settings', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       mockDatabaseService.userAccessibilitySettings.findUnique.mockResolvedValue(
         null,
@@ -57,7 +58,8 @@ describe('UserAccessibilitySettingsService', () => {
         cognitiveAccessibility: false,
         screenMagnifier: false,
       });
-    });    it('should return user settings when they exist', async () => {
+    });
+    it('should return user settings when they exist', async () => {
       const mockSettings = {
         id: 1,
         userId: 1,
