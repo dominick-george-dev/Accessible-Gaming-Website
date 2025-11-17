@@ -26,7 +26,7 @@ export interface AccessibilityPreferences {
   screenMagnifier: boolean;
 }
 
-export function useAccessibilitySettings(userId: number = 1) {
+export function useAccessibilitySettings(userId?: number) {
   const [settings, setSettings] = useState<AccessibilityPreferences>({
     textSize: 16,
     fontFamily: 'default',
@@ -46,6 +46,12 @@ export function useAccessibilitySettings(userId: number = 1) {
   // Load settings from backend
   useEffect(() => {
     const loadSettings = async () => {
+      // Don't load settings if no userId is provided
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const backendSettings = await getUserAccessibilitySettings(userId);
@@ -64,7 +70,7 @@ export function useAccessibilitySettings(userId: number = 1) {
           screenMagnifier: backendSettings.screenMagnifier || false,
         });
         
-        toast.success('Settings loaded successfully');
+        console.log('Accessibility settings loaded successfully for user', userId);
       } catch (error) {
         console.error('Failed to load accessibility settings:', error);
         toast.error('Failed to load settings. Using defaults.');
@@ -74,9 +80,14 @@ export function useAccessibilitySettings(userId: number = 1) {
     };
 
     loadSettings();
-  }, [userId]);
-  // Save settings to backend
+  }, [userId]);  // Save settings to backend
   const updateSettings = async (newSettings: Partial<AccessibilityPreferences>) => {
+    // Don't save settings if no userId is provided
+    if (!userId) {
+      toast.error('Cannot save settings: user not authenticated');
+      return;
+    }
+
     try {
       setSaving(true);
       

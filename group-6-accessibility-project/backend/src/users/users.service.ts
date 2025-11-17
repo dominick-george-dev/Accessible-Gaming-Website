@@ -29,4 +29,20 @@ export class UsersService {
       },
     });
   }
+
+  async findUserByEmail(email: string) {
+    try {
+      console.log('Database service:', this.database);
+      console.log('Searching for email:', email);
+      
+      const user = await this.database.user.findUnique({
+        where: { email },
+      });
+      
+      return user;
+    } catch (error) {
+      console.error('Database error:', error);
+      throw error;
+    }
+  }
 }

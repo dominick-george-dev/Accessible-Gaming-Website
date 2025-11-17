@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useEffect } from 'react';
-import { useAccessibilitySettings } from '../hooks/useAccessibilitySettings';
+import { useAccessibilitySettings, type AccessibilityPreferences } from '../hooks/useAccessibilitySettings';
+import { useAuth } from './AuthContext';
 
 type ThemeMode = 'light' | 'dark' | 'deep-space';
 type ColorblindFilter = 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia';
 
 interface AccessibilityContextType {
-  settings: any;
-  updateSettings: (newSettings: any) => Promise<void>;
+  settings: AccessibilityPreferences | null;
+  updateSettings: (newSettings: Partial<AccessibilityPreferences>) => Promise<void>;
   loading: boolean;
   saving: boolean;
 }
@@ -58,7 +59,8 @@ function applyColorblindFilter(filter: ColorblindFilter) {
 }
 
 export function AccessibilityProvider({ children }: { children: React.ReactNode }) {
-  const { settings, updateSettings, loading, saving } = useAccessibilitySettings();
+  const { user, isAuthenticated } = useAuth();
+  const { settings, updateSettings, loading, saving } = useAccessibilitySettings(user?.id);
 
   // Apply accessibility settings whenever they change
   useEffect(() => {

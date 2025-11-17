@@ -5,8 +5,9 @@ import { GamesModule } from './games/games.module';
 import { DatabaseModule } from './database/database.module';
 import { AccessibilityTagsModule } from './accessibility-tags/accessibility-tags.module';
 import { ReviewsModule } from './reviews/reviews.module';
-import { UserAccessibilitySettingsModule } from './user-accessibility-settings/user-accessibility-settings.module';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { UserAccessibilitySettingsModule } from './user-accessibility-settings/user-accessibility-settings.module';
 
 @Module({
   imports: [
@@ -14,8 +15,9 @@ import { UsersModule } from './users/users.module';
     DatabaseModule,
     AccessibilityTagsModule,
     ReviewsModule,
-    UserAccessibilitySettingsModule,
     UsersModule,
+    AuthModule,
+    UserAccessibilitySettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

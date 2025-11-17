@@ -32,43 +32,25 @@ import {
 import { toast } from 'sonner';
 import Magnifier from '../Magnifier';
 import { useAccessibilityContext } from '../../contexts/AccessibilityContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 // ===== TYPES =====
 
 type ColorblindFilter = 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia';
 type ThemeMode = 'light' | 'dark' | 'deep-space';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  favorites: string[];
-  isAdmin: boolean;
-  isPublisher: boolean;
-  publisherId?: string;
-  accessibilityPreferences: {
-    visual: boolean;
-    hearing: boolean;
-    dexterity: boolean;
-    cognitive: boolean;
-    textSize: number;
-    highContrast: boolean;
-    dyslexiaFont: boolean;
-    colorblindFilter: ColorblindFilter;
-    theme: ThemeMode;
-  };
-}
+// ===== MAIN COMPONENT =====
 
-// ===== MOCK USER DATA =====
+export default function ProfilePage() {
+  const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
+  const [magnifierEnabled, setMagnifierEnabled] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Backend integration for accessibility settings
+  const { settings: backendSettings, updateSettings: updateBackendSettings, loading, saving } = useAccessibilityContext();
 
-const MOCK_USER: User = {
-  id: '1',
-  name: 'Alex Johnson',
-  email: 'alex.johnson@example.com',
-  favorites: ['game1', 'game2', 'game3'],
-  isAdmin: false,
-  isPublisher: false,
-  accessibilityPreferences: {
+  // Local preferences state derived from backend settings
+  const [localPreferences, setLocalPreferences] = useState({
     visual: false,
     hearing: false,
     dexterity: false,
@@ -76,94 +58,79 @@ const MOCK_USER: User = {
     textSize: 16,
     highContrast: false,
     dyslexiaFont: false,
-    colorblindFilter: 'none',
-    theme: 'light',
-  },
-};
+    colorblindFilter: 'none' as ColorblindFilter,
+    theme: 'light' as ThemeMode,
+  });
 
-// ===== MAIN COMPONENT =====
-
-export default function ProfilePage() {
-  const [user, setUser] = useState<User>(MOCK_USER);
-  const [magnifierEnabled, setMagnifierEnabled] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false); // Add flag to prevent scroll jumping during updates
-  
-  // Backend integration for accessibility settings
-  const { settings: backendSettings, updateSettings: updateBackendSettings, loading, saving } = useAccessibilityContext();
-
-  // Sync backend settings to local user state when loaded
+  // Sync backend settings to local preferences when loaded
   React.useEffect(() => {
     if (!loading && backendSettings) {
-      setUser(prev => ({
-        ...prev,
-        accessibilityPreferences: {
-          ...prev.accessibilityPreferences,
-          textSize: backendSettings.textSize,
-          highContrast: backendSettings.highContrast,
-          dyslexiaFont: backendSettings.fontFamily === 'dyslexic',
-          colorblindFilter: backendSettings.colorBlindMode as ColorblindFilter,
-          theme: backendSettings.colourMode === 'dark-mode' ? 'dark' : 
-                 backendSettings.colourMode === 'deep-space' ? 'deep-space' : 'light',
-          visual: backendSettings.visualAccessibility,
-          hearing: backendSettings.hearingAccessibility,
-          dexterity: backendSettings.motorDexterityAccessibility,
-          cognitive: backendSettings.cognitiveAccessibility,
-        },
-      }));
+      setLocalPreferences({
+        textSize: backendSettings.textSize,
+        highContrast: backendSettings.highContrast,
+        dyslexiaFont: backendSettings.fontFamily === 'dyslexic',
+        colorblindFilter: backendSettings.colorBlindMode as ColorblindFilter,
+        theme: backendSettings.colourMode === 'dark-mode' ? 'dark' : 
+               backendSettings.colourMode === 'deep-space' ? 'deep-space' : 'light',
+        visual: backendSettings.visualAccessibility,
+        hearing: backendSettings.hearingAccessibility,
+        dexterity: backendSettings.motorDexterityAccessibility,
+        cognitive: backendSettings.cognitiveAccessibility,
+      });
       setMagnifierEnabled(backendSettings.screenMagnifier);
     }
   }, [backendSettings, loading]);
 
-  // Update preferences handler - simplified since hook now handles state management
-  const handleUpdatePreferences = async (preferences: User['accessibilityPreferences']) => {
-    // Theme changes are now applied globally by AccessibilityProvider
-    
-    // Save to backend with proper mapping
-    try {
-      await updateBackendSettings({
-        textSize: preferences.textSize,
-        fontFamily: preferences.dyslexiaFont ? 'dyslexic' : 'default',
-        highContrast: preferences.highContrast,
-        colorBlindMode: preferences.colorblindFilter,
-        colourMode: preferences.theme === 'dark' ? 'dark-mode' : 
-                   preferences.theme === 'deep-space' ? 'deep-space' : 'light-mode',
-        visualAccessibility: preferences.visual,
-        hearingAccessibility: preferences.hearing,
-        motorDexterityAccessibility: preferences.dexterity,
-        cognitiveAccessibility: preferences.cognitive,
-        screenMagnifier: magnifierEnabled,
-      });
-      
-      toast.success('Preferences updated and saved!');
-    } catch {
-      toast.error('Failed to save preferences to server');
-    }
-  };
+  // Show loading or redirect if not authenticated
+  if (authLoading) {
+    return (
+      <main className="max-w-4xl mx-auto p-4 lg:p-6">
+        <Card className="p-8">
+          <div className="flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">Loading user authentication...</p>
+            </div>
+          </div>
+        </Card>
+      </main>
+    );
+  }
 
-  // Preference change handler - simplified to prevent scroll jumping
+  if (!isAuthenticated || !user) {
+    return (
+      <main className="max-w-4xl mx-auto p-4 lg:p-6">
+        <Card className="p-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Please log in to view and manage your accessibility preferences.
+            </p>
+            <Button onClick={() => window.location.href = '/login'}>
+              Go to Login
+            </Button>
+          </div>
+        </Card>
+      </main>
+    );
+  }
+
+  // Preference change handler
   const handlePreferenceChange = async (
-    category: keyof User['accessibilityPreferences'],
-    value: boolean | ColorblindFilter | ThemeMode
+    category: keyof typeof localPreferences,
+    value: boolean | ColorblindFilter | ThemeMode | number
   ) => {
-    // If we're already updating, ignore this call to prevent multiple concurrent updates
-    if (isUpdating) {
-      return;
-    }
+    if (isUpdating) return;
 
     setIsUpdating(true);
     
     const newPreferences = {
-      ...user.accessibilityPreferences,
+      ...localPreferences,
       [category]: value,
     };
     
     // Update local state immediately for responsive UI
-    setUser(prev => ({
-      ...prev,
-      accessibilityPreferences: newPreferences,
-    }));
-    
-    // Visual changes are now applied globally by AccessibilityProvider
+    setLocalPreferences(newPreferences);
     
     // Save to backend
     try {
@@ -190,13 +157,10 @@ export default function ProfilePage() {
 
   // Text size adjustment
   const handleTextSizeChange = (increment: number) => {
-    const currentSize = user.accessibilityPreferences.textSize;
+    const currentSize = localPreferences.textSize;
     const newSize = Math.max(10, Math.min(32, currentSize + increment));
     
-    handleUpdatePreferences({
-      ...user.accessibilityPreferences,
-      textSize: newSize,
-    });
+    handlePreferenceChange('textSize', newSize);
     
     const action = increment > 0 ? 'increased' : 'decreased';
     toast.success(`Text size ${action} to ${newSize}px`);
@@ -222,7 +186,6 @@ export default function ProfilePage() {
       toast.success(newMagnifierState ? 'Magnifier enabled' : 'Magnifier disabled');
     } catch {
       toast.error('Failed to save magnifier setting');
-      // Revert on error
       setMagnifierEnabled(!newMagnifierState);
     }
   };
@@ -278,31 +241,34 @@ export default function ProfilePage() {
         <div className="flex items-center gap-4 lg:gap-6">
           <Avatar className="w-16 h-16 lg:w-24 lg:h-24">
             <AvatarFallback className="bg-blue-600 text-white text-xl lg:text-2xl">
-              {user.name.split(' ').map(n => n[0]).join('')}
+              {user.username.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h1 className="mb-1 lg:mb-2">{user.name}</h1>
+            <h1 className="mb-1 lg:mb-2">{user.username}</h1>
             <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
-            {user.isAdmin && (
-              <Badge variant="secondary" className="mt-2">Administrator</Badge>
-            )}
-            {user.isPublisher && (
-              <Badge variant="secondary" className="mt-2">Publisher</Badge>
-            )}
+            <div className="mt-2 space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={logout}
+              >
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
 
-      {/* Stats */}
+      {/* Stats - Simplified since we don't have favorites/reviews data */}
       <div className="grid grid-cols-2 gap-4 lg:gap-6">
         <Card className="p-4 lg:p-6 text-center">
-          <div className="text-gray-600 dark:text-gray-400 mb-1 lg:mb-2">Favorites</div>
-          <div className="text-3xl lg:text-4xl">{user.favorites.length}</div>
+          <div className="text-gray-600 dark:text-gray-400 mb-1 lg:mb-2">Member Since</div>
+          <div className="text-lg lg:text-xl">{new Date(user.createdAt).toLocaleDateString()}</div>
         </Card>
         <Card className="p-4 lg:p-6 text-center">
-          <div className="text-gray-600 dark:text-gray-400 mb-1 lg:mb-2">Reviews</div>
-          <div className="text-3xl lg:text-4xl">0</div>
+          <div className="text-gray-600 dark:text-gray-400 mb-1 lg:mb-2">User ID</div>
+          <div className="text-lg lg:text-xl">#{user.id}</div>
         </Card>
       </div>
 
@@ -345,7 +311,7 @@ export default function ProfilePage() {
                 aria-atomic="true"
                 id="text-size-value"
               >
-                Current: {user.accessibilityPreferences.textSize}px
+                Current: {localPreferences.textSize}px
               </div>
               
               <Button
@@ -374,7 +340,7 @@ export default function ProfilePage() {
             </div>
             <div className="ml-10">
               <Select
-                value={user.accessibilityPreferences.theme}
+                value={localPreferences.theme}
                 onValueChange={(value: string) => {
                   handlePreferenceChange('theme', value as ThemeMode);
                 }}
@@ -410,11 +376,11 @@ export default function ProfilePage() {
               </div>
               <Switch
                 id="dyslexia-font"
-                checked={user.accessibilityPreferences.dyslexiaFont}
+                checked={localPreferences.dyslexiaFont}
                 onCheckedChange={(checked) =>
                   handlePreferenceChange('dyslexiaFont', checked)
                 }
-                aria-label={`${user.accessibilityPreferences.dyslexiaFont ? 'Disable' : 'Enable'} Dyslexia-Friendly Font`}
+                aria-label={`${localPreferences.dyslexiaFont ? 'Disable' : 'Enable'} Dyslexia-Friendly Font`}
               />
             </div>
           </div>
@@ -430,11 +396,11 @@ export default function ProfilePage() {
               </div>
               <Switch
                 id="high-contrast"
-                checked={user.accessibilityPreferences.highContrast}
+                checked={localPreferences.highContrast}
                 onCheckedChange={(checked) =>
                   handlePreferenceChange('highContrast', checked)
                 }
-                aria-label={`${user.accessibilityPreferences.highContrast ? 'Disable' : 'Enable'} High Contrast Mode`}
+                aria-label={`${localPreferences.highContrast ? 'Disable' : 'Enable'} High Contrast Mode`}
               />
             </div>
           </div>
@@ -449,7 +415,7 @@ export default function ProfilePage() {
             </div>
             <div className="ml-10">
               <Select
-                value={user.accessibilityPreferences.colorblindFilter}
+                value={localPreferences.colorblindFilter}
                 onValueChange={(value: string) => {
                   handlePreferenceChange('colorblindFilter', value as ColorblindFilter);
                 }}
@@ -497,7 +463,7 @@ export default function ProfilePage() {
           {/* Accessibility Category Toggles */}
           {preferences.map((pref) => {
             const Icon = pref.icon;
-            const isEnabled = user.accessibilityPreferences[pref.id as keyof User['accessibilityPreferences']] as boolean;
+            const isEnabled = localPreferences[pref.id as keyof typeof localPreferences] as boolean;
             
             return (
               <div key={pref.id} className="flex items-center justify-between gap-4">
@@ -510,7 +476,7 @@ export default function ProfilePage() {
                   checked={isEnabled}
                   onCheckedChange={(checked) =>
                     handlePreferenceChange(
-                      pref.id as keyof User['accessibilityPreferences'],
+                      pref.id as keyof typeof localPreferences,
                       checked
                     )
                   }
@@ -523,12 +489,13 @@ export default function ProfilePage() {
       </section>
 
       {/* Active Preferences Badge */}
-      {(Object.entries(user.accessibilityPreferences).some(([key, enabled]) => 
+      {(Object.entries(localPreferences).some(([key, enabled]) => 
         key !== 'textSize' && key !== 'colorblindFilter' && key !== 'theme' && enabled
-      ) || user.accessibilityPreferences.textSize !== 16 || user.accessibilityPreferences.colorblindFilter !== 'none' || user.accessibilityPreferences.theme !== 'light') && (
+      ) || localPreferences.textSize !== 16 || localPreferences.colorblindFilter !== 'none' || localPreferences.theme !== 'light') && (
         <Card className="p-6">
           <p className="mb-4">Your active preferences:</p>
-          <div className="flex flex-wrap gap-3">            {Object.entries(user.accessibilityPreferences)
+          <div className="flex flex-wrap gap-3">
+            {Object.entries(localPreferences)
               .filter(([key, enabled]) => key !== 'textSize' && key !== 'colorblindFilter' && key !== 'theme' && enabled)
               .map(([pref]) => (
                 <Badge key={pref} variant="secondary" className="px-3 py-1">
@@ -539,19 +506,19 @@ export default function ProfilePage() {
                     : pref.charAt(0).toUpperCase() + pref.slice(1)}
                 </Badge>
               ))}
-            {user.accessibilityPreferences.theme !== 'light' && (
+            {localPreferences.theme !== 'light' && (
               <Badge variant="secondary" className="px-3 py-1">
-                {themeOptions.find(t => t.value === user.accessibilityPreferences.theme)?.label}
+                {themeOptions.find(t => t.value === localPreferences.theme)?.label}
               </Badge>
             )}
-            {user.accessibilityPreferences.textSize !== 16 && (
+            {localPreferences.textSize !== 16 && (
               <Badge variant="secondary" className="px-3 py-1">
-                Text Size: {user.accessibilityPreferences.textSize}px
+                Text Size: {localPreferences.textSize}px
               </Badge>
             )}
-            {user.accessibilityPreferences.colorblindFilter !== 'none' && (
+            {localPreferences.colorblindFilter !== 'none' && (
               <Badge variant="secondary" className="px-3 py-1">
-                {colorblindFilters.find(f => f.value === user.accessibilityPreferences.colorblindFilter)?.label}
+                {colorblindFilters.find(f => f.value === localPreferences.colorblindFilter)?.label}
               </Badge>
             )}
             {magnifierEnabled && (

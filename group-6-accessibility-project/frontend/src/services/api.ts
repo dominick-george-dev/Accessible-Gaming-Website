@@ -24,9 +24,25 @@ export interface UserAccessibilitySettings {
   screenMagnifier?: boolean;
 }
 
+// Helper function to get auth token from localStorage
+const getAuthToken = (): string | null => {
+  return localStorage.getItem('token');
+};
+
+// Helper function to create headers with authentication
+const createAuthHeaders = (): HeadersInit => {
+  const token = getAuthToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+  };
+};
+
 // Get user accessibility settings
 export async function getUserAccessibilitySettings(userId: number): Promise<UserAccessibilitySettings> {
-  const response = await fetch(`${API_BASE_URL}/user-accessibility-settings/${userId}`);
+  const response = await fetch(`${API_BASE_URL}/user-accessibility-settings/${userId}`, {
+    headers: createAuthHeaders(),
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch user accessibility settings');
   }
@@ -40,9 +56,7 @@ export async function updateUserAccessibilitySettings(
 ): Promise<UserAccessibilitySettings> {
   const response = await fetch(`${API_BASE_URL}/user-accessibility-settings/${userId}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: createAuthHeaders(),
     body: JSON.stringify(settings),
   });
   
@@ -59,9 +73,7 @@ export async function createUserAccessibilitySettings(
 ): Promise<UserAccessibilitySettings> {
   const response = await fetch(`${API_BASE_URL}/user-accessibility-settings/${userId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: createAuthHeaders(),
     body: JSON.stringify(settings),
   });
   

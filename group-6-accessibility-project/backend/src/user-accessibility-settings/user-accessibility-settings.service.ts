@@ -31,13 +31,10 @@ export class UserAccessibilitySettingsService {
     return await this.database.userAccessibilitySettings.create({
       data: {
         ...data,
-        user: {
-          connect: { id: userId },
-        },
+        userId: userId,
       },
     });
   }
-
   async getUserAccessibilitySettings(userId: number) {
     return await this.database.userAccessibilitySettings.findUnique({
       where: { userId },
