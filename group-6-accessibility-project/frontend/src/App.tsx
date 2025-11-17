@@ -4,6 +4,7 @@ import { Toaster } from './components/ui'
 import React from 'react'
 import './App.css'
 import { GameDetailPage } from './pages/GameDetailPage'
+import { AccessibilityProvider } from './contexts/AccessibilityContext'
 
 function App() {
   // Add colorblind filter SVG to document
@@ -43,12 +44,12 @@ function App() {
       document.body.appendChild(svg);
     }
   }, []);
-
   return (
-    <Router>
-      <div className="app">
-        {/* Live region for screen reader announcements */}
-        <div aria-live="polite" aria-atomic="true" className="sr-only" id="live-region" />
+    <AccessibilityProvider>
+      <Router>
+        <div className="app">
+          {/* Live region for screen reader announcements */}
+          <div aria-live="polite" aria-atomic="true" className="sr-only" id="live-region" />
         
         {/* Skip link for accessibility */}
         <a href="#main-content" className="skip-link">
@@ -64,10 +65,10 @@ function App() {
             {/* Add more routes for your other pages */}
           </Routes>
         </main>
-        {/* Footer component will go here once you add it from Figma */}
-        <Toaster />
+        {/* Footer component will go here once you add it from Figma */}        <Toaster />
       </div>
     </Router>
+    </AccessibilityProvider>
   )
 }
 

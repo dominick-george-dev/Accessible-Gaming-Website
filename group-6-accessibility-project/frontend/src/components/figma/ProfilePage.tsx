@@ -31,7 +31,7 @@ import {
 } from '../ui';
 import { toast } from 'sonner';
 import Magnifier from '../Magnifier';
-import { useAccessibilitySettings } from '../../hooks/useAccessibilitySettings';
+import { useAccessibilityContext } from '../../contexts/AccessibilityContext';
 
 // ===== TYPES =====
 
@@ -86,9 +86,10 @@ const MOCK_USER: User = {
 export default function ProfilePage() {
   const [user, setUser] = useState<User>(MOCK_USER);
   const [magnifierEnabled, setMagnifierEnabled] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false); // Add flag to prevent scroll jumping during updates
   
   // Backend integration for accessibility settings
-  const { settings: backendSettings, updateSettings: updateBackendSettings, loading, saving } = useAccessibilitySettings();
+  const { settings: backendSettings, updateSettings: updateBackendSettings, loading, saving } = useAccessibilityContext();
 
   // Sync backend settings to local user state when loaded
   React.useEffect(() => {
@@ -113,25 +114,10 @@ export default function ProfilePage() {
     }
   }, [backendSettings, loading]);
 
-  // Update preferences handler
+  // Update preferences handler - simplified since hook now handles state management
   const handleUpdatePreferences = async (preferences: User['accessibilityPreferences']) => {
-    setUser(prev => ({
-      ...prev,
-      accessibilityPreferences: preferences,
-    }));
-
-    // Apply theme changes
-    applyTheme(preferences.theme, preferences.highContrast);
+    // Theme changes are now applied globally by AccessibilityProvider
     
-    // Apply text size changes
-    applyTextSize(preferences.textSize);
-    
-    // Apply dyslexia font
-    applyDyslexiaFont(preferences.dyslexiaFont);
-    
-    // Apply colorblind filter
-    applyColorblindFilter(preferences.colorblindFilter);
-
     // Save to backend with proper mapping
     try {
       await updateBackendSettings({
@@ -149,21 +135,57 @@ export default function ProfilePage() {
       });
       
       toast.success('Preferences updated and saved!');
-    } catch (error) {
+    } catch {
       toast.error('Failed to save preferences to server');
     }
   };
 
-  // Preference change handler
-  const handlePreferenceChange = (
+  // Preference change handler - simplified to prevent scroll jumping
+  const handlePreferenceChange = async (
     category: keyof User['accessibilityPreferences'],
     value: boolean | ColorblindFilter | ThemeMode
   ) => {
+    // If we're already updating, ignore this call to prevent multiple concurrent updates
+    if (isUpdating) {
+      return;
+    }
+
+    setIsUpdating(true);
+    
     const newPreferences = {
       ...user.accessibilityPreferences,
       [category]: value,
     };
-    handleUpdatePreferences(newPreferences);
+    
+    // Update local state immediately for responsive UI
+    setUser(prev => ({
+      ...prev,
+      accessibilityPreferences: newPreferences,
+    }));
+    
+    // Visual changes are now applied globally by AccessibilityProvider
+    
+    // Save to backend
+    try {
+      await updateBackendSettings({
+        textSize: newPreferences.textSize,
+        fontFamily: newPreferences.dyslexiaFont ? 'dyslexic' : 'default',
+        highContrast: newPreferences.highContrast,
+        colorBlindMode: newPreferences.colorblindFilter,
+        colourMode: newPreferences.theme === 'dark' ? 'dark-mode' : 
+                   newPreferences.theme === 'deep-space' ? 'deep-space' : 'light-mode',
+        visualAccessibility: newPreferences.visual,
+        hearingAccessibility: newPreferences.hearing,
+        motorDexterityAccessibility: newPreferences.dexterity,
+        cognitiveAccessibility: newPreferences.cognitive,
+        screenMagnifier: magnifierEnabled,
+      });
+    } catch (error) {
+      console.error('Failed to update preferences:', error);
+      toast.error('Failed to save preferences');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   // Text size adjustment
@@ -198,7 +220,7 @@ export default function ProfilePage() {
         screenMagnifier: newMagnifierState,
       });
       toast.success(newMagnifierState ? 'Magnifier enabled' : 'Magnifier disabled');
-    } catch (error) {
+    } catch {
       toast.error('Failed to save magnifier setting');
       // Revert on error
       setMagnifierEnabled(!newMagnifierState);
@@ -350,11 +372,14 @@ export default function ProfilePage() {
               <Moon className="w-6 h-6 text-blue-600 flex-shrink-0" aria-hidden="true" />
               <Label htmlFor="theme-selector">Theme</Label>
             </div>
-            <div className="ml-10">              <Select
+            <div className="ml-10">
+              <Select
                 value={user.accessibilityPreferences.theme}
-                onValueChange={(value) => handlePreferenceChange('theme', value as ThemeMode)}
+                onValueChange={(value: string) => {
+                  handlePreferenceChange('theme', value as ThemeMode);
+                }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" id="theme-selector">
                   <SelectValue placeholder="Select a theme" />
                 </SelectTrigger>
                 <SelectContent>
@@ -422,11 +447,14 @@ export default function ProfilePage() {
               <Palette className="w-6 h-6 text-blue-600 flex-shrink-0" aria-hidden="true" />
               <Label htmlFor="colorblind-filter">Colorblind Filter</Label>
             </div>
-            <div className="ml-10">              <Select
+            <div className="ml-10">
+              <Select
                 value={user.accessibilityPreferences.colorblindFilter}
-                onValueChange={(value) => handlePreferenceChange('colorblindFilter', value as ColorblindFilter)}
+                onValueChange={(value: string) => {
+                  handlePreferenceChange('colorblindFilter', value as ColorblindFilter);
+                }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" id="colorblind-filter">
                   <SelectValue placeholder="Select a filter" />
                 </SelectTrigger>
                 <SelectContent>
@@ -567,56 +595,6 @@ export default function ProfilePage() {
       <ColorblindFilterSVGs />
     </main>
   );
-}
-
-// ===== HELPER FUNCTIONS =====
-
-function applyTheme(theme: ThemeMode, highContrast: boolean) {
-  const html = document.documentElement;
-  
-  // Remove all theme classes
-  html.classList.remove('light', 'dark', 'deep-space', 'high-contrast');
-  
-  // Apply theme
-  if (theme === 'dark') {
-    html.classList.add('dark');
-  } else if (theme === 'deep-space') {
-    html.classList.add('deep-space');
-  }
-  
-  // Apply high contrast
-  if (highContrast) {
-    html.classList.add('high-contrast');
-  }
-}
-
-function applyTextSize(size: number) {
-  document.documentElement.style.setProperty('--font-size', `${size}px`);
-}
-
-function applyDyslexiaFont(enabled: boolean) {
-  if (enabled) {
-    document.body.classList.add('dyslexia-font');
-  } else {
-    document.body.classList.remove('dyslexia-font');
-  }
-}
-
-function applyColorblindFilter(filter: ColorblindFilter) {
-  const body = document.body;
-  
-  // Remove all filter classes
-  body.classList.remove(
-    'colorblind-protanopia',
-    'colorblind-deuteranopia',
-    'colorblind-tritanopia',
-    'colorblind-achromatopsia'
-  );
-  
-  // Apply new filter
-  if (filter !== 'none') {
-    body.classList.add(`colorblind-${filter}`);
-  }
 }
 
 // ===== COLORBLIND FILTER SVG COMPONENT =====

@@ -966,3 +966,11 @@ html {
   color: #ffff00;
   background-color: #333333;
 }
+
+/* Utility class to prevent transitions during theme changes */
+.no-transitions *,
+.no-transitions *::before,
+.no-transitions *::after {
+  transition: none !important;
+  animation: none !important;
+}

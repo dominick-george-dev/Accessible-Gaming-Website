@@ -55,7 +55,7 @@ export function useAccessibilitySettings(userId: number = 1) {
           textSize: backendSettings.textSize || 16,
           fontFamily: (backendSettings.fontFamily as 'default' | 'dyslexic') || 'default',
           highContrast: backendSettings.highContrast || false,
-          colorBlindMode: (backendSettings.colorBlindMode as 'none' | 'protanopia' | 'deutranopia' | 'tritanopia' | 'achromatospia') || 'none',
+          colorBlindMode: (backendSettings.colorBlindMode as 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia') || 'none',
           colourMode: (backendSettings.colourMode as 'light-mode' | 'dark-mode' | 'deep-space') || 'light-mode',
           visualAccessibility: backendSettings.visualAccessibility || false,
           hearingAccessibility: backendSettings.hearingAccessibility || false,
@@ -75,14 +75,12 @@ export function useAccessibilitySettings(userId: number = 1) {
 
     loadSettings();
   }, [userId]);
-
   // Save settings to backend
   const updateSettings = async (newSettings: Partial<AccessibilityPreferences>) => {
     try {
       setSaving(true);
       
       const updatedSettings = { ...settings, ...newSettings };
-      setSettings(updatedSettings);
       
       // Map frontend to backend format
       const backendSettings: Partial<UserAccessibilitySettings> = {
@@ -98,15 +96,17 @@ export function useAccessibilitySettings(userId: number = 1) {
         screenMagnifier: updatedSettings.screenMagnifier,
       };
       
+      // Save to backend first, only update local state on success
       await updateUserAccessibilitySettings(userId, backendSettings);
+      
+      // Only update state after successful API call to prevent unnecessary re-renders
+      setSettings(updatedSettings);
       toast.success('Settings saved successfully');
       
     } catch (error) {
       console.error('Failed to save accessibility settings:', error);
       toast.error('Failed to save settings. Please try again.');
-      
-      // Revert changes on error
-      setSettings(settings);
+      // Don't update state on error - keep current settings
     } finally {
       setSaving(false);
     }

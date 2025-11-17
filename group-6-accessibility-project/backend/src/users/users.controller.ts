@@ -4,6 +4,7 @@ import { UsersService } from './users.service';
 export class CreateUserDto {
   email: string;
   username: string;
+  password: string;  // Added required password field
 }
 
 @Controller('users')

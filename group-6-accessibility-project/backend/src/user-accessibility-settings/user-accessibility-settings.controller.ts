@@ -12,7 +12,7 @@ import { UserAccessibilitySettingsService } from './user-accessibility-settings.
 
 export class CreateUserAccessibilitySettingsDto {
   // Text settings
-  textSize?: string;
+  textSize?: number;  // Changed from string to number
   fontFamily?: string;
 
   // Visual settings

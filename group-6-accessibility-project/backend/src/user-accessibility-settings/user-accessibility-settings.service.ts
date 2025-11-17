@@ -3,7 +3,7 @@ import { DatabaseService } from '../database/database.service';
 
 interface CreateUserAccessibilitySettingsData {
   // Text settings
-  textSize?: string;
+  textSize?: number;
   fontFamily?: string;
 
   // Visual settings
@@ -82,7 +82,7 @@ export class UserAccessibilitySettingsService {
     if (!settings) {
       // Return default accessibility settings matching the database schema
       return {
-        textSize: '16',
+        textSize: 16,
         fontFamily: 'default',
         highContrast: false,
         colorBlindMode: 'none',
