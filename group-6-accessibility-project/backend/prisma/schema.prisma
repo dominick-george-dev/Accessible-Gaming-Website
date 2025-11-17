@@ -18,6 +18,9 @@ model Game {
   id          Int      @id @default(autoincrement())
   title       String
   description String
+  images      String[] @default([])
+  trailer     String @default("")
+  transcript  String   @default("")
   genre       String[]
   releaseDate DateTime
   updatedAt   DateTime @updatedAt
