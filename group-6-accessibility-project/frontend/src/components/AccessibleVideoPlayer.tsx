@@ -58,7 +58,7 @@ export function AccessibleVideoPlayer({ gameName, youtubeUrl, transcript }: Acce
               <div>
                 <p className="text-green-900 dark:text-green-100">
                   <strong>Why transcripts matter:</strong> Text transcripts make video content accessible to deaf and hard-of-hearing users,
-                  users in sound-sensitive environments, and those who prefer reading at their own pace. They also help with SEO and content search.
+                  users in sound-sensitive environments, and those who prefer reading at their own pace.
                 </p>
               </div>
             </div>
