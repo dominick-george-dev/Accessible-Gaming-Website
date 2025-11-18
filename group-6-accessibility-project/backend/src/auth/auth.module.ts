@@ -10,7 +10,7 @@ import { DatabaseModule } from '../database/database.module';
     DatabaseModule, // Import database module for Prisma access
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+      secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '24h' },
     }),
   ],
