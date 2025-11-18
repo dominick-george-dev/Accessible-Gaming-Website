@@ -68,17 +68,3 @@ export function AccessibleVideoPlayer({ gameName, youtubeUrl, transcript }: Acce
     </section>
   );
 }
-const fullTranscript = `[0:00 - 0:03] Welcome to Puzzle Quest Adventures.
-
-[0:03 - 0:06] Experience vibrant puzzle worlds designed for everyone.
-
-[0:06 - 0:10] Full colorblind mode support with adjustable visual patterns. Our advanced color system adapts to multiple types of color blindness including deuteranopia, protanopia, and tritanopia.
-
-[0:10 - 0:14] Play with one hand using our intuitive control system. All actions can be performed with simple taps or clicks, no complex gestures required.
-
-[0:14 - 0:18] High contrast modes ensure visibility for all players. Toggle between multiple contrast presets to find what works best for you.
-
-[0:18 - 0:22] Complete voice-over narration for all game elements. Every button, menu item, and game piece is fully described by our professional voice actors.
-
-[0:22 - 0:25] Accessibility designed from the ground up. We believe great games should be playable by everyone, regardless of ability.`;
-
