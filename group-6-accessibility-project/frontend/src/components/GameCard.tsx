@@ -1,4 +1,4 @@
-import { Game } from '../types/game';
+import type { Game } from '../types/game';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Star, Heart, Check, Eye, Ear, Hand, Brain } from 'lucide-react';
@@ -10,6 +10,7 @@ interface GameCardProps {
   onToggleFavorite: (gameId: string) => void;
   onClick: () => void;
 }
+
 
 // Helper function to get category color and icon
 const getCategoryStyle = (category: string) => {
@@ -69,12 +70,12 @@ export function GameCard({ game, isFavorite, onToggleFavorite, onClick }: GameCa
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="article"
-      aria-label={`${game.name}, ${game.rating} stars, ${game.reviewCount} reviews`}
+      aria-label={`${game.title}, ${game.rating} stars, ${game.reviewCount} reviews`}
     >
       <div className="relative aspect-video bg-muted">
         <ImageWithFallback
           src={game.thumbnail}
-          alt={`${game.name} game thumbnail`}
+          alt={`${game.title} game thumbnail`}
           className="w-full h-full object-cover"
         />
         {game.verified && (
@@ -98,41 +99,35 @@ export function GameCard({ game, isFavorite, onToggleFavorite, onClick }: GameCa
         </button>
       </div>
       
-      <div className="p-4 space-y-3">
-        <div>
-          <h3 className="mb-1">{game.name}</h3>
-          <p className="text-muted-foreground line-clamp-2">{game.description}</p>
-        </div>
+      <div
+  className="flex flex-wrap gap-2"
+  role="list"
+  aria-label="Accessibility features"
+>
+  {(game.accessibilityTags ?? []).slice(0, 3).map((tag) => {
+    const style = getCategoryStyle(tag.category);
+    const Icon = style.icon;
 
-        <div className="flex items-center gap-2" aria-label={`Rating: ${game.rating} out of 5 stars`}>
-          <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" aria-hidden="true" />
-          <span>{game.rating}</span>
-          <span className="text-muted-foreground">({game.reviewCount})</span>
-        </div>
+    return (
+      <Badge
+        key={tag.id}
+        variant="outline"
+        className={`gap-1.5 ${style.color}`}
+        role="listitem"
+      >
+        {Icon && <Icon className="w-3 h-3" aria-hidden="true" />}
+        {tag.name}
+      </Badge>
+    );
+  })}
 
-        <div className="flex flex-wrap gap-2" role="list" aria-label="Accessibility features">
-          {game.accessibilityTags.slice(0, 3).map((tag) => {
-            const style = getCategoryStyle(tag.category);
-            const Icon = style.icon;
-            return (
-              <Badge
-                key={tag.id}
-                variant="outline"
-                className={`gap-1.5 ${style.color}`}
-                role="listitem"
-              >
-                <Icon className="w-3 h-3" aria-hidden="true" />
-                {tag.name}
-              </Badge>
-            );
-          })}
-          {game.accessibilityTags.length > 3 && (
-            <Badge variant="outline" role="listitem">
-              +{game.accessibilityTags.length - 3} more
-            </Badge>
-          )}
-        </div>
-      </div>
+  {(game.accessibilityTags?.length ?? 0) > 3 && (
+    <Badge variant="outline" role="listitem" className="gap-1.5">
+      +{game.accessibilityTags.length - 3} more
+    </Badge>
+  )}
+</div>
+
     </Card>
   );
 }

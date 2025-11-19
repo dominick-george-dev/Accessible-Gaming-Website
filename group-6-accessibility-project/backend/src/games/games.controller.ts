@@ -13,4 +13,9 @@ export class GamesController {
         // Logic to get game details by ID
         return this.gamesService.findById(id);
     }
+    @Get('/getall')
+    getAllGames() {
+        // Logic to get game details by ID
+        return this.gamesService.findAll();
+    }
 }

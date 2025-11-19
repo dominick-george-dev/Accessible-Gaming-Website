@@ -15,5 +15,8 @@ export class GamesService {
             }
         });
     }
+    async findAll(){
+        return this.databaseService.game.findMany()
+        }
 }
 
