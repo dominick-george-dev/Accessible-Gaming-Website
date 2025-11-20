@@ -8,11 +8,26 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard } from '@nestjs/throttler';
+
 
 
 @Module({
-  imports: [GamesModule, DatabaseModule, AccessibilityTagsModule, ReviewsModule, UsersModule, AuthModule, AnalyticsModule],
+  imports: [GamesModule, DatabaseModule, AccessibilityTagsModule, ReviewsModule, UsersModule, AuthModule, AnalyticsModule,
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          limit: 10,
+          ttl: 60000,
+        },
+      ],
+    }),
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, {
+    provide: 'APP_GUARD',
+    useClass: ThrottlerGuard,
+  }],
 })
 export class AppModule {}
