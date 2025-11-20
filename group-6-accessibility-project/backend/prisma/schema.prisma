@@ -20,6 +20,7 @@ model Game {
   rating                Float
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
+  views                 View[]
 }
 
 model AccessibilityTags {
@@ -64,6 +65,7 @@ model User {
   password                  String                     @default("NEEDS_PASSWORD_RESET") @db.VarChar(255)
   Review                    Review[]
   UserAccessibilitySettings UserAccessibilitySettings?
+  View                       View[]
 }
 
 model UserAccessibilitySettings {
@@ -82,4 +84,13 @@ model UserAccessibilitySettings {
   screenMagnifier             Boolean  @default(false)
   visualAccessibility         Boolean  @default(false)
   User                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model View {
+  id        Int      @id @default(autoincrement())
+  gameId    Int
+  userId    Int
+  viewedAt  DateTime @default(now())
+  game      Game     @relation(fields: [gameId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }

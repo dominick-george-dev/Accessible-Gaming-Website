@@ -7,10 +7,11 @@ import { AccessibilityTagsModule } from './accessibility-tags/accessibility-tags
 import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 
 @Module({
-  imports: [GamesModule, DatabaseModule, AccessibilityTagsModule, ReviewsModule, UsersModule, AuthModule],
+  imports: [GamesModule, DatabaseModule, AccessibilityTagsModule, ReviewsModule, UsersModule, AuthModule, AnalyticsModule],
   controllers: [AppController],
   providers: [AppService],
 })
