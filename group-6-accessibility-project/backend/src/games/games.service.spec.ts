@@ -11,7 +11,7 @@ describe('GamesService', () => {
         provide: DatabaseService,
         useValue: {
           game: {
-              findUnique: jest.fn().mockResolvedValue({ id: 1, title: 'Zelda', description: 'A game', thumbnail: 'url', genre: ['Adventure'], createdAt: time, updatedAt: time }),
+              findUnique: jest.fn().mockResolvedValue({ id: 1, title: 'Zelda', description: 'A game', images: ['url', 'url2'], genre: ['Adventure'], createdAt: time, updatedAt: time }),
             },
           },
         },
@@ -23,6 +23,6 @@ describe('GamesService', () => {
 
   it('should return 1 game', async () => {
     const game = await service.findById(1);
-    expect(game).toEqual({ id: 1, title: 'Zelda', description: 'A game', thumbnail: 'url', genre: ['Adventure'], createdAt: time, updatedAt: time });
+    expect(game).toEqual({ id: 1, title: 'Zelda', description: 'A game', images: ['url', 'url2'], genre: ['Adventure'], createdAt: time, updatedAt: time });
   });
 });
