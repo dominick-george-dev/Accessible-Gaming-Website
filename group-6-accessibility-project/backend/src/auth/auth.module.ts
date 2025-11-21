@@ -12,7 +12,7 @@ import { UserAccessibilitySettingsModule } from '../user-accessibility-settings/
     UserAccessibilitySettingsModule, // Import for creating default accessibility settings
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+      secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '24h' },
     }),
   ],
