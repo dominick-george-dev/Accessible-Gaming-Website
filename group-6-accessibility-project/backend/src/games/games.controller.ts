@@ -9,9 +9,10 @@ export class GamesController {
 
     @Get('/gameDetails/:id')
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
-    async getGameDetails(@Param() params: GameIdParamDto) {
+    async getGameDetails(@Param() params: GameIdParamDto | number) {
+        const id = typeof params === 'number' ? params : params.id;
         try {
-            return await this.gamesService.findById(params.id);
+            return await this.gamesService.findById(id);
         } catch (error) {
             // Re-throw HTTP exceptions as-is
             if (error instanceof HttpException) {
