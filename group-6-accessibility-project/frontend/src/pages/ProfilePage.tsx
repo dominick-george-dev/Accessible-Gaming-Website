@@ -116,9 +116,7 @@ export default function ProfilePage() {
     theme: 'light' as ThemeMode,
   });  // Sync backend settings to local preferences when loaded
   React.useEffect(() => {
-    if (!loading && backendSettings) {
-      const mappedTheme = backendSettings.colourMode === 'dark-mode' ? 'dark' : 
-               backendSettings.colourMode === 'deep-space' ? 'dark' : 'light';
+    if (!loading && backendSettings) {      const mappedTheme = backendSettings.colourMode === 'dark-mode' ? 'dark' : 'light';
       
       setLocalPreferences({
         textSize: backendSettings.textSize,

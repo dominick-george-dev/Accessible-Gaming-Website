@@ -37,7 +37,7 @@ import { useAuth } from '../../contexts/AuthContext';
 // ===== TYPES =====
 
 type ColorblindFilter = 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia';
-type ThemeMode = 'light' | 'dark' | 'deep-space';
+type ThemeMode = 'light' | 'dark';
 
 // ===== MAIN COMPONENT =====
 
@@ -45,6 +45,13 @@ export default function ProfilePage() {
   const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
   const [magnifierEnabled, setMagnifierEnabled] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  
+  // User statistics state
+  const [userStats, setUserStats] = useState({
+    favoritesCount: 0,
+    reviewsCount: 0,
+    loading: true
+  });
   
   // Backend integration for accessibility settings
   const { settings: backendSettings, updateSettings: updateBackendSettings, loading, saving } = useAccessibilityContext();
@@ -61,7 +68,6 @@ export default function ProfilePage() {
     colorblindFilter: 'none' as ColorblindFilter,
     theme: 'light' as ThemeMode,
   });
-
   // Sync backend settings to local preferences when loaded
   React.useEffect(() => {
     if (!loading && backendSettings) {
@@ -70,8 +76,7 @@ export default function ProfilePage() {
         highContrast: backendSettings.highContrast,
         dyslexiaFont: backendSettings.fontFamily === 'dyslexic',
         colorblindFilter: backendSettings.colorBlindMode as ColorblindFilter,
-        theme: backendSettings.colourMode === 'dark-mode' ? 'dark' : 
-               backendSettings.colourMode === 'deep-space' ? 'deep-space' : 'light',
+        theme: backendSettings.colourMode === 'dark-mode' ? 'dark' : 'light',
         visual: backendSettings.visualAccessibility,
         hearing: backendSettings.hearingAccessibility,
         dexterity: backendSettings.motorDexterityAccessibility,
@@ -80,6 +85,43 @@ export default function ProfilePage() {
       setMagnifierEnabled(backendSettings.screenMagnifier);
     }
   }, [backendSettings, loading]);
+
+  // Fetch user statistics (favorites and reviews counts)
+  const fetchUserStats = React.useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      // Fetch reviews count using the existing reviews API
+      const reviewsResponse = await fetch(`http://localhost:3000/reviews/user/${user.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      const reviewsData = reviewsResponse.ok ? await reviewsResponse.json() : [];
+
+      setUserStats({
+        favoritesCount: 0, // Placeholder until favorites API is implemented
+        reviewsCount: Array.isArray(reviewsData) ? reviewsData.length : 0,
+        loading: false
+      });
+    } catch (error) {
+      console.error('Failed to fetch user stats:', error);
+      setUserStats({
+        favoritesCount: 0,
+        reviewsCount: 0,
+        loading: false
+      });
+    }
+  }, [user?.id]);
+
+  // Fetch user stats when component mounts and user is available
+  React.useEffect(() => {
+    if (user?.id && !authLoading) {
+      fetchUserStats();
+    }
+  }, [user?.id, authLoading, fetchUserStats]);
 
   // Show loading or redirect if not authenticated
   if (authLoading) {
@@ -138,9 +180,7 @@ export default function ProfilePage() {
         textSize: newPreferences.textSize,
         fontFamily: newPreferences.dyslexiaFont ? 'dyslexic' : 'default',
         highContrast: newPreferences.highContrast,
-        colorBlindMode: newPreferences.colorblindFilter,
-        colourMode: newPreferences.theme === 'dark' ? 'dark-mode' : 
-                   newPreferences.theme === 'deep-space' ? 'deep-space' : 'light-mode',
+        colorBlindMode: newPreferences.colorblindFilter,        colourMode: newPreferences.theme === 'dark' ? 'dark-mode' : 'light-mode',
         visualAccessibility: newPreferences.visual,
         hearingAccessibility: newPreferences.hearing,
         motorDexterityAccessibility: newPreferences.dexterity,
@@ -205,11 +245,9 @@ export default function ProfilePage() {
     { value: 'tritanopia', label: 'Tritanopia', description: 'Blue-blind (difficulty seeing blue)' },
     { value: 'achromatopsia', label: 'Achromatopsia', description: 'Complete color blindness' },
   ];
-
   const themeOptions: { value: ThemeMode; label: string; description: string }[] = [
     { value: 'light', label: 'Light Mode', description: 'Bright, clean interface' },
     { value: 'dark', label: 'Dark Mode', description: 'Reduced eye strain in low light' },
-    { value: 'deep-space', label: 'Deep Space', description: 'Dark blue/purple gradient theme' },
   ];
 
   return (
@@ -258,17 +296,27 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </Card>
-
-      {/* Stats - Simplified since we don't have favorites/reviews data */}
+      </Card>      {/* Stats */}
       <div className="grid grid-cols-2 gap-4 lg:gap-6">
         <Card className="p-4 lg:p-6 text-center">
-          <div className="text-gray-600 dark:text-gray-400 mb-1 lg:mb-2">Member Since</div>
-          <div className="text-lg lg:text-xl">{new Date(user.createdAt).toLocaleDateString()}</div>
+          <div className="text-gray-600 dark:text-gray-400 mb-1 lg:mb-2">Favourites</div>
+          <div className="text-lg lg:text-xl">
+            {userStats.loading ? (
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-7 w-12 mx-auto rounded"></div>
+            ) : (
+              userStats.favoritesCount
+            )}
+          </div>
         </Card>
         <Card className="p-4 lg:p-6 text-center">
-          <div className="text-gray-600 dark:text-gray-400 mb-1 lg:mb-2">User ID</div>
-          <div className="text-lg lg:text-xl">#{user.id}</div>
+          <div className="text-gray-600 dark:text-gray-400 mb-1 lg:mb-2">Reviews</div>
+          <div className="text-lg lg:text-xl">
+            {userStats.loading ? (
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-7 w-12 mx-auto rounded"></div>
+            ) : (
+              userStats.reviewsCount
+            )}
+          </div>
         </Card>
       </div>
 

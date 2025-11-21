@@ -5,11 +5,23 @@ import { Separator } from './ui/separator';
 
 interface AccessibleVideoPlayerProps {
   gameName: string;
-  youtubeUrl: string;      // Pass the YouTube URL
+  youtubeUrl?: string;      // Make YouTube URL optional
   transcript?: string;      // Optional transcript prop
 }
 
 export function AccessibleVideoPlayer({ gameName, youtubeUrl, transcript }: AccessibleVideoPlayerProps) {
+  // Handle undefined youtubeUrl
+  if (!youtubeUrl) {
+    return (
+      <section aria-labelledby="video-heading" className="space-y-4">
+        <h2 id="video-heading" className="text-xl font-bold">{gameName} Trailer</h2>
+        <Card className="p-4">
+          <p className="text-muted-foreground">No trailer available for this game.</p>
+        </Card>
+      </section>
+    );
+  }
+
   // Extract video ID from URL
   const videoIdMatch = youtubeUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|watch\?v=))([\w-]+)/);
   const videoId = videoIdMatch ? videoIdMatch[1] : '';

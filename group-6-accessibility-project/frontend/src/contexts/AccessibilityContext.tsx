@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect } from 'react';
 import { useAccessibilitySettings, type AccessibilityPreferences } from '../hooks/useAccessibilitySettings';
 import { useAuth } from './AuthContext';
 
-type ThemeMode = 'light' | 'dark' | 'deep-space';
+type ThemeMode = 'light' | 'dark';
 type ColorblindFilter = 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia';
 
 interface AccessibilityContextType {
@@ -24,8 +24,6 @@ function applyTheme(theme: ThemeMode, highContrast: boolean) {
   // Apply theme
   if (theme === 'dark') {
     html.classList.add('dark');
-  } else if (theme === 'deep-space') {
-    html.classList.add('deep-space');
   }
   
   // Apply high contrast
@@ -59,15 +57,13 @@ function applyColorblindFilter(filter: ColorblindFilter) {
 }
 
 export function AccessibilityProvider({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { settings, updateSettings, loading, saving } = useAccessibilitySettings(user?.id);
 
   // Apply accessibility settings whenever they change
   useEffect(() => {
-    if (!loading && settings) {
-      // Map backend settings to theme format
-      const theme = settings.colourMode === 'dark-mode' ? 'dark' : 
-                   settings.colourMode === 'deep-space' ? 'deep-space' : 'light';
+    if (!loading && settings) {      // Map backend settings to theme format
+      const theme = settings.colourMode === 'dark-mode' ? 'dark' : 'light';
       
       // Apply all accessibility settings
       applyTheme(theme, settings.highContrast);

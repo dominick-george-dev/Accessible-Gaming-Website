@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ImgCarouselProps {
@@ -15,6 +15,20 @@ export const ImgCarousel: React.FC<ImgCarouselProps> = ({
   height = "100%",
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Early return if images is undefined or empty
+  if (!images || images.length === 0) {
+    return (
+      <div
+        className="relative mx-auto flex items-center justify-center bg-muted"
+        style={{ width, height }}
+        role="img"
+        aria-label="No image available"
+      >
+        <span className="text-muted-foreground">No images available</span>
+      </div>
+    );
+  }
 
   const prevImage = () =>
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
