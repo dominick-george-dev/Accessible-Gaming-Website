@@ -48,3 +48,12 @@ export interface User {
     highContrast: boolean; // High contrast mode for color blind/visually impaired
   };
 }
+export interface GameAnalytics {
+  gameId: string;
+  views: number;
+  favorites: number;
+  downloads: number;
+  reviewsThisMonth: number;
+  averageRating: number;
+  dailyViews: { date: string; count: number }[];
+}

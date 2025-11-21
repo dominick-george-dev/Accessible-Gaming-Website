@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import { GameDetailPage } from './pages/GameDetailPage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
+import { ChartExample } from './components/ui/chart-example'
 
 function App() {
   const handleLogin = (username: string, email: string) => {
@@ -21,9 +22,10 @@ function App() {
     <>
       <Routes>
         <Route path="/games/:id" element={<GameDetailPage />} />
-        
-        <Route 
-          path="/login" 
+        <Route path="/chart" element={<ChartExample games={[]} analytics={[]} />} />
+
+        <Route
+          path="/login"
           element={
             <LoginPage 
               onLogin={handleLogin}

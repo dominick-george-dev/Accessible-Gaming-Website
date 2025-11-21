@@ -89,8 +89,6 @@ model UserAccessibilitySettings {
 model View {
   id        Int      @id @default(autoincrement())
   gameId    Int
-  userId    Int
   viewedAt  DateTime @default(now())
   game      Game     @relation(fields: [gameId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
 }
