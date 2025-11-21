@@ -61,6 +61,7 @@ describe('ReviewsController', () => {
   it('should create a review', async () => {
     const createReviewDto = {
       userId: 1,
+      User: {},
       userName: 'testuser',
       rating: 5,
       comment: 'Great game!',

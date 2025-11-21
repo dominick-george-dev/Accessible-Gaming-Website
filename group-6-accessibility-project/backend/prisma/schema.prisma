@@ -36,21 +36,20 @@ model Game {
 
 // AccessibilityTags model representing various accessibility features
 model AccessibilityTags {
-  id        Int      @id @default(autoincrement())
-  tag       String
-  category  String   // e.g., Visual, Auditory, Motor, Cognitive
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    Int                     @id @default(autoincrement())
+  tag                   String
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  category              String
   gameAccessibilityTags GameAccessibilityTags[]
 }
 
 // Junction table for many-to-many relationship between Game and AccessibilityTags
 model GameAccessibilityTags {
-  gameId             Int
+  gameId              Int
   accessibilityTagsId Int
-
-  game Game @relation(fields: [gameId], references: [id])
-  accessibilityTags AccessibilityTags @relation(fields: [accessibilityTagsId], references: [id])
+  accessibilityTags   AccessibilityTags @relation(fields: [accessibilityTagsId], references: [id])
+  game                Game              @relation(fields: [gameId], references: [id])
 
   @@id([gameId, accessibilityTagsId])
 }
@@ -58,17 +57,45 @@ model GameAccessibilityTags {
 
 // Review model representing user reviews for games
 model Review {
-  id        Int      @id @default(autoincrement())
-  gameId    Int   
-  userId    Int
-  userName  String
-  rating    Int
-  comment   String
+  id                    Int      @id @default(autoincrement())
+  gameId                Int
+  userId                Int
+  rating                Int
+  comment               String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
   accessibilityFeedback String[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  helpful   Int      @default(0)
+  helpful               Int      @default(0)
+  userName              String
+  game                  Game     @relation(fields: [gameId], references: [id])
+  User                  User     @relation(fields: [userId], references: [id])
+}
 
-  game Game @relation(fields: [gameId], references: [id])
+model User {
+  id                        Int                        @id @default(autoincrement())
+  email                     String                     @unique
+  username                  String                     @unique
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  password                  String                     @default("NEEDS_PASSWORD_RESET") @db.VarChar(255)
+  Review                    Review[]
+  UserAccessibilitySettings UserAccessibilitySettings?
+}
 
+model UserAccessibilitySettings {
+  id                          Int      @id @default(autoincrement())
+  userId                      Int      @unique
+  textSize                    String   @default("medium")
+  fontFamily                  String   @default("default")
+  highContrast                Boolean  @default(false)
+  colorBlindMode              String   @default("none")
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime
+  cognitiveAccessibility      Boolean  @default(false)
+  colourMode                  String   @default("light-mode")
+  hearingAccessibility        Boolean  @default(false)
+  motorDexterityAccessibility Boolean  @default(false)
+  screenMagnifier             Boolean  @default(false)
+  visualAccessibility         Boolean  @default(false)
+  User                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
