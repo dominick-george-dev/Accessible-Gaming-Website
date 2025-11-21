@@ -15,7 +15,7 @@ import {
   Hand,
   Brain,
 } from "lucide-react";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { ImgCarousel } from "../components/ui/imgCarousel";
 import { AccessibleVideoPlayer } from "../components/AccessibleVideoPlayer";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -296,10 +296,9 @@ export function GameDetailPage() {
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
             {/* Game Image */}
             <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-            <ImageWithFallback
-                src={game.thumbnail}
+            <ImgCarousel
+                images={game.images}
                 alt={`${game.title} game cover`}
-                className="w-full h-full object-cover"
             />
             {game.verified && (
                 <div
@@ -404,7 +403,11 @@ export function GameDetailPage() {
         <Separator />
         
         {/* Video Trailer */}
-        <AccessibleVideoPlayer gameName={game.title} thumbnailUrl={game.thumbnail} />
+        <AccessibleVideoPlayer
+            gameName={game.title}
+            youtubeUrl={game.trailer}
+            transcript={game.transcript}
+        />
 
         
 
