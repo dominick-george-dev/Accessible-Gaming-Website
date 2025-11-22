@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { ImgCarousel } from "../components/ui/imgCarousel";
 import { AccessibleVideoPlayer } from "../components/AccessibleVideoPlayer";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Game, Review } from "../types/game";
 import { useParams, useNavigate } from "react-router-dom";
@@ -64,15 +64,19 @@ export function GameDetailPage() {
     const [loading, setLoading] = useState(true);
     const [userRating, setUserRating] = useState(0);
     const [reviewText, setReviewText] = useState("");
-    const [selectedAccessibilityTags, setSelectedAccessibilityTags] = useState<
-        string[]
-    >([]);
+    const [selectedAccessibilityTags, setSelectedAccessibilityTags] = useState<string[]>([]);
+    const hasLoggedView = useRef(false);
+
 
     const isLoggedIn = true; // You can hook this up to your auth system later
 
     useEffect(() => {
         if (!id) return; // wait until id is available
-
+        //Ensures only ran once for accuracy
+        if (!hasLoggedView.current) {
+            hasLoggedView.current = true;
+        createViewLog(id);
+        }
         const loadData = async () => {
             setLoading(true);
             try {
@@ -105,6 +109,22 @@ export function GameDetailPage() {
         toast.error("Failed to load game details");
         }
     };
+
+    const createViewLog = async (gameId: string) => {
+        try{
+            const response = await fetch(`http://localhost:3000/games/view/${gameId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                viewedAt: new Date(),
+                }),
+            })
+            if(!response.ok) throw new Error('Failed to create view')
+
+        } catch (error){
+            console.log("Error creating view", error)
+        }
+    }
 
     const fetchAccessibilityTags = async (gameId: string) => {
         try {

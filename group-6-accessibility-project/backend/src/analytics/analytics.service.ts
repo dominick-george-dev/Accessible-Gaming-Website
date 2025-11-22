@@ -5,70 +5,105 @@ import { DatabaseService } from '../database/database.service';
 export class AnalyticsService {
   constructor(private readonly db: DatabaseService) {}
 
-  // Fetch total views for a game
-  async getTotalViews(gameId: number) {
+  async getPublisherAnalytics(publisherId: number) {
     try {
-      return this.db.view.count({ where: { gameId } });
-    } catch (e) {
-      throw new InternalServerErrorException('Failed to fetch total views.');
-    }
-  }
-
-  // Fetch total reviews for a game
-  async getTotalReviews(gameId: number) {
-    try {
-      return this.db.review.count({ where: { gameId } });
-    } catch (e) {
-      throw new InternalServerErrorException('Failed to fetch reviews.');
-    }
-  }
-
-  // Fetch average rating for a game
-  async getAverageRating(gameId: number) {
-    try {
-      const result = await this.db.review.aggregate({
-        where: { gameId },
-        _avg: { rating: true },
+      // 1. Total games
+      const totalGamesPromise = this.db.game.count({
+        where: { publisherId }
       });
-      return result._avg.rating || 0;
-    } catch (e) {
-      throw new InternalServerErrorException('Failed to calculate rating.');
-    }
-  }
 
-  // Fetch daily views for a game
-  async getDailyViews(gameId: number) {
-    try {
-      return this.db.$queryRaw`
-        SELECT DATE("createdAt") AS date, COUNT(*) AS count
-        FROM "View"
-        WHERE "gameId" = ${gameId}
-        GROUP BY DATE("createdAt")
-        ORDER BY date ASC;
-      `;
-    } catch (e) {
-      throw new InternalServerErrorException('Failed to fetch daily views.');
-    }
-  }
-  
-  // Fetch all analytics for a game
-  async getAllGameAnalytics(gameId: number) {
-    try {
-      const [views, reviews, rating, daily] = await Promise.all([
-        this.getTotalViews(gameId),
-        this.getTotalReviews(gameId),
-        this.getAverageRating(gameId),
-        this.getDailyViews(gameId),
+      // 2. Average rating across all games (use reviews for true avg)
+      const avgRatingPromise = this.db.review.aggregate({
+        where: { game: { publisherId } },
+        _avg: { rating: true }
+      });
+
+      // 3. Top 5 viewed games
+      const topViewedPromise = this.db.view.groupBy({
+        by: ["gameId"],
+        _count: { gameId: true },
+        orderBy: { _count: { gameId: "desc" } },
+        take: 5
+      });
+
+      // 4. Top 5 rated games (avg rating per game)
+      const topRatedPromise = this.db.review.groupBy({
+        by: ["gameId"],
+        _avg: { rating: true },
+        orderBy: { _avg: { rating: "desc" } },
+        take: 5
+      });
+
+      // 5. Accessibility distribution
+      const accessibilityDistributionPromise = this.db.gameAccessibilityTags.groupBy({
+        by: ["accessibilityTagsId"],
+        _count: { accessibilityTagsId: true },
+        where: { game: { publisherId } }
+      });
+
+      // 6. Game-level analytics (views, avg rating, reviews)
+      const gamesPromise = this.db.game.findMany({
+        where: { publisherId },
+        include: {
+          _count: { select: { views: true, reviews: true } },
+          reviews: {
+            select: { rating: true }
+          }
+        }
+      });
+
+      // Execute all queries in parallel
+      const [
+        totalGames,
+        avgRatingResult,
+        topViewed,
+        topRated,
+        accessibilityDist,
+        games
+      ] = await Promise.all([
+        totalGamesPromise,
+        avgRatingPromise,
+        topViewedPromise,
+        topRatedPromise,
+        accessibilityDistributionPromise,
+        gamesPromise
       ]);
 
+      // --- Process game-level analytics ---
+      const perGameAnalytics = games.map(game => {
+        const avgRating =
+          game.reviews.length > 0
+            ? Number(
+                (
+                  game.reviews.reduce((a, r) => a + r.rating, 0) /
+                  game.reviews.length
+                ).toFixed(1)
+              )
+            : 0;
+
+        return {
+          gameId: game.id,
+          title: game.title,
+          totalViews: game._count.views,
+          totalReviews: game._count.reviews,
+          avgRating
+        };
+      });
+
       return {
-        totalViews: views,
-        totalReviews: reviews,
-        averageRating: rating,
-        dailyViews: daily,
+        totalGames,
+        avgTotalRating: Number((avgRatingResult._avg.rating || 0).toFixed(1)),
+        topViewedGames: topViewed,
+        topRatedGames: topRated.map(r => ({
+          gameId: r.gameId,
+          avgRating: Number((r._avg.rating || 0).toFixed(1))
+        })),
+        accessibilityFeatureDistribution: accessibilityDist,
+        games: perGameAnalytics
       };
     } catch (e) {
-      throw new InternalServerErrorException('Failed to fetch analytics.');
+      console.error(e);
+      throw new InternalServerErrorException("Failed to fetch publisher analytics.");
     }
   }
 }

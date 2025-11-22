@@ -9,7 +9,7 @@ describe('AnalyticsController', () => {
 
   beforeEach(async () => {
     const mockService = {
-      getAllGameAnalytics: jest.fn().mockResolvedValue({ ok: true }),
+      getPublisherAnalytics: jest.fn().mockResolvedValue({ ok: true }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -27,7 +27,7 @@ describe('AnalyticsController', () => {
   });
 
   it('should fetch analytics', async () => {
-    await controller.getAnalytics(1);
-    expect(service.getAllGameAnalytics).toHaveBeenCalledWith(1);
+    await controller.getGamesAnalytics(1);
+    expect(service.getPublisherAnalytics).toHaveBeenCalledWith(1);
   });
 });
