@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar, MobileSidebar, Header, BottomNav } from './Navigation';
+import { Breadcrumbs } from './Breadcrumbs';
+import { LoadingBar } from './LoadingBar';
 import { UndoButton } from './UndoButton';
 import { toast } from 'sonner';
 import { addUndoAction } from '../utils/undoManager';
@@ -188,12 +190,22 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
           onToggleVoiceControls={handleToggleVoiceControls}
           voiceControlsEnabled={voiceControlsEnabled}
           user={user}
-        />{/* Main Content */}
-        <main 
+        />
+
+        {/* Dynamic Loading Bar */}
+        <LoadingBar />        {/* Breadcrumb Navigation */}
+        <Breadcrumbs 
+          selectedGameName={selectedGameName}
+          selectedPublisherName={selectedPublisherName}
+          isSidebarOpen={isDesktopSidebarOpen}
+        />
+
+        {/* Main Content */}        <main 
           id="main-content" 
-          className={`content-with-bottom-nav w-full max-w-full pt-12 overflow-x-hidden transition-all duration-300 ${
+          className={`content-with-bottom-nav w-full max-w-full overflow-x-hidden transition-all duration-300 ${
             isDesktopSidebarOpen ? 'lg:pl-52' : 'lg:pl-4'
           }`}
+          style={{ paddingTop: 'calc(4rem + 3rem)' }} /* Header + Breadcrumbs + spacing */
           tabIndex={-1}
         >
           {children}
