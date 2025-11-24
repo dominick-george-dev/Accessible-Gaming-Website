@@ -1,5 +1,5 @@
 import './App.css'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { GameDetailPage } from './pages/GameDetailPage'
 import { BrowsePage } from './pages/BrowserPage'
 import { LoginPage } from './pages/LoginPage'
@@ -18,9 +18,10 @@ function App() {
     window.location.href = '/games/1';
   };
 
-  return (
-    <>
+  return (    <>
       <Routes>
+        <Route path="/" element={<Navigate to="/browserpage" replace />} />
+        <Route path="/home" element={<Navigate to="/browserpage" replace />} />
         <Route path="/games/:id" element={<GameDetailPage />} />
         <Route path="/browserpage" element={<BrowsePage />} />
         <Route 

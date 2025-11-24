@@ -5,14 +5,11 @@ import { GameIdParamDto } from './dto/game-id-param.dto';
 
 @Controller('games')
 export class GamesController {
-    constructor(private readonly gamesService: GamesService) {}
-
-    @Get('/gameDetails/:id')
+    constructor(private readonly gamesService: GamesService) {}    @Get('/gameDetails/:id')
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
-    async getGameDetails(@Param() params: GameIdParamDto | number) {
-        const id = typeof params === 'number' ? params : params.id;
+    async getGameDetails(@Param() params: GameIdParamDto) {
         try {
-            return await this.gamesService.findById(id);
+            return await this.gamesService.findById(params.id);
         } catch (error) {
             // Re-throw HTTP exceptions as-is
             if (error instanceof HttpException) {
@@ -25,9 +22,9 @@ export class GamesController {
 
     @Get()
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
-    async getAllGames(@Query() query: GetGamesQueryDto) {
+    async getAllGamesWithPagination(@Query() query: GetGamesQueryDto) {
         try {
-            return await this.gamesService.findAll(query.page, query.limit);
+            return await this.gamesService.findAllWithPagination(query.page, query.limit);
         } catch (error) {
             // Re-throw HTTP exceptions as-is
             if (error instanceof HttpException) {
@@ -37,9 +34,10 @@ export class GamesController {
             throw new HttpException('Failed to retrieve games', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @Get('/getall')
     getAllGames() {
-        // Logic to get game details by ID
-        return this.gamesService.findAll();
+        // Logic to get all games without pagination
+        return this.gamesService.findAllGames();
     }
 }

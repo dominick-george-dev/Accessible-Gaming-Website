@@ -9,7 +9,8 @@ export class GamesService {
     constructor(private readonly databaseService: DatabaseService) {}
 
     async findById(id: number) {
-        if (!id || id < 1 || !Number.isInteger(id)) {
+        // Ensure id is a valid positive integer
+        if (typeof id !== 'number' || !Number.isInteger(id) || id < 1) {
             throw new BadRequestException('Invalid game ID');
         }
 
@@ -39,15 +40,13 @@ export class GamesService {
 
             return game;
         } catch (error) {
-            if (error instanceof NotFoundException) {
+            if (error instanceof NotFoundException || error instanceof BadRequestException) {
                 throw error;
             }
             // Don't leak database errors
             throw new BadRequestException('Failed to retrieve game');
         }
-    }
-
-    async findAll(page: number = 1, limit: number = 20) {
+    }    async findAllWithPagination(page: number = 1, limit: number = 20) {
         // Validate and sanitize inputs
         const validatedPage = Math.max(1, Math.floor(page) || 1);
         const validatedLimit = Math.min(
@@ -95,8 +94,9 @@ export class GamesService {
             throw new BadRequestException('Failed to retrieve games');
         }
     }
-    async findAll(){
-        return this.databaseService.game.findMany()
-        }
+
+    async findAllGames() {
+        return this.databaseService.game.findMany();
+    }
 }
 
