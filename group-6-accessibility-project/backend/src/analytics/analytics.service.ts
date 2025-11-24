@@ -1,5 +1,23 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+
+// Simple XSS sanitization for output
+function sanitize(text: any): string {
+  if (typeof text !== 'string') return text;
+  return text
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// Strict numeric validator
+function ensureNumber(value: any, field: string): number {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    throw new BadRequestException(`Invalid number provided for ${field}`);
+  }
+  return value;
+}
 
 @Injectable()
 export class AnalyticsService {
@@ -7,6 +25,10 @@ export class AnalyticsService {
 
   async getPublisherAnalytics(publisherId: number) {
     try {
+
+      // Validate input early to prevent injection attacks
+      ensureNumber(publisherId, "publisherId");
+
       // Total games
       const totalGamesPromise = this.db.game.count({
         where: { publisherId }
@@ -116,7 +138,7 @@ export class AnalyticsService {
 
         return {
           gameId: game.id,
-          title: game.title,
+          title: sanitize(game.title),
           totalViews: game._count.views,
           totalReviews: game._count.reviews,
           avgRating,
@@ -128,7 +150,7 @@ export class AnalyticsService {
       const categoryCountMap: Record<string, number> = {};
 
       for (const entry of accessibilityTags) {
-        const category = entry.accessibilityTags.category;
+        const category = sanitize(entry.accessibilityTags.category);
         categoryCountMap[category] = (categoryCountMap[category] || 0) + 1;
       }
       // Convert Map to Array
@@ -140,7 +162,7 @@ export class AnalyticsService {
       return {
         totalGames,
         avgTotalRating: Number((avgRatingResult._avg.rating || 0).toFixed(1)),
-        topViewedGames: topViewed,
+        topViewedGames: topViewed.map(t =>({...t})),
         topRatedGames: topRated.map(r => ({
           gameId: r.gameId,
           avgRating: Number((r._avg.rating || 0).toFixed(1))
@@ -151,6 +173,9 @@ export class AnalyticsService {
 
     } catch (e) {
       console.error(e);
+      if (e instanceof BadRequestException) {
+        throw e;
+      }
       throw new InternalServerErrorException("Failed to fetch publisher analytics.");
     }
   }

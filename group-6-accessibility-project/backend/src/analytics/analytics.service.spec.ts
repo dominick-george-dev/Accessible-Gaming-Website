@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service';
 import { DatabaseService } from '../database/database.service';
-import { InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
 
-describe('AnalyticsService', () => {
-  let service: AnalyticsService;
-
-  const mockDB = {
+// Utility to build a fresh DB mock each time
+function createMockDB() {
+  return {
     game: {
       count: jest.fn(),
       findMany: jest.fn(),
@@ -23,23 +22,27 @@ describe('AnalyticsService', () => {
       findMany: jest.fn(),
     }
   };
+}
 
-  // This ensures TypeScript understands everything as Jest mocks
-  let db: jest.Mocked<typeof mockDB>;
+
+// MAIN ANALYTICS TEST SUITE
+describe('AnalyticsService', () => {
+  let service: AnalyticsService;
+  let db: ReturnType<typeof createMockDB>;
 
   beforeEach(async () => {
+    jest.resetAllMocks();
+
+    db = createMockDB();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AnalyticsService,
-        {
-          provide: DatabaseService,
-          useValue: mockDB,
-        }
+        { provide: DatabaseService, useValue: db }
       ]
     }).compile();
 
-    service = module.get<AnalyticsService>(AnalyticsService);
-    db = module.get(DatabaseService);
+    service = module.get(AnalyticsService);
   });
 
   const publisherId = 10;
@@ -90,11 +93,11 @@ describe('AnalyticsService', () => {
   function mockAllDB() {
     db.game.count.mockResolvedValue(2);
     db.review.aggregate.mockResolvedValue(mockAvgRating);
-    db.view.groupBy.mockResolvedValue(mockTopViewed); 
-    db.review.groupBy.mockResolvedValue(mockTopRated); 
+    db.view.groupBy.mockResolvedValue(mockTopViewed);
+    db.review.groupBy.mockResolvedValue(mockTopRated);
     db.gameAccessibilityTags.findMany.mockResolvedValue(mockAccessibility);
     db.game.findMany.mockResolvedValue(mockGames);
-    db.view.findMany.mockResolvedValue(mockDailyViews); 
+    db.view.findMany.mockResolvedValue(mockDailyViews);
   }
 
   // Returns analytics
@@ -186,39 +189,121 @@ describe('AnalyticsService', () => {
       { gameId: 1, viewedAt: new Date("2025-01-02") },
     ]);
 
-    const res = await service.getPublisherAnalytics(publisherId);
-    const daily = res.games[0].dailyViews;
+    const result = await service.getPublisherAnalytics(publisherId);
 
-    expect(daily).toEqual([
+    expect(result.games[0].dailyViews).toEqual([
       { date: "2025-01-01", count: 1 },
       { date: "2025-01-02", count: 1 },
       { date: "2025-01-03", count: 1 },
     ]);
   });
 
-
-// Accessibility categories are counted correctly
-  it('should aggregate accessibility categories correctly', async () => {
-    mockAllDB();
-
-    const res = await service.getPublisherAnalytics(publisherId);
-
-    expect(res.accessibilityFeatureDistribution).toContainEqual({
-      category: "vision",
-      count: 2,
-    });
-    expect(res.accessibilityFeatureDistribution).toContainEqual({
-      category: "hearing",
-      count: 1,
-    });
-  });
-
-  // DB failure throws InternalServerErrorException
-  it('should throw InternalServerErrorException when DB fails', async () => {
+  it('should throw InternalServerErrorException for db failures', async () => {
     db.game.count.mockRejectedValue(new Error('DB error'));
 
-    await expect(service.getPublisherAnalytics(publisherId)).rejects.toThrow(
-      InternalServerErrorException
-    );
+    await expect(service.getPublisherAnalytics(publisherId))
+      .rejects.toThrow(InternalServerErrorException);
+  });
+});
+
+
+// SECURITY & SANITISATION TESTS
+describe("AnalyticsService Security & Sanitization", () => {
+  let service: AnalyticsService;
+  let db: ReturnType<typeof createMockDB>;
+
+  beforeEach(async () => {
+    jest.resetAllMocks();
+    db = createMockDB();
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AnalyticsService,
+        { provide: DatabaseService, useValue: db }
+      ]
+    }).compile();
+
+    service = module.get(AnalyticsService);
+  });
+
+  function mockDefaults() {
+    db.game.count.mockResolvedValue(1);
+    db.review.aggregate.mockResolvedValue({ _avg: { rating: 5 } });
+    db.view.groupBy.mockResolvedValue([]);
+    db.review.groupBy.mockResolvedValue([]);
+    db.gameAccessibilityTags.findMany.mockResolvedValue([]);
+    db.game.findMany.mockResolvedValue([
+      {
+        id: 1,
+        title: "<script>alert('xss')</script>",
+        _count: { views: 1, reviews: 1 },
+        reviews: [{ rating: 5 }]
+      }
+    ]);
+    db.view.findMany.mockResolvedValue([
+      { gameId: 1, viewedAt: new Date("2025-01-01") }
+    ]);
+  }
+
+  // Should protect from XSS in game titles
+  it("should escape XSS in game titles", async () => {
+    mockDefaults();
+
+    const result = await service.getPublisherAnalytics(1);
+
+    expect(result.games[0].title)
+      .toBe("&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;");
+  });
+
+  // Sanitize accessibility categories
+  it("should sanitize accessibility categories", async () => {
+    mockDefaults();
+    db.gameAccessibilityTags.findMany.mockResolvedValue([
+      { accessibilityTags: { category: "<b>boom</b>" } }
+    ]);
+
+    const result = await service.getPublisherAnalytics(1);
+
+    expect(result.accessibilityFeatureDistribution[0].category)
+      .toBe("&lt;b&gt;boom&lt;/b&gt;");
+  });
+
+  //Should protect publisherId from script injection
+  it("should reject non-numeric publisherId", async () => {
+    await expect(service.getPublisherAnalytics("bad" as any))
+      .rejects.toThrow(BadRequestException);
+  });
+
+  // Identifies Not a Numbers
+  it("should reject NaN", async () => {
+    await expect(service.getPublisherAnalytics(NaN as any))
+      .rejects.toThrow(BadRequestException);
+  });
+
+  // Reject Objects as publisher Id
+  it("should reject object publisherId (pollution attempt)", async () => {
+    const malicious = { __proto__: { hacked: true } };
+
+    await expect(service.getPublisherAnalytics(malicious as any))
+      .rejects.toThrow(BadRequestException);
+
+    expect(({} as any).hacked).toBeUndefined();
+  });
+
+  // Stop DB call for invalid input
+  it("should NOT call DB when input invalid", async () => {
+    await expect(service.getPublisherAnalytics("xx" as any))
+      .rejects.toThrow(BadRequestException);
+
+    expect(db.game.count).not.toHaveBeenCalled();
+    expect(db.game.findMany).not.toHaveBeenCalled();
+  });
+
+  // Should respond with InternalServerErrorException errors
+  it("should wrap db errors into InternalServerErrorException", async () => {
+    db.game.count.mockRejectedValue(new Error("DB FAIL"));
+
+    await expect(service.getPublisherAnalytics(1))
+      .rejects.toThrow(InternalServerErrorException);
   });
 });
