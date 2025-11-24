@@ -12,7 +12,7 @@ export class AnalyticsService {
         where: { publisherId }
       });
 
-      // 2. Average rating across all games (use reviews for true avg)
+      // 2. Average rating across all games
       const avgRatingPromise = this.db.review.aggregate({
         where: { game: { publisherId } },
         _avg: { rating: true }
@@ -26,7 +26,7 @@ export class AnalyticsService {
         take: 5
       });
 
-      // 4. Top 5 rated games (avg rating per game)
+      // 4. Top 5 rated games
       const topRatedPromise = this.db.review.groupBy({
         by: ["gameId"],
         _avg: { rating: true },
@@ -34,14 +34,19 @@ export class AnalyticsService {
         take: 5
       });
 
-      // 5. Accessibility distribution
-      const accessibilityDistributionPromise = this.db.gameAccessibilityTags.groupBy({
-        by: ["accessibilityTagsId"],
-        _count: { accessibilityTagsId: true },
-        where: { game: { publisherId } }
+      // 5. Accessibility features grouped by CATEGORY
+      const accessibilityTagsPromise = this.db.gameAccessibilityTags.findMany({
+        where: { game: { publisherId } },
+        select: {
+          accessibilityTags: {
+            select: {
+              category: true
+            }
+          }
+        }
       });
 
-      // 6. Game-level analytics (views, avg rating, reviews)
+      // 6. Game-level analytics (views, ratings, reviews)
       const gamesPromise = this.db.game.findMany({
         where: { publisherId },
         include: {
@@ -51,6 +56,17 @@ export class AnalyticsService {
           }
         }
       });
+// 7. Daily views per game
+      const dailyViewsPromise = this.db.view.findMany({
+        where: { game: { publisherId } },
+        select: {
+          gameId: true,
+          viewedAt: true,
+        },
+        orderBy: {
+          viewedAt: 'asc'
+        }
+      });
 
       // Execute all queries in parallel
       const [
@@ -58,15 +74,17 @@ export class AnalyticsService {
         avgRatingResult,
         topViewed,
         topRated,
-        accessibilityDist,
-        games
+        accessibilityTags,
+        games,
+        dailyViewsRaw
       ] = await Promise.all([
         totalGamesPromise,
         avgRatingPromise,
         topViewedPromise,
         topRatedPromise,
-        accessibilityDistributionPromise,
-        gamesPromise
+        accessibilityTagsPromise,
+        gamesPromise,
+        dailyViewsPromise
       ]);
 
       // --- Process game-level analytics ---
@@ -81,15 +99,48 @@ export class AnalyticsService {
               )
             : 0;
 
+        // Aggregate daily views for this game
+        const dailyViewsMap: Record<string, number> = {};
+
+        dailyViewsRaw
+          .filter(d => d.gameId === game.id)
+          .forEach(d => {
+            const date = d.viewedAt.toISOString().split('T')[0]; // YYYY-MM-DD
+            dailyViewsMap[date] = (dailyViewsMap[date] || 0) + 1;
+          });
+
+        // Convert map to array
+        const dailyViews = Object.entries(dailyViewsMap)
+          .map(([date, count]) => ({ date, count }))
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+
         return {
           gameId: game.id,
           title: game.title,
           totalViews: game._count.views,
           totalReviews: game._count.reviews,
-          avgRating
+          avgRating,
+          dailyViews
         };
       });
 
+      // --- Group accessibility tags by category ---
+      const categoryCountMap: Record<string, number> = {};
+
+      for (const entry of accessibilityTags) {
+        const category = entry.accessibilityTags.category;
+        categoryCountMap[category] = (categoryCountMap[category] || 0) + 1;
+      }
+
+      const accessibilityFeatureDistribution = Object.entries(categoryCountMap).map(
+        ([category, count]) => ({
+          category,
+          count
+        })
+      );
+
+      // --- Final return ---
       return {
         totalGames,
         avgTotalRating: Number((avgRatingResult._avg.rating || 0).toFixed(1)),
@@ -98,9 +149,10 @@ export class AnalyticsService {
           gameId: r.gameId,
           avgRating: Number((r._avg.rating || 0).toFixed(1))
         })),
-        accessibilityFeatureDistribution: accessibilityDist,
+        accessibilityFeatureDistribution,
         games: perGameAnalytics
       };
+
     } catch (e) {
       console.error(e);
       throw new InternalServerErrorException("Failed to fetch publisher analytics.");
