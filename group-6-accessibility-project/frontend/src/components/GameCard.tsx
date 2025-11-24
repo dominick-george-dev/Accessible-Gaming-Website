@@ -1,4 +1,4 @@
-import { Game } from '../types/game';
+import type { Game } from '../types/game';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Star, Heart, Check, Eye, Ear, Hand, Brain } from 'lucide-react';
@@ -10,6 +10,7 @@ interface GameCardProps {
   onToggleFavorite: (gameId: string) => void;
   onClick: () => void;
 }
+
 
 // Helper function to get category color and icon
 const getCategoryStyle = (category: string) => {
@@ -69,12 +70,11 @@ export function GameCard({ game, isFavorite, onToggleFavorite, onClick }: GameCa
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="article"
-      aria-label={`${game.name}, ${game.rating} stars, ${game.reviewCount} reviews`}
-    >
-      <div className="relative aspect-video bg-muted">
+      aria-label={`${game.title}, ${game.rating} stars, ${game.reviewCount} reviews`}
+    >      <div className="relative aspect-video bg-muted">
         <ImageWithFallback
-          src={game.thumbnail}
-          alt={`${game.name} game thumbnail`}
+          src={game.images && game.images.length > 0 ? game.images[0] : ''}
+          alt={`${game.title} game thumbnail`}
           className="w-full h-full object-cover"
         />
         {game.verified && (
@@ -90,49 +90,80 @@ export function GameCard({ game, isFavorite, onToggleFavorite, onClick }: GameCa
           onKeyDown={handleFavoriteKeyDown}
           className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-2 hover:bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
           aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          aria-pressed={isFavorite}
-        >
+          aria-pressed={isFavorite}        >
           <Heart
             className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-foreground'}`}
           />
         </button>
       </div>
-      
-      <div className="p-4 space-y-3">
-        <div>
-          <h3 className="mb-1">{game.name}</h3>
-          <p className="text-muted-foreground line-clamp-2">{game.description}</p>
+        <div className="p-4 space-y-3">
+        {/* Game Title and Rating */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-lg leading-tight line-clamp-2">
+              {game.title}
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              {game.developer}
+            </p>
+          </div>
+          <div className="flex-shrink-0">
+            <div className="flex items-center gap-1">
+              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              <span className="font-medium text-sm">{game.rating.toFixed(1)}</span>
+            </div>
+            <div className="text-xs text-muted-foreground text-right mt-1">
+              ({game.reviewCount} {game.reviewCount === 1 ? 'review' : 'reviews'})
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2" aria-label={`Rating: ${game.rating} out of 5 stars`}>
-          <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" aria-hidden="true" />
-          <span>{game.rating}</span>
-          <span className="text-muted-foreground">({game.reviewCount})</span>
-        </div>
+        {/* Genres */}
+        {game.genre && game.genre.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {game.genre.slice(0, 2).map((genre, index) => (
+              <Badge key={index} variant="secondary" className="text-xs">
+                {genre}
+              </Badge>
+            ))}
+            {game.genre.length > 2 && (
+              <Badge variant="secondary" className="text-xs">
+                +{game.genre.length - 2} more
+              </Badge>
+            )}
+          </div>
+        )}
 
-        <div className="flex flex-wrap gap-2" role="list" aria-label="Accessibility features">
-          {game.accessibilityTags.slice(0, 3).map((tag) => {
+        {/* Accessibility Tags */}
+        <div
+          className="flex flex-wrap gap-2"
+          role="list"
+          aria-label="Accessibility features"
+        >
+          {(game.accessibilityTags ?? []).slice(0, 3).map((tag) => {
             const style = getCategoryStyle(tag.category);
             const Icon = style.icon;
+
             return (
               <Badge
                 key={tag.id}
                 variant="outline"
-                className={`gap-1.5 ${style.color}`}
+                className={`gap-1.5 text-xs ${style.color}`}
                 role="listitem"
               >
-                <Icon className="w-3 h-3" aria-hidden="true" />
+                {Icon && <Icon className="w-3 h-3" aria-hidden="true" />}
                 {tag.name}
               </Badge>
             );
           })}
-          {game.accessibilityTags.length > 3 && (
-            <Badge variant="outline" role="listitem">
+
+          {(game.accessibilityTags?.length ?? 0) > 3 && (
+            <Badge variant="outline" role="listitem" className="gap-1.5 text-xs">
               +{game.accessibilityTags.length - 3} more
             </Badge>
-          )}
-        </div>
+          )}        </div>
       </div>
+
     </Card>
   );
 }
