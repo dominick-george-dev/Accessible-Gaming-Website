@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner'; 
+import { useAuth } from '../hooks/useAuth';
 
 interface LoginPageProps {
-  onLogin: (email: string, password: string) => void;
+  onLogin: (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => void;
   onNavigateToSignup: () => void;
 }
 
@@ -18,6 +19,7 @@ export function LoginPage({ onLogin, onNavigateToSignup }: LoginPageProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { saveRedirectPath } = useAuth();
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -63,14 +65,11 @@ export function LoginPage({ onLogin, onNavigateToSignup }: LoginPageProps) {
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      const data = await response.json();      if (response.ok) {
         localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user));
         
         toast.success('Login successful! Welcome back.');
-        onLogin(data.user.username, data.user.email);
+        onLogin(data.user);
       } else {
         // Handle API errors
         if (data.message && data.message.includes('Invalid email or password')) {
@@ -98,6 +97,14 @@ export function LoginPage({ onLogin, onNavigateToSignup }: LoginPageProps) {
     liveRegion.textContent = message;
     document.body.appendChild(liveRegion);
     setTimeout(() => document.body.removeChild(liveRegion), 1000);
+  };
+
+  // Handle navigation to signup while preserving redirect path
+  const handleNavigateToSignup = () => {
+    // Save the current redirect path (if any) before navigating to signup
+    const currentRedirectPath = localStorage.getItem('redirectPath') || '/';
+    saveRedirectPath(currentRedirectPath);
+    onNavigateToSignup();
   };
 
   return (
@@ -208,7 +215,7 @@ export function LoginPage({ onLogin, onNavigateToSignup }: LoginPageProps) {
               <Button
                 type="button"
                 variant="link"
-                onClick={onNavigateToSignup}
+                onClick={handleNavigateToSignup}
                 className="px-1"
               >
                 Sign up
