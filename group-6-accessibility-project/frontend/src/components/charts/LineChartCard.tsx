@@ -25,6 +25,7 @@ export function LineChartCard({
   color = "#10b981",
 }: LineChartCardProps) {
   return (
+    // return line graph with data with y label
     <Card className="p-6">
       <h3 className="mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height={300}>

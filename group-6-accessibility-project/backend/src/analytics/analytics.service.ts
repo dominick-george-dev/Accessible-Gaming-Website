@@ -7,18 +7,18 @@ export class AnalyticsService {
 
   async getPublisherAnalytics(publisherId: number) {
     try {
-      // 1. Total games
+      // Total games
       const totalGamesPromise = this.db.game.count({
         where: { publisherId }
       });
 
-      // 2. Average rating across all games
+      // Average rating across all games
       const avgRatingPromise = this.db.review.aggregate({
         where: { game: { publisherId } },
         _avg: { rating: true }
       });
 
-      // 3. Top 5 viewed games
+      // Top 5 viewed games
       const topViewedPromise = this.db.view.groupBy({
         by: ["gameId"],
         _count: { gameId: true },
@@ -26,7 +26,7 @@ export class AnalyticsService {
         take: 5
       });
 
-      // 4. Top 5 rated games
+      // Top 5 rated games
       const topRatedPromise = this.db.review.groupBy({
         by: ["gameId"],
         _avg: { rating: true },
@@ -34,7 +34,7 @@ export class AnalyticsService {
         take: 5
       });
 
-      // 5. Accessibility features grouped by CATEGORY
+      // Accessibility features grouped by CATEGORY
       const accessibilityTagsPromise = this.db.gameAccessibilityTags.findMany({
         where: { game: { publisherId } },
         select: {
@@ -46,7 +46,7 @@ export class AnalyticsService {
         }
       });
 
-      // 6. Game-level analytics (views, ratings, reviews)
+      // Game-level analytics (views, ratings, reviews)
       const gamesPromise = this.db.game.findMany({
         where: { publisherId },
         include: {
@@ -56,7 +56,7 @@ export class AnalyticsService {
           }
         }
       });
-// 7. Daily views per game
+      // Daily views per game
       const dailyViewsPromise = this.db.view.findMany({
         where: { game: { publisherId } },
         select: {
@@ -87,15 +87,14 @@ export class AnalyticsService {
         dailyViewsPromise
       ]);
 
-      // --- Process game-level analytics ---
+      // Process game-level analytics
       const perGameAnalytics = games.map(game => {
-        const avgRating =
-          game.reviews.length > 0
+        const avgRating = game.reviews.length > 0
             ? Number(
                 (
                   game.reviews.reduce((a, r) => a + r.rating, 0) /
                   game.reviews.length
-                ).toFixed(1)
+                ).toFixed(1) // To 1 decimal place
               )
             : 0;
 
@@ -125,22 +124,19 @@ export class AnalyticsService {
         };
       });
 
-      // --- Group accessibility tags by category ---
+      // Group accessibility tags by category
       const categoryCountMap: Record<string, number> = {};
 
       for (const entry of accessibilityTags) {
         const category = entry.accessibilityTags.category;
         categoryCountMap[category] = (categoryCountMap[category] || 0) + 1;
       }
-
+      // Convert Map to Array
       const accessibilityFeatureDistribution = Object.entries(categoryCountMap).map(
-        ([category, count]) => ({
-          category,
-          count
-        })
+        ([category, count]) => ({category,count})
       );
 
-      // --- Final return ---
+      // Final return
       return {
         totalGames,
         avgTotalRating: Number((avgRatingResult._avg.rating || 0).toFixed(1)),

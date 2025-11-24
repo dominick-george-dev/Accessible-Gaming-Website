@@ -1,5 +1,5 @@
 import { Card } from "../ui/card";
-import { PieChart, Pie, Tooltip, Cell, ResponsiveContainer, Legend } from "recharts";
+import { PieChart, Pie, Tooltip, Cell, ResponsiveContainer } from "recharts";
 import { Badge } from "../ui/badge"; // assuming you have this component
 
 interface PieChartCardProps {

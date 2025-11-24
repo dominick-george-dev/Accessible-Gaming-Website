@@ -22,6 +22,8 @@ function App() {
     <>
       <Routes>
         <Route path="/games/:id" element={<GameDetailPage />} />
+
+        {/* Temperary URL for development. Once dashboard is implemeted this will act as a tab*/}
         <Route path="/publisherAnalyticsTab/:id" element={<PublisherAnalyticsTab />} />
 
         <Route

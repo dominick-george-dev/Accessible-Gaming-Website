@@ -7,13 +7,7 @@ import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
-  // @Get('game/:id')
-  // @UsePipes(new ValidationPipe({ transform: true }))
-  // @Throttle({default: { limit: 5, ttl: 60000 }}) // Limit to 5 requests per minute per user
-  // getAnalytics(@Param('id', ParseIntPipe) id: number) {
-  //   return this.analyticsService.getAllGameAnalytics(id);
-  // }
-
+  // Get all publisher Analytics in one call
   @Get('publisher/:id')
   getGamesAnalytics(@Param('id', ParseIntPipe) id: number){
     return this.analyticsService.getPublisherAnalytics(id);

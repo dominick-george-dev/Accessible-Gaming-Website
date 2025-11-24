@@ -19,6 +19,7 @@ interface BarChartCardProps {
 
 export function BarChartCard({ title, data, xKey, yKey, color = "#3b82f6" }: BarChartCardProps) {
   return (
+    // Return Bar graph with x & y axis labels
     <Card className="p-6">
       <h3 className="mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height={450}>

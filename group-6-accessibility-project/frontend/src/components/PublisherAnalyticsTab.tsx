@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { Charts } from "./analytics/Charts";
-import { BarChartCard } from "./analytics/BarChartCard";
-import { PieChartCard } from "./analytics/PieChartCard";
-import { LineChartCard } from "./analytics/LineChartCard";
+import { Charts } from "./charts/Charts";
+import { BarChartCard } from "./charts/BarChartCard";
+import { PieChartCard } from "./charts/PieChartCard";
+import { LineChartCard } from "./charts/LineChartCard";
 import { Card } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { useParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { ResponsiveContainer } from "recharts";
 
 export function PublisherAnalyticsTab() {
   const [analytics, setAnalytics] = useState<any | null>(null);
@@ -54,7 +53,9 @@ export function PublisherAnalyticsTab() {
     setOpen(true);
   };
 
-  // Transform API data → Chart data
+  // Transform API data to Chart data
+
+  // Top 5 games
   const topGamesByViews = analytics.topViewedGames.map((item: any) => {
     const game = analytics.games.find((g: any) => g.gameId === item.gameId);
     return {
@@ -63,6 +64,7 @@ export function PublisherAnalyticsTab() {
     };
   });
 
+  // Top 5 rated games
   const topGamesByRating = analytics.topRatedGames.map((item: any) => {
     const game = analytics.games.find((g: any) => g.gameId === item.gameId);
     return {
@@ -71,6 +73,7 @@ export function PublisherAnalyticsTab() {
     };
   });
 
+  // Accessibility Feature Distribution by category
   const accessibilityDistribution = analytics.accessibilityFeatureDistribution.map(
     (tag: any) => ({
       category: tag.category,
@@ -78,6 +81,7 @@ export function PublisherAnalyticsTab() {
     })
   );
 
+  // Analytics per game
   const gamesDetails = analytics.games;
 
 
@@ -141,13 +145,6 @@ export function PublisherAnalyticsTab() {
           valueKey="count"
           colors={["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b"]}
         />
-
-        {/* <LineChartCard
-          title="Daily Views"
-          data={dailyViews}
-          xKey="date"
-          yKey="count"
-        /> */}
       </Charts>
 
       {/* Individual Game Stats */}
@@ -173,7 +170,7 @@ export function PublisherAnalyticsTab() {
                     <td className="text-right p-3">{games.totalViews.toLocaleString()}</td>
                     <td className="text-right p-3">{games.totalReviews.toLocaleString()}</td>                    
                     <td className="text-right p-3">{games?.avgRating.toFixed(1) || 'N/A'}</td>
-                    {/* Favourites will be implented once favourites page is imleplemented*/}
+                    {/* Favourites will be implented once the favourites page is imleplemented*/}
                     <td className="text-right p-3">N/A</td>
                   </tr>
                 );
@@ -191,7 +188,7 @@ export function PublisherAnalyticsTab() {
               {selectedGame?.title || "Game"} - Daily Views
             </DialogTitle>
           </DialogHeader>
-
+          {/* Display selected games daily views or No data available */}
           {selectedGame ? (
             <LineChartCard
               title="Daily Views"
