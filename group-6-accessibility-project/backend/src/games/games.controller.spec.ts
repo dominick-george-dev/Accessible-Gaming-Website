@@ -13,6 +13,9 @@ describe('GamesController', () => {
         title: 'Mock Game',
         developer: 'Mock Dev',
         rating: 4.5,
+        imageUrl: ['http://example.com/image.png', 'http://example.com/image2.png'],
+        genre: 'Action',
+        releaseDate: '2023-01-01',
       })),
     };
 
