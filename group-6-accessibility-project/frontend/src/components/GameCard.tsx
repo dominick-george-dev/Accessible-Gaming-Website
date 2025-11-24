@@ -71,10 +71,9 @@ export function GameCard({ game, isFavorite, onToggleFavorite, onClick }: GameCa
       tabIndex={0}
       role="article"
       aria-label={`${game.title}, ${game.rating} stars, ${game.reviewCount} reviews`}
-    >
-      <div className="relative aspect-video bg-muted">
+    >      <div className="relative aspect-video bg-muted">
         <ImageWithFallback
-          src={game.thumbnail}
+          src={game.images && game.images.length > 0 ? game.images[0] : ''}
           alt={`${game.title} game thumbnail`}
           className="w-full h-full object-cover"
         />

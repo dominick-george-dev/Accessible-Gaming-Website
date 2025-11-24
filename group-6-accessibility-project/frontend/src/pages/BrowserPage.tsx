@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Game } from '../types/game';
 import { GameCard } from '../components/GameCard';
 import { FilterPanel } from '../components/FilterPanel';
@@ -13,6 +14,7 @@ const RECENT_SEARCHES_KEY = 'accessplay_recent_searches';
 const MAX_RECENT_SEARCHES = 5;
 
 export function BrowsePage() {
+  const navigate = useNavigate();
   const [games, setGames] = useState<Game[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,6 +49,10 @@ export function BrowsePage() {
     };
     loadGames();
   }, []);
+  // Navigate to game detail page
+  const handleGameClick = (gameId: string) => {
+    navigate(`/games/${gameId}`);
+  };
 
   // Save/remove favorites locally
   const toggleFavorite = (id: string) => {
@@ -202,14 +208,13 @@ export function BrowsePage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-                {filteredGames.map(game => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">                {filteredGames.map(game => (
                   <GameCard
                     key={game.id}
                     game={game}
                     isFavorite={favorites.includes(game.id)}
                     onToggleFavorite={() => toggleFavorite(game.id)}
-                    onClick={() => console.log(`Clicked game ${game.id}`)}
+                    onClick={() => handleGameClick(game.id)}
                   />
                 ))}
               </div>

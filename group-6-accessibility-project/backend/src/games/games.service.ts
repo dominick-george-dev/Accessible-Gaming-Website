@@ -12,9 +12,7 @@ export class GamesService {
         // Ensure id is a valid positive integer
         if (typeof id !== 'number' || !Number.isInteger(id) || id < 1) {
             throw new BadRequestException('Invalid game ID');
-        }
-
-        try {
+        }        try {
             const game = await this.databaseService.game.findUnique({
                 where: {
                     id,
@@ -23,6 +21,9 @@ export class GamesService {
                     id: true,
                     title: true,
                     description: true,
+                    images: true,
+                    trailer: true,
+                    transcript: true,
                     genre: true,
                     releaseDate: true,
                     developer: true,
@@ -56,8 +57,7 @@ export class GamesService {
 
         const skip = (validatedPage - 1) * validatedLimit;
 
-        try {
-            const [games, total] = await Promise.all([
+        try {            const [games, total] = await Promise.all([
                 this.databaseService.game.findMany({
                     skip,
                     take: validatedLimit,
@@ -65,6 +65,9 @@ export class GamesService {
                         id: true,
                         title: true,
                         description: true,
+                        images: true,
+                        trailer: true,
+                        transcript: true,
                         genre: true,
                         releaseDate: true,
                         developer: true,
