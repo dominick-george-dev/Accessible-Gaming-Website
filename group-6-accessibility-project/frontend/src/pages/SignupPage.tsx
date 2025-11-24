@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Eye, EyeOff, AlertCircle, Check, X } from 'lucide-react';
 import { toast } from 'sonner'; 
+import { useAuth } from '../hooks/useAuth';
 
 interface SignupPageProps {
-  onSignup: (name: string, email: string, password: string) => void;
+  onSignup: (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => void;
   onNavigateToLogin: () => void;
 }
 
@@ -33,6 +34,7 @@ export function SignupPage({ onSignup, onNavigateToLogin }: SignupPageProps) {
     confirmPassword?: string;
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { saveRedirectPath } = useAuth();
 
   // Real-time password validation
   const validatePassword = (pwd: string): PasswordValidation => {
@@ -111,14 +113,10 @@ export function SignupPage({ onSignup, onNavigateToLogin }: SignupPageProps) {
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      const data = await response.json();      if (response.ok) {
         localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        
         toast.success('Account created successfully! You are now logged in.');
-        onSignup(data.user.username, data.user.email, password);
+        onSignup(data.user);
       } else {
         // Handle API errors
         if (data.message && data.message.includes('email already exists')) {
@@ -157,6 +155,14 @@ export function SignupPage({ onSignup, onNavigateToLogin }: SignupPageProps) {
     liveRegion.textContent = message;
     document.body.appendChild(liveRegion);
     setTimeout(() => document.body.removeChild(liveRegion), 1000);
+  };
+
+  // Handle navigation to login while preserving redirect path
+  const handleNavigateToLogin = () => {
+    // Save the current redirect path (if any) before navigating to login
+    const currentRedirectPath = localStorage.getItem('redirectPath') || '/';
+    saveRedirectPath(currentRedirectPath);
+    onNavigateToLogin();
   };
 
   const ValidationItem = ({ isValid, text }: { isValid: boolean; text: string }) => (
@@ -382,7 +388,7 @@ export function SignupPage({ onSignup, onNavigateToLogin }: SignupPageProps) {
               <Button
                 type="button"
                 variant="link"
-                onClick={onNavigateToLogin}
+                onClick={handleNavigateToLogin}
                 className="px-1"
               >
                 Sign in

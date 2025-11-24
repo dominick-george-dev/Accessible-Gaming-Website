@@ -146,14 +146,10 @@ export function BrowsePage() {
       }
     });
   });
-
   return matches.slice(0, 5);
-}, [games, searchQuery]);
-
-
-  return (
-    <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+}, [games, searchQuery]);  return (    <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
+      <div className="max-w-5xl">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
         {/* Desktop Filters */}
         <div className="hidden lg:block lg:col-span-1">
           <div className="sticky top-24">
@@ -166,7 +162,7 @@ export function BrowsePage() {
         </div>
 
         {/* Main Content */}
-        <div className="lg:col-span-3 space-y-4 lg:space-y-6">
+        <div className="lg:col-span-3 space-y-4 lg:space-y-6 min-w-0">
           {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" aria-hidden="true"/>
@@ -178,7 +174,7 @@ export function BrowsePage() {
               onFocus={() => setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={e => { if (e.key === 'Enter' && searchQuery.trim()) saveToRecentSearches(searchQuery.trim()); }}
-              className="pl-10"
+              className="pl-10 w-full"
             />
 
             {showSuggestions && (suggestions.length > 0 || (searchQuery.length === 0 && recentSearches.length > 0)) && (
@@ -218,10 +214,9 @@ export function BrowsePage() {
                   />
                 ))}
               </div>
-            )}
-          </div>
-        </div>
+            )}          </div>        </div>
       </div>
+    </div>
     </div>
   );
 }
