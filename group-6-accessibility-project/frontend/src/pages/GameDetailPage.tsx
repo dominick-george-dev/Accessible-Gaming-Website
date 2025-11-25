@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { ImgCarousel } from "../components/ui/imgCarousel";
 import { AccessibleVideoPlayer } from "../components/AccessibleVideoPlayer";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import type { Game, Review } from "../types/game";
 import { useParams, useNavigate } from "react-router-dom";
@@ -68,11 +68,15 @@ export function GameDetailPage() {
     const [isFavorite, setIsFavorite] = useState(false);
     const [isHelpful, setIsHelpful] = useState<Record<number, boolean>>({});
     const [loading, setLoading] = useState(true);
+    const [similarGames, setSimilarGames] = useState<Game[]>([]);
+    const [loadingSimilar, setLoadingSimilar] = useState(false);
+    const [similarError, setSimilarError] = useState<string | null>(null);
     const [userRating, setUserRating] = useState(0);
     const [reviewText, setReviewText] = useState("");
     const [selectedAccessibilityTags, setSelectedAccessibilityTags] = useState<
         string[]
     >([]);
+    const headingRef = useRef<HTMLHeadingElement | null>(null);
 
     const isLoggedIn = true; // You can hook this up to your auth system later
 
@@ -86,6 +90,7 @@ export function GameDetailPage() {
                 fetchGameDetails(id),
                 fetchAccessibilityTags(id),
                 fetchReviews(id),
+                fetchSimilarGames(id)
             ]);
             } catch (error) {
             console.error("Error loading game data:", error);
@@ -96,6 +101,14 @@ export function GameDetailPage() {
 
         loadData();
     }, [id]);
+
+    //Focus main heading when game chnages so screen reader announce it to user
+    useEffect(() => {
+        if (game) {
+            //small timeout to ensure heading is in DOM
+            setTimeout(() => headingRef.current?.focus(), 50);
+        }
+    }, [game]);
 
     console.log('reviews:', reviews);
 
@@ -109,6 +122,103 @@ export function GameDetailPage() {
         } catch (error) {
         console.error("Error fetching game details:", error);
         toast.error("Failed to load game details");
+        }
+    };
+
+    /**
+    * Fetch similar games. Try dedicated endpoint first,
+    * otherwise fall back to client-side filtering/sorting.
+    */
+
+    const fetchSimilarGames = async (gameId: string) => {
+        setLoadingSimilar(true);
+        setSimilarError(null);
+        try {
+            //include Auth header if token is present (secure)
+            const token = localStorage.getItem('authToken');
+            const headers: Record<string, string> = token ? {Authorization: `Bearer ${token}`} :{};
+
+            //Try server side similar endpoint
+            const res = await fetch(`http://localhost:3000/games/similar/${gameId}`, {headers});
+            if (res.ok) {
+                const data = await res.json();
+                setSimilarGames(data || []);
+                return;
+            }
+
+            //Fallback: fetch all games and do client-side similar scoring
+            const allRes = await fetch(`http://localhost:3000/games`, {headers});
+            if (!allRes.ok) throw new Error("Failed to fetch all games for similarity");
+            const allRaw = await allRes.json();
+
+            // normalize to array
+            let allGames: Game[] = [];
+            if (Array.isArray(allRaw)) allGames = allRaw;
+            else if (Array.isArray(allRaw.games)) allGames = allRaw.games;
+            else if (Array.isArray(allRaw.data)) allGames = allRaw.data;
+            else allGames = Object.values(allRaw).filter(v => v && typeof v === 'object') as Game[];
+
+            if (!allGames.length) { setSimilarGames([]); return; }
+
+            const baseGame = game || allGames.find(g => String(g.id) === String(gameId));
+            if (!baseGame) {
+                setSimilarGames([]);
+                return;
+            }
+
+            //prefernces from localStorage
+            const prefsRaw = localStorage.getItem("preferences");
+            const prefs = prefsRaw ? JSON.parse(prefsRaw) : null;
+            const preferredGenres: string[] = prefs?.preferredGenres || [];
+            const prefferdTags: string[] = prefs?.preferredAccessibilityTags || [];
+
+            const scored = allGames
+                .filter(g => String(g.id) !== String(gameId))
+                .map(g => {
+                    //count matching genres
+                    const genreMatches = g.genre.filter(genre => baseGame.genre.includes(genre)).length;
+                    // Normalize accessibility tag names (games may store tags as strings or objects)
+                    const gTagNames = (g.accessibilityTags || []).map((t: any) =>
+                        typeof t === 'string' ? t : (t.name ?? t.tag ?? '')
+                    );
+                    const baseTagNames = (baseGame.accessibilityTags || []).map((t: any) =>
+                        typeof t === 'string' ? t : (t.name ?? t.tag ?? '')
+                    );
+                    const tagMatches = gTagNames.filter((tagName: string) =>
+                        baseTagNames.includes(tagName)
+                    ).length;
+                    //preference boosts
+                    const prefGenreBoost = preferredGenres.reduce((acc, genre) => acc + (g.genre.includes(genre) ? 1 : 0), 0);
+                    const prefTagBoost = prefferdTags.reduce((acc, tag) => acc + (gTagNames.includes(tag) ? 1 : 0), 0);
+                    //base score: genre + tag + pref + rating weight
+                    const score = genreMatches * 3 + tagMatches * 4 + prefGenreBoost *2 + prefTagBoost *3 + (g.rating || 0) * 0.1;
+                    return { game: g, score }
+                })
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 8)
+                .map(s => s.game);
+            
+            // Attach accessibility tags to each similar game (fetch per-game tags)
+            const similarWithTags = await Promise.all(
+                scored.map(async (g) => {
+                    try {
+                        const tagRes = await fetch(`http://localhost:3000/accessibility-tags/game/${g.id}`, { headers });
+                        if (!tagRes.ok) return g;
+                        const tags = await tagRes.json();
+                        return { ...g, accessibilityTags: tags };
+                    } catch {
+                        return g;
+                    }
+                })
+            );
+
+            setSimilarGames(similarWithTags);
+        } catch (error) {
+            console.error("Error fetching similar games:", error);
+            setSimilarError("Failed to load similar games");
+            setSimilarGames([]);
+        } finally {
+            setLoadingSimilar(false);
         }
     };
 
@@ -389,7 +499,8 @@ export function GameDetailPage() {
             <div className="space-y-4 lg:space-y-6">
             <div>
                 <div className="flex items-start justify-between gap-3 mb-2 lg:mb-3">
-                <h1 className="flex-1">{game.title}</h1>                <Button
+                <h1 ref={headingRef} tabIndex={-1} className="flex-1">{game.title}</h1>                
+                <Button
                     variant="outline"
                     size="icon"
                     onClick={() => onToggleFavorite()}
@@ -481,7 +592,80 @@ export function GameDetailPage() {
             transcript={game.transcript}
         />
 
-        
+        <Separator />
+            {/* Similar Games Section */}
+            <section aria-labelledby="similar-games-heading" className="mt-2">
+            <h2 id="similar-games-heading" className="mb-3 lg:mb-4">You May Also Like</h2>
+
+            {loadingSimilar ? (
+                <p className="text-muted-foreground">Loading similar games...</p>
+            ) : similarError ? (
+                <p role="alert" className="text-destructive">{similarError}</p>
+            ) : similarGames.length === 0 ? (
+                <div className="space-y-2">
+                    <p className="text-muted-foreground">No similar games found.</p>
+                    <p className="text-muted-foreground">Try browsing popular accessible games below.</p>
+                </div>
+            ) : (
+                // outer provides horizontal scroll when needed; inner flex centers cards
+                <div className="overflow-x-auto">
+                    <div
+                        className="flex gap-4 justify-center items-start px-4 py-1"
+                        role="list"
+                        aria-label="Similar games"
+                    >
+                        {similarGames.map((s) => (
+                            <Card
+                                key={s.id}
+                                className="min-w-[200px] max-w-[220px] p-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary flex-shrink-0"
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Open ${s.title} details.`}
+                                aria-describedby={`similar-${s.id}-tags`}
+                                onClick={() => navigate(`/games/${s.id}`)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        navigate(`/games/${s.id}`);
+                                    }
+                                }}
+                            >
+                                <div className="aspect-[4/3] mb-2 bg-muted rounded overflow-hidden">
+                                    <img
+                                        src={s.images?.[0] || ''}
+                                        alt={`Cover art for ${s.title}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="line-clamp-2">{s.title}</h3>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {s.genre.slice(0,2).map((g) => (
+                                            <Badge key={g} variant="outline" className="text-xs">
+                                                {g}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                    {/* Accessibility tags displayed clearly on each card */}
+                                    <div id={`similar-${s.id}-tags`} className="flex flex-wrap gap-1 mt-2" aria-hidden={false}>
+                                        {(s.accessibilityTags || []).slice(0,3).map((t: any, i: number) => (
+                                            <Badge
+                                                key={(t && (t.id ?? i)) ?? i}
+                                                variant="secondary"
+                                                className="text-xs"
+                                            >
+                                                {typeof t === "string" ? t : (t.name ?? t.tag ?? "")}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </section>
+        <Separator />
 
         {/* Accessibility Features */}
         <section aria-labelledby="accessibility-heading">
