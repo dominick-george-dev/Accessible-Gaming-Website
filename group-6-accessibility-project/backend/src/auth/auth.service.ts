@@ -2,6 +2,7 @@ import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { DatabaseService } from '../database/database.service';
+import { roles } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -58,8 +59,8 @@ export class AuthService {
           id: true,
           username: true,
           email: true,
+          role: true,
           createdAt: true,
-          // Don't return password in response
         },
       });
 
@@ -67,7 +68,8 @@ export class AuthService {
       const payload = { 
         sub: user.id, 
         username: user.username, 
-        email: user.email 
+        email: user.email,
+        role: user.role
       };
       const token = this.jwtService.sign(payload);
 
@@ -78,6 +80,7 @@ export class AuthService {
           id: user.id,
           username: user.username,
           email: user.email,
+          role: user.role,
           createdAt: user.createdAt,
         },
       };
@@ -100,7 +103,8 @@ export class AuthService {
         username: true,
         email: true,
         password: true,
-        createdAt: true, // Make sure this is included
+        createdAt: true, // Make sure this is included#
+        role: true,
         },
     });
 
@@ -118,7 +122,8 @@ export class AuthService {
     const payload = { 
       sub: user.id, 
       username: user.username, 
-      email: user.email 
+      email: user.email,
+      role: user.role
     };
     const token = this.jwtService.sign(payload);
 
@@ -129,6 +134,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
+        role: user.role,
         createdAt: user.createdAt,
       },
     };

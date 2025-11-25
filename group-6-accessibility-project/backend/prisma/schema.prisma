@@ -16,8 +16,13 @@ model Game {
   updatedAt             DateTime                @updatedAt
   createdAt             DateTime                @default(now())
   developer             String
-  publisher             String
   rating                Float
+  images                String[]
+  trailer               String?
+  transcript            String?
+  hasBeenVerified       Boolean                 @default(false)
+  publisherId           Int?
+  Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
 }
@@ -62,6 +67,8 @@ model User {
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
   password                  String                     @default("NEEDS_PASSWORD_RESET") @db.VarChar(255)
+  role                      roles                      @default(USER)
+  Publisher                 Publisher[]
   Review                    Review[]
   UserAccessibilitySettings UserAccessibilitySettings?
 }
@@ -82,4 +89,26 @@ model UserAccessibilitySettings {
   screenMagnifier             Boolean  @default(false)
   visualAccessibility         Boolean  @default(false)
   User                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Publisher {
+  id             Int     @id @default(autoincrement())
+  userId         Int
+  displayName    String?
+  profilePicture String?
+  Game           Game[]
+  User           User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "userId")
+}
+
+enum roles {
+  USER
+  ADMIN
+  PUBLISHER
+}
+
+enum categories {
+  Visual
+  Hearing
+  Dexterity
+  Cognitive
 }

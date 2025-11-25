@@ -3,6 +3,9 @@ import { Routes, Route } from 'react-router-dom'
 import { GameDetailPage } from './pages/GameDetailPage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
+import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
+import { LogoutPage } from './pages/LogoutPage'
+import { PublisherDashboard } from './pages/PublisherDashboard'
 
 function App() {
   const handleLogin = (username: string, email: string) => {
@@ -21,7 +24,9 @@ function App() {
     <>
       <Routes>
         <Route path="/games/:id" element={<GameDetailPage />} />
-        
+        <Route path="/make-account-publisher" element={<MakeAccountPublisherPage />} />
+        <Route path="/logout" element={<LogoutPage />} /> 
+        <Route path="/publisher-dashboard" element={<PublisherDashboard />} />
         <Route 
           path="/login" 
           element={
