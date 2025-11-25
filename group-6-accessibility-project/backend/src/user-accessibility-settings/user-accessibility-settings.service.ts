@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { Prisma } from '@prisma/client';
 
 interface CreateUserAccessibilitySettingsData {
   // Text settings
-  textSize?: number;
+  textSize?: string;
   fontFamily?: string;
 
   // Visual settings
@@ -23,19 +24,17 @@ interface CreateUserAccessibilitySettingsData {
 
 @Injectable()
 export class UserAccessibilitySettingsService {
-  constructor(private readonly database: DatabaseService) {}
-  async createUserAccessibilitySettings(
+  constructor(private readonly database: DatabaseService) {}  async createUserAccessibilitySettings(
     userId: number,
     data: CreateUserAccessibilitySettingsData,
   ) {
     return await this.database.userAccessibilitySettings.create({
       data: {
+        userId,
         ...data,
-        userId: userId,
-      },
+      } as Prisma.UserAccessibilitySettingsUncheckedCreateInput,
     });
-  }
-  async getUserAccessibilitySettings(userId: number) {
+  }  async getUserAccessibilitySettings(userId: number) {
     return await this.database.userAccessibilitySettings.findUnique({
       where: { userId },
       include: { user: true },

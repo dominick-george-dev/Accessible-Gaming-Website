@@ -8,25 +8,52 @@ import {
   Body,
   ParseIntPipe,
 } from '@nestjs/common';
+import { IsOptional, IsString, IsBoolean } from 'class-validator';
 import { UserAccessibilitySettingsService } from './user-accessibility-settings.service';
 
 export class CreateUserAccessibilitySettingsDto {
   // Text settings
-  textSize?: number;  // Changed from string to number
+  @IsOptional()
+  @IsString()
+  textSize?: string;
+  
+  @IsOptional()
+  @IsString()
   fontFamily?: string;
 
   // Visual settings
+  @IsOptional()
+  @IsBoolean()
   highContrast?: boolean;
+  
+  @IsOptional()
+  @IsString()
   colorBlindMode?: string;
+  
+  @IsOptional()
+  @IsString()
   colourMode?: string;
 
   // Accessibility preferences
+  @IsOptional()
+  @IsBoolean()
   visualAccessibility?: boolean;
+  
+  @IsOptional()
+  @IsBoolean()
   hearingAccessibility?: boolean;
+  
+  @IsOptional()
+  @IsBoolean()
   motorDexterityAccessibility?: boolean;
+  
+  @IsOptional()
+  @IsBoolean()
   cognitiveAccessibility?: boolean;
 
   // Magnifier
+  @IsOptional()
+  @IsBoolean()
   screenMagnifier?: boolean;
 }
 

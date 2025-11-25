@@ -22,7 +22,6 @@ model Game {
   transcript            String?
   hasBeenVerified       Boolean                 @default(false)
   publisherId           Int?
-  publisher             String?
   Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
@@ -77,7 +76,7 @@ model User {
 model UserAccessibilitySettings {
   id                          Int      @id @default(autoincrement())
   userId                      Int      @unique
-  textSize                    Int      @default(16)
+  textSize                    String   @default("16")
   fontFamily                  String   @default("default")
   highContrast                Boolean  @default(false)
   colorBlindMode              String   @default("none")
@@ -105,4 +104,11 @@ enum roles {
   USER
   ADMIN
   PUBLISHER
+}
+
+enum categories {
+  Visual
+  Hearing
+  Dexterity
+  Cognitive
 }

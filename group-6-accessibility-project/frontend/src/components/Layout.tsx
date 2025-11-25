@@ -4,9 +4,10 @@ import { Sidebar, MobileSidebar, Header, BottomNav } from './Navigation';
 import { Breadcrumbs } from './Breadcrumbs';
 import { LoadingBar } from './LoadingBar';
 import { UndoButton } from './UndoButton';
+import { Magnifier } from './Magnifier';
 import { toast } from 'sonner';
 import { addUndoAction } from '../utils/undoManager';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -22,20 +23,15 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     return savedState !== null ? JSON.parse(savedState) : true;
   });
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [magnifierEnabled, setMagnifierEnabled] = useState(false);
   const [voiceControlsEnabled, setVoiceControlsEnabled] = useState(false);
-  const [user, setUser] = useState<{
-    name: string;
-    role: string;
-    isAdmin: boolean;
-    isPublisher: boolean;
-  } | null>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
   const [previousLocation, setPreviousLocation] = useState<string | null>(null);
-  const { saveRedirectPath } = useAuth();
+  
+  // Use AuthContext for authentication state
+  const { user, isAuthenticated, logout } = useAuth();
 
   // Helper function to get page title for navigation undo
   const getPageTitle = (pathname: string) => {
@@ -58,7 +54,6 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         return 'Page';
     }
   };
-
   // Track navigation for undo functionality
   useEffect(() => {
     if (previousLocation && previousLocation !== location.pathname) {
@@ -71,50 +66,22 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
       );
     }
     setPreviousLocation(location.pathname);
-  }, [location.pathname, navigate, previousLocation]);  // Check for existing user session on component mount
-  useEffect(() => {
-    // This is where you would check for existing authentication
-    // For now, we'll use localStorage to persist login state
-    const savedLoginState = localStorage.getItem('isLoggedIn');
-    const savedUserData = localStorage.getItem('userData');
-    
-    if (savedLoginState === 'true') {
-      setIsLoggedIn(true);
-      if (savedUserData) {
-        try {
-          const userData = JSON.parse(savedUserData);
-          setUser({
-            name: userData.username || userData.name || 'User',
-            role: userData.role || (userData.isAdmin ? 'admin' : userData.isPublisher ? 'publisher' : 'user'),
-            isAdmin: userData.isAdmin || false, 
-            isPublisher: userData.isPublisher || false 
-          });
-        } catch {
-          // Handle invalid JSON - set to null since we're not logged in properly
-          setUser(null);
-          setIsLoggedIn(false);
-        }
-      }
-    } else {
-      // Don't set user data if not logged in
-      setIsLoggedIn(false);
-      setUser(null);
-    }
-  }, []);const handleLogin = () => {
-    // Store the current path for redirect after login
-    saveRedirectPath(location.pathname);
-    
-    // Navigate to login page
+  }, [location.pathname, navigate, previousLocation]);  // Convert AuthContext user to expected format for Navigation components
+  const layoutUser = user ? {
+    name: user.username,
+    role: 'user', // Default role since AuthContext doesn't include role info
+    isAdmin: false, // Would need to be added to AuthContext User interface
+    isPublisher: false // Would need to be added to AuthContext User interface
+  } : null;
+
+  // Authentication handlers
+  const handleLogin = () => {
     navigate('/login');
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUser(null);
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userData');
-    navigate('/');
-  };  const handleToggleSidebar = () => {
+    logout();
+  };const handleToggleSidebar = () => {
     const newState = !isDesktopSidebarOpen;
     const previousState = isDesktopSidebarOpen;
     
@@ -158,38 +125,43 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     );
     
     toast(`Voice controls ${!previousState ? 'enabled' : 'disabled'}`);
-  };return (    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      {/* Desktop Sidebar - Conditionally shown */}
-      {isDesktopSidebarOpen && (
-        <div className="hidden lg:block">
-          <Sidebar isLoggedIn={isLoggedIn} />
-        </div>
-      )}
+  };  return (
+    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">
+      {/* Desktop Sidebar - Always shown but with collapsed state */}
+      <div className="hidden lg:block">
+        <Sidebar isLoggedIn={isAuthenticated} collapsed={!isDesktopSidebarOpen} />
+      </div>
 
       {/* Mobile Sidebar Drawer */}
       <MobileSidebar
-        isLoggedIn={isLoggedIn}
-        isAdmin={user?.isAdmin || false}
-        isPublisher={user?.isPublisher || false}
+        isLoggedIn={isAuthenticated}
+        isAdmin={layoutUser?.isAdmin || false}
+        isPublisher={layoutUser?.isPublisher || false}
         isOpen={isMobileSidebarOpen}
-        onClose={() => setIsMobileSidebarOpen(false)}      />{/* Main Layout with content shrinking behavior */}
+        onClose={() => setIsMobileSidebarOpen(false)}
+      />
+
+      {/* Main Layout with content shrinking behavior */}
       <div 
         className={`w-full max-w-full overflow-x-hidden main-content-wrapper content-shrink-transition ${
           isDesktopSidebarOpen ? 'shrunk-content' : ''
         }`}
-      >        {/* Top Header */}        <Header
+      >
+        {/* Top Header */}
+        <Header
           selectedGameName={selectedGameName}
           selectedPublisherName={selectedPublisherName}
           onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
           onToggleSidebar={handleToggleSidebar}
           isSidebarOpen={isDesktopSidebarOpen}
-          isLoggedIn={isLoggedIn}
+          isLoggedIn={isAuthenticated}
           onLogin={handleLogin}
           onLogout={handleLogout}
           onToggleMagnifier={handleToggleMagnifier}
           magnifierEnabled={magnifierEnabled}
           onToggleVoiceControls={handleToggleVoiceControls}
           voiceControlsEnabled={voiceControlsEnabled}
-          user={user}
+          user={layoutUser}
         />
 
         {/* Dynamic Loading Bar */}
@@ -198,12 +170,10 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
           selectedGameName={selectedGameName}
           selectedPublisherName={selectedPublisherName}
           isSidebarOpen={isDesktopSidebarOpen}
-        />
-
-        {/* Main Content */}        <main 
+        />        {/* Main Content */}        <main 
           id="main-content" 
           className={`content-with-bottom-nav w-full max-w-full overflow-x-hidden transition-all duration-300 ${
-            isDesktopSidebarOpen ? 'lg:pl-52' : 'lg:pl-4'
+            isDesktopSidebarOpen ? 'lg:pl-52' : 'lg:pl-20'
           }`}
           style={{ paddingTop: 'calc(4rem + 3rem)' }} /* Header + Breadcrumbs + spacing */
           tabIndex={-1}
@@ -213,10 +183,11 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
 
         {/* Bottom Navigation - Only shown on mobile */}
         <div className="lg:hidden">
-          <BottomNav />        </div>
-
-        {/* Undo Button */}
+          <BottomNav />        </div>        {/* Undo Button */}
         <UndoButton />
+
+        {/* Screen Magnifier */}
+        <Magnifier isActive={magnifierEnabled} />
       </div>
     </div>
   );

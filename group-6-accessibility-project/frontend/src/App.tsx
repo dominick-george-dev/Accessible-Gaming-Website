@@ -11,6 +11,7 @@ import { SignupPage } from './pages/SignupPage'
 import { Layout } from './components/Layout'
 import ProfilePage from './pages/ProfilePage'
 
+
 // Create placeholder pages for the navigation items
 const HomePageComponent = () => (
   <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4">

@@ -30,7 +30,7 @@ import {
   SelectItem,
 } from '../ui';
 import { toast } from 'sonner';
-import Magnifier from '../Magnifier';
+import { Magnifier } from '../Magnifier';
 import { useAccessibilityContext } from '../../contexts/AccessibilityContext';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -600,10 +600,8 @@ export default function ProfilePage() {
             </div>
           </li>
         </ul>
-      </Card>
-
-      {/* Magnifier Component */}
-      <Magnifier enabled={magnifierEnabled} zoom={2} />
+      </Card>      {/* Magnifier Component */}
+      <Magnifier isActive={magnifierEnabled} magnification={2} />
 
       {/* Colorblind Filter SVGs */}
       <ColorblindFilterSVGs />

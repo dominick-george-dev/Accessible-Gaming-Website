@@ -51,7 +51,8 @@ main {
 
 /* Figma component base styles */
 .figma-component {
-  /* Add common styles for Figma components here */
+  /* Base styles for Figma components */
+  box-sizing: border-box;
 }
 
 /* Homepage specific styles */
@@ -81,4 +82,43 @@ main {
   .homepage {
     padding: 20px 10px;
   }
+}
+
+/* Magnifier styles */
+.magnifier-active {
+  cursor: none !important;
+}
+
+.magnifier-active * {
+  cursor: none !important;
+}
+
+.magnifier-lens {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Prevent interference with magnifier */
+.magnifier-lens * {
+  pointer-events: none;
+}
+
+/* Ensure magnifier appears above everything */
+.magnifier-lens {
+  z-index: 10000 !important;
+}
+
+/* Smooth transitions for magnifier elements */
+.magnifier-lens {
+  transition: opacity 0.1s ease-in-out;
+}
+
+/* Prevent text selection during magnification */
+.magnifier-active {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }

@@ -22,12 +22,11 @@ export class GamesService {
                     title: true,
                     description: true,
                     images: true,
-                    trailer: true,
-                    transcript: true,
+                    trailer: true,                    transcript: true,
                     genre: true,
                     releaseDate: true,
                     developer: true,
-                    publisher: true,
+                    Publisher: true,
                     rating: true,
                     createdAt: true,
                     updatedAt: true,
@@ -67,11 +66,10 @@ export class GamesService {
                         description: true,
                         images: true,
                         trailer: true,
-                        transcript: true,
-                        genre: true,
+                        transcript: true,                        genre: true,
                         releaseDate: true,
                         developer: true,
-                        publisher: true,
+                        Publisher: true,
                         rating: true,
                         createdAt: true,
                         updatedAt: true,
@@ -90,9 +88,8 @@ export class GamesService {
                     limit: validatedLimit,
                     total,
                     totalPages: Math.ceil(total / validatedLimit),
-                },
-            };
-        } catch (error) {
+                },            };
+        } catch {
             // Don't leak database errors
             throw new BadRequestException('Failed to retrieve games');
         }

@@ -30,7 +30,7 @@ import {
   SelectItem,
 } from '../components/ui';
 import { toast } from 'sonner';
-import Magnifier from '../components/Magnifier';
+import { Magnifier } from '../components/Magnifier';
 import { useAccessibilityContext } from '../contexts/AccessibilityContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -44,18 +44,43 @@ type ThemeMode = 'light' | 'dark';
 export default function ProfilePage() {
   const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
   const [magnifierEnabled, setMagnifierEnabled] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);  const [userStats, setUserStats] = useState({
+  const [isUpdating, setIsUpdating] = useState(false);  
+  const [userStats, setUserStats] = useState({
     favoritesCount: 0,
     reviewsCount: 0,
     loading: true
   });
-    // Fetch user statistics (favorites and reviews counts)
+
+  // Simple token check as fallback
+  const hasToken = !!(localStorage.getItem('access_token') || localStorage.getItem('token'));
+  const storedUser = localStorage.getItem('user');
+  
+  console.log('ProfilePage: Initial checks:', { hasToken, hasStoredUser: !!storedUser });
+  // Debug: Log authentication state changes
+  React.useEffect(() => {
+    console.log('ProfilePage: Auth state changed:', {
+      user: user?.username || null,
+      authLoading,
+      isAuthenticated,
+      hasAccessToken: !!localStorage.getItem('access_token'),
+      hasToken: !!localStorage.getItem('token')
+    });
+  }, [user, authLoading, isAuthenticated]);
+
+  // Note: Removed automatic redirect to /login to allow proper authentication prompt UI
+  // Fetch user statistics (favorites and reviews counts)
   const fetchUserStats = React.useCallback(async () => {
     if (!user?.id) return;
     
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+      // Use the same token logic as the API service
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+      if (!token) {
+        console.log('ProfilePage: No token found for user stats');
+        return;
+      }
+
+      console.log('ProfilePage: Fetching user stats for user:', user.id);
 
       // Fetch favorites count
       const favoritesResponse = await fetch(`http://localhost:3000/users/${user.id}/favorites`, {
@@ -75,8 +100,13 @@ export default function ProfilePage() {
         reviewsCount: Array.isArray(reviewsData) ? reviewsData.length : 0,
         loading: false
       });
+
+      console.log('ProfilePage: User stats loaded:', {
+        favorites: Array.isArray(favoritesData) ? favoritesData.length : 0,
+        reviews: Array.isArray(reviewsData) ? reviewsData.length : 0
+      });
     } catch (error) {
-      console.error('Failed to fetch user stats:', error);
+      console.error('ProfilePage: Failed to fetch user stats:', error);
       setUserStats({
         favoritesCount: 0,
         reviewsCount: 0,
@@ -132,9 +162,9 @@ export default function ProfilePage() {
       setMagnifierEnabled(backendSettings.screenMagnifier);
     }
   }, [backendSettings, loading]);
-
   // Show loading or redirect if not authenticated
   if (authLoading) {
+    console.log('ProfilePage: Showing loading state');
     return (
       <main className="max-w-4xl mx-auto p-4 lg:p-6">
         <Card className="p-8">
@@ -148,25 +178,31 @@ export default function ProfilePage() {
       </main>
     );
   }
-
-  if (!isAuthenticated || !user) {
+  // Show authentication required if not authenticated OR no user data OR no token
+  if (!isAuthenticated || !user || !hasToken) {
+    console.log('ProfilePage: User not authenticated, showing login prompt:', { 
+      isAuthenticated, 
+      hasUser: !!user, 
+      hasToken,
+      authLoading 
+    });
     return (
       <main className="max-w-4xl mx-auto p-4 lg:p-6">
         <Card className="p-8">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Please log in to view and manage your accessibility preferences.
-            </p>
-            <Button onClick={() => window.location.href = '/login'}>
-              Go to Login
-            </Button>
+              You must be logged in to access your profile. Please log in to continue.
+            </p>            <div className="space-x-4">
+              <Button onClick={() => window.location.href = '/login'}>
+                Go to Login
+              </Button>
+            </div>
           </div>
         </Card>
       </main>
     );
-  }
-  // Preference change handler
+  }// Preference change handler
   const handlePreferenceChange = async (
     category: keyof typeof localPreferences,
     value: boolean | ColorblindFilter | ThemeMode | number
@@ -174,6 +210,12 @@ export default function ProfilePage() {
     console.log('🔧 handlePreferenceChange called:', { category, value, currentScroll: window.scrollY });
     
     if (isUpdating) return;
+
+    // Check if user is still authenticated
+    if (!isAuthenticated || !user) {
+      toast.error('You must be logged in to save settings');
+      return;
+    }
 
     setIsUpdating(true);
     
@@ -183,15 +225,19 @@ export default function ProfilePage() {
       ...localPreferences,
       [category]: value,
     };
-      // Update local state immediately for responsive UI
+    
+    // Update local state immediately for responsive UI
     setLocalPreferences(newPreferences);
     
     // Check scroll position immediately after state update
     setTimeout(() => {
       console.log('📊 After state update (immediate) - scroll position:', window.scrollY);
     }, 0);
-      // Save to backend
-    try {await updateBackendSettings({
+    
+    // Save to backend
+    try {
+      console.log('💾 Saving settings to backend...', newPreferences);
+      await updateBackendSettings({
         textSize: newPreferences.textSize,
         fontFamily: newPreferences.dyslexiaFont ? 'dyslexic' : 'default',
         highContrast: newPreferences.highContrast,
@@ -203,9 +249,17 @@ export default function ProfilePage() {
         cognitiveAccessibility: newPreferences.cognitive,
         screenMagnifier: magnifierEnabled,
       });
+      console.log('✅ Settings saved successfully');
     } catch (error) {
-      console.error('Failed to update preferences:', error);
+      console.error('❌ Failed to update preferences:', error);
       toast.error('Failed to save preferences');
+      
+      // If saving failed, revert to previous state
+      const revertedPreferences = {
+        ...localPreferences,
+        [category]: localPreferences[category],
+      };
+      setLocalPreferences(revertedPreferences);
     } finally {
       setIsUpdating(false);
     }
@@ -229,20 +283,28 @@ export default function ProfilePage() {
       handleTextSizeChange(increment);
     }
   };
-
   // Toggle magnifier
   const handleToggleMagnifier = async () => {
+    // Check if user is still authenticated
+    if (!isAuthenticated || !user) {
+      toast.error('You must be logged in to save settings');
+      return;
+    }
+
     const newMagnifierState = !magnifierEnabled;
     setMagnifierEnabled(newMagnifierState);
     
     try {
+      console.log('🔍 Saving magnifier setting to backend...', newMagnifierState);
       await updateBackendSettings({
         screenMagnifier: newMagnifierState,
       });
       toast.success(newMagnifierState ? 'Magnifier enabled' : 'Magnifier disabled');
-    } catch {
+      console.log('✅ Magnifier setting saved successfully');
+    } catch (error) {
+      console.error('❌ Failed to save magnifier setting:', error);
       toast.error('Failed to save magnifier setting');
-      setMagnifierEnabled(!newMagnifierState);
+      setMagnifierEnabled(!newMagnifierState); // Revert on error
     }
   };
 
@@ -265,9 +327,14 @@ export default function ProfilePage() {
     { value: 'light', label: 'Light Mode', description: 'Bright, clean interface' },
     { value: 'dark', label: 'Dark Mode', description: 'Reduced eye strain in low light' },
   ];
-
   return (
     <main className="max-w-4xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8">
+      {/* Page Header */}
+      <div className="text-center py-4">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">User Profile</h1>
+        <p className="text-gray-600 dark:text-gray-400">Manage your account settings and accessibility preferences</p>
+      </div>
+
       {/* Loading State */}
       {loading && (
         <Card className="p-8">
@@ -288,9 +355,7 @@ export default function ProfilePage() {
             <span>Saving accessibility settings...</span>
           </div>
         </Card>
-      )}
-
-      {/* User Info */}
+      )}      {/* User Info */}
       <Card className="p-4 lg:p-8">
         <div className="flex items-center gap-4 lg:gap-6">
           <Avatar className="w-16 h-16 lg:w-24 lg:h-24">
@@ -299,7 +364,7 @@ export default function ProfilePage() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h1 className="mb-1 lg:mb-2">{user.username}</h1>
+            <h2 className="text-xl lg:text-2xl font-semibold mb-1 lg:mb-2">{user.username}</h2>
             <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
             <div className="mt-2 space-x-2">
               <Button 
@@ -312,7 +377,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </Card>      {/* User Statistics */}
+      </Card>{/* User Statistics */}
       <div className="grid grid-cols-2 gap-4 lg:gap-6">
         <Card className="p-4 lg:p-6 text-center">
           <div className="text-gray-600 dark:text-gray-400 mb-1 lg:mb-2">Favourites</div>
@@ -612,10 +677,8 @@ export default function ProfilePage() {
             </div>
           </li>
         </ul>
-      </Card>
-
-      {/* Magnifier Component */}
-      <Magnifier enabled={magnifierEnabled} zoom={2} />
+      </Card>      {/* Magnifier Component */}
+      <Magnifier isActive={magnifierEnabled} magnification={2} />
 
       {/* Colorblind Filter SVGs */}
       <ColorblindFilterSVGs />

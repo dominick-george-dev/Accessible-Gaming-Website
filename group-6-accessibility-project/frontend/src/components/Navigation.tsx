@@ -27,6 +27,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
   isLoggedIn: boolean;
+  collapsed?: boolean;
 }
 
 interface MobileSidebarProps {
@@ -58,11 +59,11 @@ interface HeaderProps {
   } | null;
 }
 
-export function Sidebar({ isLoggedIn }: SidebarProps) {
+export function Sidebar({ isLoggedIn, collapsed = false }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Base navigation items
+  // Base navigation items (always shown)
   const baseNavItems = [
     { id: 'home', icon: Home, label: 'Home', path: '/' },
     { id: 'browse', icon: Search, label: 'Browse Games', path: '/browserpage' },
@@ -71,12 +72,11 @@ export function Sidebar({ isLoggedIn }: SidebarProps) {
     { id: 'profile', icon: User, label: 'Profile', path: '/profile' },
   ];
 
-  // Add admin/publisher items only if logged in
-  const navItems = isLoggedIn ? [
-    ...baseNavItems,
+  // Admin/Publisher items (shown at bottom when logged in)
+  const adminNavItems = isLoggedIn ? [
     { id: 'admin', icon: Shield, label: 'Admin Dashboard', path: '/admin' },
     { id: 'publisher', icon: BarChart3, label: 'Publisher Dashboard', path: '/publisher' },
-  ] : baseNavItems;
+  ] : [];
 
   const getCurrentPage = () => {
     const pathname = location.pathname;
@@ -92,14 +92,15 @@ export function Sidebar({ isLoggedIn }: SidebarProps) {
   };
 
   const currentPage = getCurrentPage();
-
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-48 bg-card border-r flex flex-col z-60 hidden lg:flex sidebar-above-header sidebar-transition"
+      className={`fixed left-0 top-0 h-screen bg-card border-r flex flex-col z-60 hidden lg:flex sidebar-above-header sidebar-transition ${
+        collapsed ? 'w-16' : 'w-48'
+      }`}
       aria-label="Main navigation"
     >
       {/* Logo Section */}
-      <div className="py-4 pl-4 pr-0 flex items-center gap-2">
+      <div className={`py-4 flex items-center ${collapsed ? 'justify-center px-4' : 'gap-2 pl-4 pr-0'}`}>
         <div
           className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0"
           aria-hidden="true"
@@ -115,14 +116,12 @@ export function Sidebar({ isLoggedIn }: SidebarProps) {
             <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
         </div>
-        <h2 className="text-lg font-semibold">AccessPlay</h2>
-      </div>
-
-      <Separator />
+        {!collapsed && <h2 className="text-lg font-semibold">AccessPlay</h2>}
+      </div>      <Separator />
 
       {/* Main Navigation */}
-      <nav className="flex-1 py-3 pl-3 pr-0 space-y-1">
-        {navItems.map((item) => {
+      <nav className={`flex-1 py-3 space-y-1 ${collapsed ? 'px-2' : 'pl-3 pr-0'}`}>
+        {baseNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
 
@@ -130,24 +129,55 @@ export function Sidebar({ isLoggedIn }: SidebarProps) {
             <Button
               key={item.id}
               variant={isActive ? 'secondary' : 'ghost'}
-              className="w-full justify-start gap-2 h-9 px-3 text-sm"
+              className={`${collapsed ? 'w-12 h-10 p-0 justify-center' : 'w-full justify-start gap-2 h-9 px-3'} text-sm`}
               onClick={() => navigate(item.path)}
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
+              title={collapsed ? item.label : undefined}
             >
               <Icon className="w-4 h-4" aria-hidden="true" />
-              <span>{item.label}</span>
+              {!collapsed && <span>{item.label}</span>}
             </Button>
           );
         })}
       </nav>
 
+      {/* Admin/Publisher Navigation - Bottom Section */}
+      {adminNavItems.length > 0 && (
+        <>
+          <Separator />
+          <nav className={`py-3 space-y-1 ${collapsed ? 'px-2' : 'pl-3 pr-0'}`}>
+            {adminNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentPage === item.id;
+
+              return (
+                <Button
+                  key={item.id}
+                  variant={isActive ? 'secondary' : 'ghost'}
+                  className={`${collapsed ? 'w-12 h-10 p-0 justify-center' : 'w-full justify-start gap-2 h-9 px-3'} text-sm`}
+                  onClick={() => navigate(item.path)}
+                  aria-label={item.label}
+                  aria-current={isActive ? 'page' : undefined}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <Icon className="w-4 h-4" aria-hidden="true" />
+                  {!collapsed && <span>{item.label}</span>}
+                </Button>
+              );
+            })}
+          </nav>
+        </>
+      )}
+
       <Separator />
 
       {/* Footer Info */}
-      <div className="py-3 pl-3 pr-0 text-muted-foreground">
-        <p className="text-xs">Discover accessible games for everyone</p>
-      </div>
+      {!collapsed && (
+        <div className="py-3 pl-3 pr-0 text-muted-foreground">
+          <p className="text-xs">Discover accessible games for everyone</p>
+        </div>
+      )}
     </aside>
   );
 }
@@ -161,7 +191,8 @@ export function MobileSidebar({
 }: MobileSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  // Base navigation items
+  
+  // Base navigation items (always shown)
   const baseNavItems = [
     { id: 'home', icon: Home, label: 'Home', path: '/' },
     { id: 'browse', icon: Search, label: 'Browse Games', path: '/browserpage' },
@@ -170,17 +201,19 @@ export function MobileSidebar({
     { id: 'profile', icon: User, label: 'Profile', path: '/profile' },
   ];
 
-  // Add admin/publisher items only if logged in
-  const navItems = isLoggedIn ? [
-    ...baseNavItems,
-    { id: 'admin', icon: Shield, label: 'Admin Dashboard', path: '/admin' },
-    { id: 'publisher', icon: BarChart3, label: 'Publisher Dashboard', path: '/publisher' },
-  ] : baseNavItems;
-
-  // Admin and special user navigation items
-  const adminItem = { id: 'admin', icon: Shield, label: 'Admin Dashboard', path: '/admin' };
-  const developerItem = { id: 'developer', icon: Code, label: 'Developer Dashboard', path: '/developer' };
-  const publisherItem = { id: 'publisher', icon: BarChart3, label: 'Publisher Dashboard', path: '/publisher' };
+  // Admin/Publisher items (shown at bottom when logged in and user has appropriate role)
+  const adminNavItems = [];
+  if (isLoggedIn && isAdmin) {
+    adminNavItems.push(
+      { id: 'admin', icon: Shield, label: 'Admin Dashboard', path: '/admin' },
+      { id: 'developer', icon: Code, label: 'Developer Dashboard', path: '/developer' }
+    );
+  }
+  if (isLoggedIn && isPublisher) {
+    adminNavItems.push(
+      { id: 'publisher', icon: BarChart3, label: 'Publisher Dashboard', path: '/publisher' }
+    );
+  }
 
   const getCurrentPage = () => {
     const pathname = location.pathname;
@@ -227,78 +260,58 @@ export function MobileSidebar({
               </div>
               <SheetTitle className="text-xl font-semibold">AccessPlay</SheetTitle>
             </div>
-          </SheetHeader>
-
-          <Separator />
+          </SheetHeader>          <Separator />
 
           {/* Main Navigation */}
-          <nav className="flex-1 p-4 space-y-2" aria-label="Main navigation">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentPage === item.id;
+          <div className="flex-1 flex flex-col">
+            <nav className="p-4 space-y-2" aria-label="Main navigation">
+              {baseNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentPage === item.id;
 
-              return (
-                <Button
-                  key={item.id}
-                  variant={isActive ? 'secondary' : 'ghost'}
-                  className="w-full justify-start gap-3"
-                  onClick={() => handleNavigate(item.path)}
-                  aria-label={item.label}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <Icon className="w-5 h-5" aria-hidden="true" />
-                  <span>{item.label}</span>
-                </Button>
-              );
-            })}
+                return (
+                  <Button
+                    key={item.id}
+                    variant={isActive ? 'secondary' : 'ghost'}
+                    className="w-full justify-start gap-3"
+                    onClick={() => handleNavigate(item.path)}
+                    aria-label={item.label}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <Icon className="w-5 h-5" aria-hidden="true" />
+                    <span>{item.label}</span>
+                  </Button>
+                );
+              })}
+            </nav>
 
-            {/* Admin Navigation - Only show for admin users */}
-            {isLoggedIn && isAdmin && (
+            {/* Admin/Publisher Navigation - Bottom Section */}
+            {adminNavItems.length > 0 && (
               <>
-                <Separator className="my-4" />
-                <Button
-                  key={adminItem.id}
-                  variant={currentPage === adminItem.id ? 'secondary' : 'ghost'}
-                  className="w-full justify-start gap-3"
-                  onClick={() => handleNavigate(adminItem.path)}
-                  aria-label={adminItem.label}
-                  aria-current={currentPage === adminItem.id ? 'page' : undefined}
-                >
-                  <Shield className="w-5 h-5" aria-hidden="true" />
-                  <span>{adminItem.label}</span>
-                </Button>
-                <Button
-                  key={developerItem.id}
-                  variant={currentPage === developerItem.id ? 'secondary' : 'ghost'}
-                  className="w-full justify-start gap-3"
-                  onClick={() => handleNavigate(developerItem.path)}
-                  aria-label={developerItem.label}
-                  aria-current={currentPage === developerItem.id ? 'page' : undefined}
-                >
-                  <Code className="w-5 h-5" aria-hidden="true" />
-                  <span>{developerItem.label}</span>
-                </Button>
+                <Separator />
+                <nav className="p-4 space-y-2">
+                  {adminNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentPage === item.id;
+
+                    return (
+                      <Button
+                        key={item.id}
+                        variant={isActive ? 'secondary' : 'ghost'}
+                        className="w-full justify-start gap-3"
+                        onClick={() => handleNavigate(item.path)}
+                        aria-label={item.label}
+                        aria-current={isActive ? 'page' : undefined}
+                      >
+                        <Icon className="w-5 h-5" aria-hidden="true" />
+                        <span>{item.label}</span>
+                      </Button>
+                    );
+                  })}
+                </nav>
               </>
             )}
-
-            {/* Publisher Navigation - Only show for publisher users */}
-            {isLoggedIn && isPublisher && (
-              <>
-                <Separator className="my-4" />
-                <Button
-                  key={publisherItem.id}
-                  variant={currentPage === publisherItem.id ? 'secondary' : 'ghost'}
-                  className="w-full justify-start gap-3"
-                  onClick={() => handleNavigate(publisherItem.path)}
-                  aria-label={publisherItem.label}
-                  aria-current={currentPage === publisherItem.id ? 'page' : undefined}
-                >
-                  <BarChart3 className="w-5 h-5" aria-hidden="true" />
-                  <span>{publisherItem.label}</span>
-                </Button>
-              </>
-            )}
-          </nav>
+          </div>
 
           <Separator />
 
@@ -343,8 +356,7 @@ export function Header({
       case '/profile': return 'Profile';
       case '/admin': return 'Admin Dashboard';
       case '/developer': return 'Developer Dashboard';
-      case '/publisher': return 'Publisher Dashboard';
-      case '/login': return 'Sign In';
+      case '/publisher': return 'Publisher Dashboard';      case '/login': return 'Log In';
       case '/signup': return 'Sign Up';
       default: 
         if (pathname.startsWith('/games/')) {
@@ -360,9 +372,8 @@ export function Header({
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full h-16 navbar-header">
       {/* Background that extends full viewport width */}
-      <div className="w-full h-full bg-card border-b navbar-header-bg">
-        <div className={`w-full h-full px-4 lg:px-6 flex items-center justify-between gap-3 relative z-20 max-w-full overflow-hidden transition-all duration-300 ${
-          isSidebarOpen ? 'lg:pl-52' : 'lg:pl-6'
+      <div className="w-full h-full bg-card border-b navbar-header-bg">        <div className={`w-full h-full px-4 lg:px-6 flex items-center justify-between gap-3 relative z-20 max-w-full overflow-hidden transition-all duration-300 ${
+          isSidebarOpen ? 'lg:pl-52' : 'lg:pl-20'
         }`}>
           {/* Menu Button & Logo - Always visible */}
           <div className="flex items-center gap-3 flex-shrink-0">
@@ -410,10 +421,8 @@ export function Header({
                 AccessPlay
               </span>
             </Button>
-          </div>
-
-          {/* Page Title */}
-          <div className="flex-1 min-w-0">
+          </div>          {/* Page Title */}
+          <div className="flex-1 min-w-0 text-center">
             <h1 className="text-base lg:text-lg font-semibold truncate">{getPageTitle()}</h1>
           </div>
 
@@ -432,9 +441,7 @@ export function Header({
               {voiceControlsEnabled && (
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" aria-hidden="true" />
               )}
-            </Button>
-
-            {/* Magnifier Toggle Button */}
+            </Button>            {/* Magnifier Toggle Button */}
             <Button
               variant={magnifierEnabled ? 'default' : 'outline'}
               size="icon"
@@ -450,53 +457,67 @@ export function Header({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="3"
-                  className="w-3 h-3 absolute bottom-0 right-0"
+                  className="w-2.5 h-2.5 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
                   aria-hidden="true"
                 >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
                 </svg>
               </div>
               {magnifierEnabled && (
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" aria-hidden="true" />
               )}
-            </Button>
-
-            {/* Login/User Dropdown Button (Hidden on mobile) */}
+            </Button>            {/* Login/User Dropdown Button (Hidden on mobile) */}
             {isLoggedIn ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
-                    variant="outline" 
-                    className="hidden md:flex items-center gap-2 relative z-30"
+                    variant="ghost" 
+                    size="sm"
+                    className="hidden md:flex items-center gap-3 relative z-30 px-3 py-2 h-10 hover:bg-accent/80 transition-colors"
                   >
-                    <User className="w-4 h-4" />
-                    <span>{user?.name || 'User'}</span>
-                    <ChevronDown className="w-4 h-4" />
+                    <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold shadow-sm">
+                      {user?.name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div className="flex flex-col items-start min-w-0">
+                      <span className="truncate max-w-24 text-sm font-medium">{user?.name || 'User'}</span>
+                      <span className="text-xs text-muted-foreground truncate max-w-24">
+                        {user?.role || (user?.isAdmin ? 'Admin' : user?.isPublisher ? 'Publisher' : 'Member')}
+                      </span>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>
-                    <div className="font-normal">
-                      <p className="font-medium">{user?.name || 'User'}</p>
-                      <p className="text-sm text-muted-foreground capitalize">
-                        {user?.role || (user?.isAdmin ? 'Admin' : user?.isPublisher ? 'Publisher' : 'User')}
-                      </p>
+                <DropdownMenuContent align="end" className="w-64 p-2">
+                  <DropdownMenuLabel className="pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold shadow-sm">
+                        {user?.name?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <p className="font-semibold leading-none truncate">{user?.name || 'User'}</p>
+                        <p className="text-sm text-muted-foreground truncate mt-1">
+                          {user?.role || (user?.isAdmin ? 'Administrator' : user?.isPublisher ? 'Publisher' : 'Member')}
+                        </p>
+                      </div>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={onLogout} className="text-red-600 focus:text-red-600">
-                    <LogOut className="w-4 h-4 mr-2" />
+                  <DropdownMenuItem 
+                    onClick={onLogout} 
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 focus:text-red-700 focus:bg-red-50 cursor-pointer rounded-md p-3"
+                  >
+                    <LogOut className="w-4 h-4 mr-3" />
                     Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
+              </DropdownMenu>) : (
               <Button 
                 onClick={onLogin}
+                size="sm"
                 className="hidden md:flex relative z-30"
               >
-                Sign In
+                Log In
               </Button>
             )}
           </div>

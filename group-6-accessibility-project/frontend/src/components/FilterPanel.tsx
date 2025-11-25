@@ -2,7 +2,6 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
-import { ScrollArea } from './ui/scroll-area';
 import { Eye, Ear, Hand, Brain } from 'lucide-react';
 
 interface FilterPanelProps {
@@ -76,9 +75,8 @@ export function FilterPanel({
   ];
 
   return (
-    <div className="bg-card rounded-lg border p-4 lg:p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3>Filter by Accessibility</h3>
+    <div className="bg-card rounded-lg border p-4 lg:p-4 space-y-4">      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium">Filter by Accessibility</h3>
         {activeFilterCount > 0 && (
           <Badge variant="secondary" aria-live="polite">
             {activeFilterCount} active

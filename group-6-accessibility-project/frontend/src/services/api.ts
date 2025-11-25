@@ -26,7 +26,8 @@ export interface UserAccessibilitySettings {
 
 // Helper function to get auth token from localStorage
 const getAuthToken = (): string | null => {
-  return localStorage.getItem('token');
+  // Try both possible token names (access_token from login, token from context)
+  return localStorage.getItem('access_token') || localStorage.getItem('token');
 };
 
 // Helper function to create headers with authentication

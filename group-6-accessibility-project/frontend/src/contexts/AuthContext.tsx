@@ -28,19 +28,21 @@ const API_BASE_URL = 'http://localhost:3000';
 const storeAuthData = (user: User, token: string) => {
   localStorage.setItem('user', JSON.stringify(user));
   localStorage.setItem('token', token);
+  localStorage.setItem('access_token', token); // Store both names for compatibility
 };
 
 // Helper function to clear auth data from localStorage
 const clearAuthData = () => {
   localStorage.removeItem('user');
   localStorage.removeItem('token');
+  localStorage.removeItem('access_token'); // Clear both token names
 };
 
 // Helper function to get stored auth data
 const getStoredAuthData = (): { user: User | null; token: string | null } => {
   try {
     const userStr = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || localStorage.getItem('access_token'); // Check both token names
     
     if (userStr && token) {
       const user = JSON.parse(userStr);
@@ -60,15 +62,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading: true,
     isAuthenticated: false,
   });
-
   // Check for stored authentication on app load
   useEffect(() => {
+    console.log('AuthProvider: Checking for stored auth data...');
     const { user, token } = getStoredAuthData();
+    
+    console.log('AuthProvider: Found stored data:', { user: user?.username, hasToken: !!token });
     
     if (user && token) {
       // Validate token by making a test request
       validateToken(user, token);
     } else {
+      console.log('AuthProvider: No stored auth data found');
       setAuthState({
         user: null,
         token: null,
@@ -77,8 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     }
   }, []);
-
   const validateToken = async (user: User, token: string) => {
+    console.log('AuthProvider: Validating token for user:', user.username);
     try {
       // Test the token by making a request to a protected endpoint
       const response = await fetch(`${API_BASE_URL}/user-accessibility-settings/${user.id}`, {
@@ -87,8 +92,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
 
+      console.log('AuthProvider: Token validation response status:', response.status);
+
       if (response.ok) {
         // Token is valid
+        console.log('AuthProvider: Token is valid, setting authenticated state');
         setAuthState({
           user,
           token,
@@ -97,6 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } else {
         // Token is invalid
+        console.log('AuthProvider: Token is invalid, clearing auth data');
         clearAuthData();
         setAuthState({
           user: null,
@@ -106,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       }
     } catch (error) {
-      console.error('Token validation failed:', error);
+      console.error('AuthProvider: Token validation failed:', error);
       clearAuthData();
       setAuthState({
         user: null,
@@ -178,7 +187,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw error;
     }
   };
-
   const logout = () => {
     clearAuthData();
     setAuthState({
@@ -187,6 +195,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading: false,
       isAuthenticated: false,
     });
+    
+    // Force a page refresh to ensure all components update
+    window.location.href = '/';
   };
 
   return (
