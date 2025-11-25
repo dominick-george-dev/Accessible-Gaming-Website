@@ -6,6 +6,7 @@ import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
+import { MyFavoritesPage } from './pages/MyFavoritesPage'
 
 // Create placeholder pages for the navigation items
 const HomePage = () => (
@@ -23,16 +24,7 @@ const HomePage = () => (
   </div>
 );
 
-const FavoritesPage = () => (
-  <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-    <div className="max-w-5xl">
-      <h2 className="text-2xl font-bold mb-6">My Favorites</h2>
-      <p className="text-muted-foreground">
-        You haven't added any games to your favorites yet. Start browsing to find games you love!
-      </p>
-    </div>
-  </div>
-);
+// REMOVE the local FavoritesPage definition!
 
 const AccessibilityPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
@@ -60,9 +52,9 @@ const ProfilePage = () => (
 
 function App() {
   const { setLoginState } = useAuth();
-  const navigate = useNavigate();  const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => {
+  const navigate = useNavigate();
+  const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => {
     console.log('User logged in:', userData);
-    // Set login state and user data - this will now handle redirect
     setLoginState(true, { 
       username: userData.username, 
       email: userData.email, 
@@ -73,7 +65,6 @@ function App() {
 
   const handleSignup = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => {
     console.log('User signed up:', userData);
-    // Set login state and user data - this will now handle redirect
     setLoginState(true, { 
       username: userData.username, 
       email: userData.email, 
@@ -116,7 +107,7 @@ function App() {
       } />
       <Route path="/favorites" element={
         <Layout>
-          <FavoritesPage />
+          <MyFavoritesPage />
         </Layout>
       } />
       <Route path="/accessibility" element={
@@ -129,7 +120,7 @@ function App() {
           <ProfilePage />
         </Layout>
       } />
-        {/* Authentication pages without Layout (they have their own layout) */}
+      {/* Authentication pages without Layout */}
       <Route 
         path="/login" 
         element={
