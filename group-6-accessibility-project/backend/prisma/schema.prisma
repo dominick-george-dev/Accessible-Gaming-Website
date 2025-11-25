@@ -16,7 +16,6 @@ model Game {
   updatedAt             DateTime                @updatedAt
   createdAt             DateTime                @default(now())
   developer             String
-  publisher             String
   rating                Float
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]

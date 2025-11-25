@@ -32,19 +32,27 @@ export function BrowsePage() {
     if (storedSearches) setRecentSearches(JSON.parse(storedSearches));
 
     const loadGames = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch('http://localhost:3000/games/getall');
-        if (!res.ok) throw new Error('Failed to fetch games');
-        const data: Game[] = await res.json();
-        setGames(data);
-      } catch (err) {
-        console.error(err);
-        toast.error('Failed to load games');
-      } finally {
-        setLoading(false);
-      }
-    };
+  setLoading(true);
+  try {
+    const res = await fetch('http://localhost:3000/games/getall');
+    if (!res.ok) throw new Error('Failed to fetch games');
+
+    const data = await res.json();
+    console.log("API returned:", data);
+
+    if (Array.isArray(data)) setGames(data);
+    else if (Array.isArray(data.games)) setGames(data.games);
+    else if (Array.isArray(data.data)) setGames(data.data);
+    else setGames([]);
+
+  } catch (err) {
+    console.error(err);
+    toast.error('Failed to load games');
+    setGames([]);
+  } finally {
+    setLoading(false);
+  }
+};
     loadGames();
   }, []);
 
@@ -81,39 +89,50 @@ export function BrowsePage() {
 
   const activeFilterCount = Object.values(selectedCategories).filter(Boolean).length;
 
-  // Filter games based on search and accessibility categories
- const filteredGames = useMemo(() => {
+
+
+ // ...existing code...
+// ...existing code...
+const filteredGames = useMemo(() => {
+  if (!Array.isArray(games)) return [];
+
+  // Get selected categories as array (lowercase for comparison)
+  const selectedCats = Object.entries(selectedCategories)
+    .filter(([_, selected]) => selected)
+    .map(([cat]) => cat.toLowerCase());
+
   return games.filter(game => {
     const title = game.title ?? '';
     const tags = Array.isArray(game.accessibilityTags) ? game.accessibilityTags : [];
     const genres = Array.isArray(game.genre) ? game.genre : [];
-
     const q = searchQuery.toLowerCase();
 
+    // Search filter
     const matchesSearch =
       q === '' ||
       title.toLowerCase().includes(q) ||
       genres.some(g => (g ?? '').toLowerCase().includes(q)) ||
       tags.some(tag => (tag?.name ?? '').toLowerCase().includes(q));
 
-    const selectedCats = Object.entries(selectedCategories)
-      .filter(([_, selected]) => selected)
-      .map(([cat]) => cat);
-
+    // Category filter: game must have ANY selected category in its tags
     const matchesAccessibility =
       selectedCats.length === 0 ||
-      selectedCats.every(cat =>
-        tags.some(tag => tag?.category === cat)
-      );
+      tags.some(tag => {
+        const cat = (tag?.category ?? '').toLowerCase();
+        return selectedCats.includes(cat);
+      });
 
     return matchesSearch && matchesAccessibility;
   });
 }, [games, searchQuery, selectedCategories]);
-
+// ...existing code...
+// ...existing code...
 
   // Generate search suggestions (autocomplete)
   const suggestions = useMemo(() => {
   if (searchQuery.length < 2) return [];
+  if (!Array.isArray(games)) return [];
+
   const query = searchQuery.toLowerCase();
   const matches: string[] = [];
 

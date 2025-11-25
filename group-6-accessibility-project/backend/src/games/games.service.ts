@@ -25,7 +25,6 @@ export class GamesService {
                     genre: true,
                     releaseDate: true,
                     developer: true,
-                    publisher: true,
                     rating: true,
                     createdAt: true,
                     updatedAt: true,
@@ -47,56 +46,52 @@ export class GamesService {
         }
     }
 
-    async findAll(page: number = 1, limit: number = 20) {
-        // Validate and sanitize inputs
-        const validatedPage = Math.max(1, Math.floor(page) || 1);
-        const validatedLimit = Math.min(
-            this.MAX_PAGE_SIZE,
-            Math.max(1, Math.floor(limit) || this.DEFAULT_PAGE_SIZE)
-        );
+async findAll(page: number = 1, limit: number = 20) {
+    // Validate and sanitize inputs
+    const validatedPage = Math.max(1, Math.floor(page) || 1);
+    const validatedLimit = Math.min(
+        this.MAX_PAGE_SIZE,
+        Math.max(1, Math.floor(limit) || this.DEFAULT_PAGE_SIZE)
+    );
 
-        const skip = (validatedPage - 1) * validatedLimit;
+    const skip = (validatedPage - 1) * validatedLimit;
 
-        try {
-            const [games, total] = await Promise.all([
-                this.databaseService.game.findMany({
-                    skip,
-                    take: validatedLimit,
-                    select: {
-                        id: true,
-                        title: true,
-                        description: true,
-                        genre: true,
-                        releaseDate: true,
-                        developer: true,
-                        publisher: true,
-                        rating: true,
-                        createdAt: true,
-                        updatedAt: true,
-                    },
-                    orderBy: {
-                        createdAt: 'desc',
-                    },
-                }),
-                this.databaseService.game.count(),
-            ]);
-
-            return {
-                data: games,
-                pagination: {
-                    page: validatedPage,
-                    limit: validatedLimit,
-                    total,
-                    totalPages: Math.ceil(total / validatedLimit),
+    try {
+        const [games, total] = await Promise.all([
+            this.databaseService.game.findMany({
+                skip,
+                take: validatedLimit,
+                include: {
+                    gameAccessibilityTags: {
+                        include: {
+                            accessibilityTags: true
+                        }
+                    }
                 },
-            };
-        } catch (error) {
-            // Don't leak database errors
-            throw new BadRequestException('Failed to retrieve games');
-        }
-    }
-    async findAll(){
-        return this.databaseService.game.findMany()
-        }
-}
+                orderBy: {
+                    createdAt: 'desc',
+                },
+            }),
+            this.databaseService.game.count(),
+        ]);
 
+        // Flatten accessibilityTags for frontend
+        const mappedGames = games.map(game => ({
+            ...game,
+            accessibilityTags: game.gameAccessibilityTags.map(gat => gat.accessibilityTags)
+        }));
+        return {
+            data: mappedGames,
+            pagination: {
+                page: validatedPage,
+                limit: validatedLimit,
+                total,
+                totalPages: Math.ceil(total / validatedLimit),
+            },
+        };
+    } catch (error) {
+        // Don't leak database errors
+        throw new BadRequestException('Failed to retrieve games');
+    }
+}
+}

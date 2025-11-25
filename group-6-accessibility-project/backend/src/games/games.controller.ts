@@ -23,7 +23,7 @@ export class GamesController {
         }
     }
 
-    @Get()
+    @Get('/getall')
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
     async getAllGames(@Query() query: GetGamesQueryDto) {
         try {
@@ -37,9 +37,9 @@ export class GamesController {
             throw new HttpException('Failed to retrieve games', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    @Get('/getall')
-    getAllGames() {
+    
+    /*getAllGames() {
         // Logic to get game details by ID
         return this.gamesService.findAll();
-    }
+    }*/
 }
