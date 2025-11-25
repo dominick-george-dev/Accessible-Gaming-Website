@@ -1,3 +1,9 @@
+-- AlterTable
+ALTER TABLE "Game" ADD COLUMN     "publisher" TEXT;
+
+-- DropEnum
+DROP TYPE "categories";
+
 -- CreateTable
 CREATE TABLE "View" (
     "id" SERIAL NOT NULL,

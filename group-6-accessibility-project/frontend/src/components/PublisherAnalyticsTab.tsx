@@ -14,36 +14,40 @@ export function PublisherAnalyticsTab() {
   const [loading, setLoading] = useState(false);
   const [selectedGame, setSelectedGame] = useState<any | null>(null);
   const [open, setOpen] = useState(false);
+  const [unauthorized, setUnauthorized] = useState(false);
+
 
 
   useEffect(() => {
-    if(!id) return;
-    
-    const loadData = async () => {
-      try{
-        setLoading(true);
-        loadAnalytics(id);
-      }catch(e){
-      console.error("Error loading analytics", e);
-      }finally {
-      setLoading(false);
-      };
-    };
-    loadData();
-  }, []);
+  setLoading(true);
+  loadAnalytics().finally(() => setLoading(false));
+}, []);
 
 
-  const loadAnalytics = async (publisherId: string) => {
-    try {
-      const res = await fetch(`http://localhost:3000/analytics/publisher/${publisherId}`);
-      const data = await res.json();
-      setAnalytics(data);
-    } catch (err) {
-      console.error("Error loading analytics", err);
+  const loadAnalytics = async () => {
+  try {
+    const res = await fetch(`http://localhost:3000/analytics/publisher`, {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+      },
+    });
+    if (res.status === 403) {
+      setUnauthorized(true);
+      setAnalytics(null);
+      return;
     }
+    if (!res.ok) {
+      throw new Error("Failed to load analytics");
+    }
+    const data = await res.json();
+    setAnalytics(data);
+  } catch (err) {
+    console.error("Error loading analytics", err);
   }
+};
 
   if (loading) return <p>Loading analytics...</p>;
+  if (unauthorized) return <p style={{ color: "red" }}>Unauthorized access. You do not have permission to view this data.</p>;
   if (!analytics) return <p>Failed to load analytics...</p>;
 
   

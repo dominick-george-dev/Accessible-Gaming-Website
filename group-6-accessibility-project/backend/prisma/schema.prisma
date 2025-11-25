@@ -22,7 +22,6 @@ model Game {
   transcript            String?
   hasBeenVerified       Boolean                 @default(false)
   publisherId           Int?
-  publisher             String?
   Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
@@ -112,5 +111,3 @@ enum roles {
   ADMIN
   PUBLISHER
 }
-
-

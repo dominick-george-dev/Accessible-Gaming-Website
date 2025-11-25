@@ -14,11 +14,11 @@ CREATE TABLE "User" (
 CREATE TABLE "UserAccessibilitySettings" (
     "id" SERIAL NOT NULL,
     "userId" INTEGER NOT NULL,
-    "textSize" INTEGER NOT NULL DEFAULT 16,
+    "textSize" TEXT NOT NULL DEFAULT 'medium',
     "fontFamily" TEXT NOT NULL DEFAULT 'default',
     "highContrast" BOOLEAN NOT NULL DEFAULT false,
     "colorBlindMode" TEXT NOT NULL DEFAULT 'none',
-    "colorMode" BOOLEAN NOT NULL DEFAULT false,
+    "colourMode" BOOLEAN NOT NULL DEFAULT false,
     "visualAccessibility" BOOLEAN NOT NULL DEFAULT false,
     "hearingAccessibility" BOOLEAN NOT NULL DEFAULT false,
     "motorDexterityAccessibility" BOOLEAN NOT NULL DEFAULT false,

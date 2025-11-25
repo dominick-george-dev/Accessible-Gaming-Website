@@ -43,6 +43,9 @@ export class AnalyticsService {
       // Top 5 viewed games
       const topViewedPromise = this.db.view.groupBy({
         by: ["gameId"],
+        where:{
+          game: { publisherId }
+        },
         _count: { gameId: true },
         orderBy: { _count: { gameId: "desc" } },
         take: 5
@@ -51,6 +54,9 @@ export class AnalyticsService {
       // Top 5 rated games
       const topRatedPromise = this.db.review.groupBy({
         by: ["gameId"],
+        where:{
+          game:{publisherId}
+        },
         _avg: { rating: true },
         orderBy: { _avg: { rating: "desc" } },
         take: 5

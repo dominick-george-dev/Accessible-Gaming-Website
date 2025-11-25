@@ -59,6 +59,7 @@ export class AuthService {
           username: true,
           email: true,
           createdAt: true,
+          role: true,
           // Don't return password in response
         },
       });
@@ -67,7 +68,8 @@ export class AuthService {
       const payload = { 
         sub: user.id, 
         username: user.username, 
-        email: user.email 
+        email: user.email, 
+        role: user.role,
       };
       const token = this.jwtService.sign(payload);
 
@@ -78,6 +80,7 @@ export class AuthService {
           id: user.id,
           username: user.username,
           email: user.email,
+          role: user.role,
           createdAt: user.createdAt,
         },
       };
@@ -100,7 +103,8 @@ export class AuthService {
         username: true,
         email: true,
         password: true,
-        createdAt: true, // Make sure this is included
+        role: true, //Added for role based security
+        createdAt: true,
         },
     });
 
@@ -118,7 +122,8 @@ export class AuthService {
     const payload = { 
       sub: user.id, 
       username: user.username, 
-      email: user.email 
+      email: user.email,
+      role: user.role
     };
     const token = this.jwtService.sign(payload);
 
@@ -142,6 +147,7 @@ export class AuthService {
         id: true,
         email: true,
         username: true,
+        role: true,
         createdAt: true,
         // Don't select password
       },
