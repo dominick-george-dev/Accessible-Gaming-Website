@@ -33,7 +33,7 @@ describe('GamesController', () => {
   });
 
   it('should return 1 game', async () => {
-    const game = await controller.getGameDetails(1);
+    const game = await controller.getGameDetails({ id: 1 });
 
     expect(service.findById).toHaveBeenCalledWith(1);
     expect(game).toEqual({

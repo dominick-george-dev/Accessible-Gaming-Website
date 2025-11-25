@@ -1,13 +1,55 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { HomePage, ProfilePageWrapper } from './pages'
 import { Toaster } from './components/ui'
 import React from 'react'
 import './App.css'
-import { GameDetailPage } from './pages/GameDetailPage'
 import { AccessibilityProvider } from './contexts/AccessibilityContext'
 import { AuthProvider } from './contexts/AuthContext'
+import { GameDetailPage } from './pages/GameDetailPage'
+import { BrowsePage } from './pages/BrowserPage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
+import { Layout } from './components/Layout'
+import ProfilePage from './pages/ProfilePage'
+
+// Create placeholder pages for the navigation items
+const HomePageComponent = () => (
+  <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4">
+    <div className="max-w-4xl w-full text-center">
+      <h2 className="text-2xl font-bold mb-6">Welcome to AccessPlay</h2>
+      <p className="text-muted-foreground mb-4">
+        Discover accessible games designed for everyone. Browse our collection of games 
+        with detailed accessibility information to find the perfect game for you.
+      </p>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Add featured games or content here */}
+      </div>
+    </div>
+  </div>
+);
+
+const FavoritesPage = () => (
+  <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4">
+    <div className="max-w-4xl w-full text-center">
+      <h2 className="text-2xl font-bold mb-6">My Favorites</h2>
+      <p className="text-muted-foreground">
+        You haven't added any games to your favorites yet. Start browsing to find games you love!
+      </p>
+    </div>
+  </div>
+);
+
+const AccessibilityPage = () => (
+  <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4">
+    <div className="max-w-4xl w-full text-center">
+      <h2 className="text-2xl font-bold mb-6">Accessibility Statement</h2>
+      <p className="text-muted-foreground mb-4">
+        AccessPlay is committed to ensuring digital accessibility for people with disabilities. 
+        We are continually improving the user experience for everyone.
+      </p>
+      {/* Add more accessibility information */}
+    </div>
+  </div>
+);
 
 function App() {
   // Add colorblind filter SVG to document
@@ -49,41 +91,58 @@ function App() {
   }, []);
   return (
     <AuthProvider>
-      <AccessibilityProvider>
-        <Router>
+      <AccessibilityProvider>        <Router>
           <div className="app">
             {/* Live region for screen reader announcements */}
             <div aria-live="polite" aria-atomic="true" className="sr-only" id="live-region" />
-          
-            {/* Skip link for accessibility */}
-            <a href="#main-content" className="skip-link">
-              Skip to main content
-            </a>
 
             {/* Navigation component will go here once you add it from Figma */}
             <main id="main-content">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/profile" element={<ProfilePageWrapper />} />
-                <Route path="/games/:id" element={<GameDetailPage />} />
-                  <Route 
-                  path="/login" 
-                  element={
-                    <LoginPage 
-                      onNavigateToSignup={() => window.location.href = '/signup'}
-                    />
-                  } 
-                />
-                
-                <Route 
-                  path="/signup" 
-                  element={
-                    <SignupPage 
-                      onNavigateToLogin={() => window.location.href = '/login'}
-                    />
-                  } 
-                />
-              </Routes>
+               <Routes>      {/* Routes with Layout wrapper */}
+      <Route path="/" element={
+        <Layout>
+          <HomePageComponent />
+        </Layout>
+      } />
+      <Route path="/home" element={
+        <Layout>
+          <HomePageComponent />
+        </Layout>
+      } />
+      <Route path="/browserpage" element={
+        <Layout>
+          <BrowsePage />
+        </Layout>
+      } />
+      <Route path="/games/:id" element={
+        <Layout>
+          <GameDetailPage />
+        </Layout>
+      } />
+      <Route path="/favorites" element={
+        <Layout>
+          <FavoritesPage />
+        </Layout>
+      } />
+      <Route path="/accessibility" element={
+        <Layout>
+          <AccessibilityPage />
+        </Layout>
+      } />      <Route path="/profile" element={
+        <Layout>
+          <ProfilePage />
+        </Layout>
+      } />        {/* Authentication pages without Layout (they have their own layout) */}      <Route 
+        path="/login" 
+        element={
+          <LoginPage />
+        } 
+      />      <Route 
+        path="/signup" 
+        element={
+          <SignupPage />
+        } 
+      /></Routes>
             </main>
             {/* Footer component will go here once you add it from Figma */}
             <Toaster />

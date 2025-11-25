@@ -6,12 +6,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Eye, EyeOff, AlertCircle, Check, X } from 'lucide-react';
-import { toast } from 'sonner'; 
-import { useAuth } from '../contexts/AuthContext';
-
-interface SignupPageProps {
-  onNavigateToLogin: () => void;
-}
+import { toast } from 'sonner';
 
 interface PasswordValidation {
   minLength: boolean;
@@ -20,9 +15,8 @@ interface PasswordValidation {
   hasSymbol: boolean;
 }
 
-export function SignupPage({ onNavigateToLogin }: SignupPageProps) {
+export function SignupPage() {
   const navigate = useNavigate();
-  const { signup } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,7 +28,8 @@ export function SignupPage({ onNavigateToLogin }: SignupPageProps) {
     email?: string; 
     password?: string; 
     confirmPassword?: string;
-  }>({});  const [isSubmitting, setIsSubmitting] = useState(false);
+  }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Real-time password validation
   const validatePassword = (pwd: string): PasswordValidation => {
@@ -99,13 +94,53 @@ export function SignupPage({ onNavigateToLogin }: SignupPageProps) {
       return;    }
 
     try {
-      // Use auth context signup method
-      await signup(name.trim(), email.trim().toLowerCase(), password);
-      
-      toast.success('Account created successfully! You are now logged in.');
-      
-      // Redirect to profile page
-      navigate('/profile');
+      // Call backend API directly
+      const response = await fetch('http://localhost:3000/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: name.trim(),
+          email: email.trim().toLowerCase(),
+          password: password,
+        }),
+      });
+
+      const data = await response.json();      if (response.ok) {
+        localStorage.setItem('access_token', data.access_token);
+        toast.success('Account created successfully! You are now logged in.');
+        
+        // Redirect to previous page if available, otherwise go to home
+        const redirectPath = localStorage.getItem('redirectAfterAuth') || '/';
+        localStorage.removeItem('redirectAfterAuth');
+        
+        // Use setTimeout to allow the toast to show before navigation
+        setTimeout(() => {
+          navigate(redirectPath);
+        }, 100);
+      }else {
+        // Handle API errors
+        if (data.message && data.message.includes('email already exists')) {
+          setErrors({ email: 'This email is already registered. Please use a different email or try logging in.' });
+        } else if (data.message && data.message.includes('username') && data.message.includes('taken')) {
+          setErrors({ name: 'This username is already taken. Please choose a different username.' });
+        } else if (data.message) {
+          // Handle validation errors from backend
+          const errorMsg = Array.isArray(data.message) ? data.message.join('. ') : data.message;
+          if (errorMsg.includes('Password must contain')) {
+            setErrors({ password: errorMsg });
+          } else if (errorMsg.includes('Username must be')) {
+            setErrors({ name: errorMsg });
+          } else if (errorMsg.includes('email')) {
+            setErrors({ email: errorMsg });
+          } else {
+            toast.error(errorMsg);
+          }
+        } else {
+          toast.error('Registration failed. Please try again.');
+        }
+      }
     } catch (error) {
       console.error('Registration error:', error);
       
@@ -138,6 +173,10 @@ export function SignupPage({ onNavigateToLogin }: SignupPageProps) {
     liveRegion.textContent = message;
     document.body.appendChild(liveRegion);
     setTimeout(() => document.body.removeChild(liveRegion), 1000);
+  };
+  // Handle navigation to login while preserving redirect path
+  const handleNavigateToLogin = () => {
+    navigate('/login');
   };
 
   const ValidationItem = ({ isValid, text }: { isValid: boolean; text: string }) => (
@@ -363,7 +402,7 @@ export function SignupPage({ onNavigateToLogin }: SignupPageProps) {
               <Button
                 type="button"
                 variant="link"
-                onClick={onNavigateToLogin}
+                onClick={handleNavigateToLogin}
                 className="px-1"
               >
                 Sign in

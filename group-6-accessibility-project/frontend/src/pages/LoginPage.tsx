@@ -7,13 +7,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner'; 
-import { useAuth } from '../contexts/AuthContext';
 
 interface LoginPageProps {
+  onLogin: (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => void;
   onNavigateToSignup: () => void;
 }
 
-export function LoginPage({ onNavigateToSignup }: LoginPageProps) {
+export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -50,27 +50,44 @@ export function LoginPage({ onNavigateToSignup }: LoginPageProps) {
       setIsSubmitting(false);
       const errorMessage = Object.values(newErrors).join('. ');
       announceToScreenReader(errorMessage);
-      return;    }
+      return;
+    }
 
     try {
-      // Use auth context login method
-      await login(email.trim().toLowerCase(), password);
-      
-      toast.success('Login successful! Welcome back.');
-      
-      // Redirect to profile page
-      navigate('/profile');    } catch (error) {
-      console.error('Login error:', error);
-      
-      // Handle login errors
-      const errorMessage = error instanceof Error ? error.message : 'Login failed. Please try again.';
-      if (errorMessage.includes('Invalid email or password')) {
-        setErrors({ general: 'Invalid email or password. Please check your credentials and try again.' });
+      // Call backend API directly
+      const response = await fetch('http://localhost:3000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        toast.success('Login successful! Welcome back.');
+        onLogin(data.user.username, data.user.email);
       } else {
-        setErrors({ general: errorMessage });
+        // Handle API errors
+        if (data.message && data.message.includes('Invalid email or password')) {
+          setErrors({ general: 'Invalid email or password. Please check your credentials and try again.' });
+        } else if (data.message) {
+          const errorMsg = Array.isArray(data.message) ? data.message.join('. ') : data.message;
+          setErrors({ general: errorMsg });
+        } else {
+          setErrors({ general: 'Login failed. Please try again.' });
+        }
       }
-      
-      toast.error('Login failed. Please check your credentials.');
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Network error. Please check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -84,19 +101,21 @@ export function LoginPage({ onNavigateToSignup }: LoginPageProps) {
     liveRegion.textContent = message;
     document.body.appendChild(liveRegion);
     setTimeout(() => document.body.removeChild(liveRegion), 1000);
+  };  // Handle navigation to signup
+  const handleNavigateToSignup = () => {
+    navigate('/signup');
   };
 
   return (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle>Sign in to your account</CardTitle>
+      <Card className="w-full max-w-md">        <CardHeader className="space-y-2">
+          <CardTitle className="text-xl">Sign in to your account</CardTitle>
           <CardDescription>
             Enter your email and password to access your personalized game discovery experience
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             {/* Email Field */}
             <div className="space-y-2">
               <Label htmlFor="login-email">
@@ -178,9 +197,7 @@ export function LoginPage({ onNavigateToSignup }: LoginPageProps) {
                 </AlertDescription>
               </Alert>
             )}
-          </CardContent>
-
-          <CardFooter className="flex flex-col gap-4 mt-3">
+          </CardContent>          <CardFooter className="flex flex-col gap-6 mt-6">
             <Button
               type="submit"
               className="w-full"
@@ -194,7 +211,7 @@ export function LoginPage({ onNavigateToSignup }: LoginPageProps) {
               <Button
                 type="button"
                 variant="link"
-                onClick={onNavigateToSignup}
+                onClick={handleNavigateToSignup}
                 className="px-1"
               >
                 Sign up
