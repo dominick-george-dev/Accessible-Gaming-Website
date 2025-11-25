@@ -10,7 +10,9 @@ export interface Game {
   id: string;
   title: string;
   description: string;
-  thumbnail: string;
+  images: string[];
+  trailer: string;
+  transcript: string;
   genre: string[];
   developer: string;
   rating: number;

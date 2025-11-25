@@ -9,27 +9,14 @@ export class GamesService {
     constructor(private readonly databaseService: DatabaseService) {}
 
     async findById(id: number) {
-        if (!id || id < 1 || !Number.isInteger(id)) {
+        // Ensure id is a valid positive integer
+        if (typeof id !== 'number' || !Number.isInteger(id) || id < 1) {
             throw new BadRequestException('Invalid game ID');
-        }
-
-        try {
+        }        try {
             const game = await this.databaseService.game.findUnique({
                 where: {
                     id,
-                },
-                select: {
-                    id: true,
-                    title: true,
-                    description: true,
-                    genre: true,
-                    releaseDate: true,
-                    developer: true,
-                    rating: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    // Exclude sensitive fields if any
-                },
+                },   
             });
 
             if (!game) {
@@ -38,7 +25,7 @@ export class GamesService {
 
             return game;
         } catch (error) {
-            if (error instanceof NotFoundException) {
+            if (error instanceof NotFoundException || error instanceof BadRequestException) {
                 throw error;
             }
             // Don't leak database errors
@@ -66,8 +53,10 @@ async findAll(page: number = 1, limit: number = 20) {
                         include: {
                             accessibilityTags: true
                         }
-                    }
+                    },
                 },
+                
+                
                 orderBy: {
                     createdAt: 'desc',
                 },
@@ -78,7 +67,8 @@ async findAll(page: number = 1, limit: number = 20) {
         // Flatten accessibilityTags for frontend
         const mappedGames = games.map(game => ({
             ...game,
-            accessibilityTags: game.gameAccessibilityTags.map(gat => gat.accessibilityTags)
+            accessibilityTags: game.gameAccessibilityTags.map(gat => gat.accessibilityTags),
+            images: game.images ?? [],
         }));
         return {
             data: mappedGames,
