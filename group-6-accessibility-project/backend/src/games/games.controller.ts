@@ -5,7 +5,9 @@ import { GameIdParamDto } from './dto/game-id-param.dto';
 
 @Controller('games')
 export class GamesController {
-    constructor(private readonly gamesService: GamesService) {}    @Get('/gameDetails/:id')
+    constructor(private readonly gamesService: GamesService) {}    
+    
+    @Get('/gameDetails/:id')
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
     async getGameDetails(@Param() params: GameIdParamDto) {
         try {
@@ -20,11 +22,11 @@ export class GamesController {
         }
     }
 
-    @Get()
+    @Get('/getall')
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
     async getAllGamesWithPagination(@Query() query: GetGamesQueryDto) {
         try {
-            return await this.gamesService.findAllWithPagination(query.page, query.limit);
+            return await this.gamesService.findAll(query.page, query.limit);
         } catch (error) {
             // Re-throw HTTP exceptions as-is
             if (error instanceof HttpException) {
@@ -33,11 +35,5 @@ export class GamesController {
             // Don't leak internal errors
             throw new HttpException('Failed to retrieve games', HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    @Get('/getall')
-    getAllGames() {
-        // Logic to get all games without pagination
-        return this.gamesService.findAllGames();
     }
 }

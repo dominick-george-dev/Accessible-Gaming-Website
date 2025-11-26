@@ -43,6 +43,12 @@ describe('GamesController', () => {
       title: 'Mock Game',
       developer: 'Mock Dev',
       rating: 4.5,
+      genre: "Action",
+      imageUrl: [
+        "http://example.com/image.png",
+        "http://example.com/image2.png",
+      ],
+      releaseDate: "2023-01-01",
     });
   });
 });
