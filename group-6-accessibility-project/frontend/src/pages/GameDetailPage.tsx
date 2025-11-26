@@ -125,6 +125,27 @@ export function GameDetailPage() {
         }
     };
 
+    const fetchAccessibilityTags = async (gameId: string) => {
+        try {
+            // Try a conventional backend endpoint for accessibility tags for a game
+            const response = await fetch(`http://localhost:3000/games/${gameId}/accessibility-tags`);
+            if (!response.ok) {
+                // If the route does not exist, treat as no tags rather than crashing
+                if (response.status === 404) {
+                    setAccessibilityTags([]);
+                    return;
+                }
+                throw new Error("Failed to fetch accessibility tags");
+            }
+            const data = await response.json();
+            setAccessibilityTags(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Error fetching accessibility tags:", error);
+            // Ensure state is a consistent empty array on failure
+            setAccessibilityTags([]);
+        }
+    };
+
     /**
     * Fetch similar games. Try dedicated endpoint first,
     * otherwise fall back to client-side filtering/sorting.
@@ -134,103 +155,30 @@ export function GameDetailPage() {
         setLoadingSimilar(true);
         setSimilarError(null);
         try {
-            //include Auth header if token is present (secure)
-            const token = localStorage.getItem('authToken');
-            const headers: Record<string, string> = token ? {Authorization: `Bearer ${token}`} :{};
+            const token = localStorage.getItem("authToken");
+            const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
-            //Try server side similar endpoint
-            const res = await fetch(`http://localhost:3000/games/similar/${gameId}`, {headers});
-            if (res.ok) {
-                const data = await res.json();
-                setSimilarGames(data || []);
-                return;
+            // Call the backend similar endpoint — backend returns games already scored and with tags
+            const res = await fetch(`http://localhost:3000/games/similar/${gameId}`, { headers });
+            if (!res.ok) {
+                if (res.status === 404) {
+                    // no server route / game not found — show friendly message and do not attempt heavy client fallback
+                    setSimilarGames([]);
+                    setSimilarError(null);
+                    return;
+                }
+                throw new Error(`Failed to fetch similar games: ${res.status}`);
             }
 
-            //Fallback: fetch all games and do client-side similar scoring
-            const allRes = await fetch(`http://localhost:3000/games`, {headers});
-            if (!allRes.ok) throw new Error("Failed to fetch all games for similarity");
-            const allRaw = await allRes.json();
-
-            // normalize to array
-            let allGames: Game[] = [];
-            if (Array.isArray(allRaw)) allGames = allRaw;
-            else if (Array.isArray(allRaw.games)) allGames = allRaw.games;
-            else if (Array.isArray(allRaw.data)) allGames = allRaw.data;
-            else allGames = Object.values(allRaw).filter(v => v && typeof v === 'object') as Game[];
-
-            if (!allGames.length) { setSimilarGames([]); return; }
-
-            const baseGame = game || allGames.find(g => String(g.id) === String(gameId));
-            if (!baseGame) {
-                setSimilarGames([]);
-                return;
-            }
-
-            //prefernces from localStorage
-            const prefsRaw = localStorage.getItem("preferences");
-            const prefs = prefsRaw ? JSON.parse(prefsRaw) : null;
-            const preferredGenres: string[] = prefs?.preferredGenres || [];
-            const prefferdTags: string[] = prefs?.preferredAccessibilityTags || [];
-
-            const scored = allGames
-                .filter(g => String(g.id) !== String(gameId))
-                .map(g => {
-                    //count matching genres
-                    const genreMatches = g.genre.filter(genre => baseGame.genre.includes(genre)).length;
-                    // Normalize accessibility tag names (games may store tags as strings or objects)
-                    const gTagNames = (g.accessibilityTags || []).map((t: any) =>
-                        typeof t === 'string' ? t : (t.name ?? t.tag ?? '')
-                    );
-                    const baseTagNames = (baseGame.accessibilityTags || []).map((t: any) =>
-                        typeof t === 'string' ? t : (t.name ?? t.tag ?? '')
-                    );
-                    const tagMatches = gTagNames.filter((tagName: string) =>
-                        baseTagNames.includes(tagName)
-                    ).length;
-                    //preference boosts
-                    const prefGenreBoost = preferredGenres.reduce((acc, genre) => acc + (g.genre.includes(genre) ? 1 : 0), 0);
-                    const prefTagBoost = prefferdTags.reduce((acc, tag) => acc + (gTagNames.includes(tag) ? 1 : 0), 0);
-                    //base score: genre + tag + pref + rating weight
-                    const score = genreMatches * 3 + tagMatches * 4 + prefGenreBoost *2 + prefTagBoost *3 + (g.rating || 0) * 0.1;
-                    return { game: g, score }
-                })
-                .sort((a, b) => b.score - a.score)
-                .slice(0, 8)
-                .map(s => s.game);
-            
-            // Attach accessibility tags to each similar game (fetch per-game tags)
-            const similarWithTags = await Promise.all(
-                scored.map(async (g) => {
-                    try {
-                        const tagRes = await fetch(`http://localhost:3000/accessibility-tags/game/${g.id}`, { headers });
-                        if (!tagRes.ok) return g;
-                        const tags = await tagRes.json();
-                        return { ...g, accessibilityTags: tags };
-                    } catch {
-                        return g;
-                    }
-                })
-            );
-
-            setSimilarGames(similarWithTags);
-        } catch (error) {
-            console.error("Error fetching similar games:", error);
-            setSimilarError("Failed to load similar games");
+            const data = await res.json();
+            // assume backend returns an array of games including accessibility tags
+            setSimilarGames(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error("Error fetching similar games:", err);
+            setSimilarError("Unable to load similar games. Please try again later.");
             setSimilarGames([]);
         } finally {
             setLoadingSimilar(false);
-        }
-    };
-
-    const fetchAccessibilityTags = async (gameId: string) => {
-        try {
-            const response = await fetch(`http://localhost:3000/accessibility-tags/game/${gameId}`);
-            if (!response.ok) throw new Error("Failed to fetch accessibility tags");
-            const data = await response.json();
-                setAccessibilityTags(data);
-        } catch (error) {
-            console.error("Error fetching accessibility tags:", error);
-            toast.error("Failed to load accessibility tags");
         }
     };
 

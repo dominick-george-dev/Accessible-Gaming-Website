@@ -35,6 +35,31 @@ export class GamesController {
         }
     }
 
+    @Get('/similar/:id')
+    @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
+    async getSimilarGames(@Param() params: GameIdParamDto) {
+        try {
+            // optional: accept query params for limit, personalization etc.
+            const results = await this.gamesService.findSimilarGames(String(params.id), { limit: 8 });
+            return results;
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new HttpException('Failed to retrieve similar games', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Get('/:id/accessibility-tags')
+    async getAccessibilityTagsForGame(@Param('id') id: string) {
+        try {
+            // delegate to a dedicated service that returns an array of tags
+            console.log('GET /games/:id/accessibility-tags called for id=', id); // DELETE AFTER DEBUGGING
+            return await this.gamesService.getAccessibilityTagsForGame(Number(id));
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new HttpException('Failed to retrieve accessibility tags', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @Get('/getall')
     getAllGames() {
         // Logic to get all games without pagination
