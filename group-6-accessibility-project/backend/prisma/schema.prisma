@@ -65,9 +65,9 @@ model User {
   id                        Int                        @id @default(autoincrement())
   email                     String                     @unique
   username                  String                     @unique
+  password                  String                     @default("NEEDS_PASSWORD_RESET") @db.VarChar(255)
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
-  password                  String                     @default("NEEDS_PASSWORD_RESET") @db.VarChar(255)
   role                      roles                      @default(USER)
   Publisher                 Publisher[]
   Review                    Review[]
@@ -81,14 +81,14 @@ model UserAccessibilitySettings {
   fontFamily                  String   @default("default")
   highContrast                Boolean  @default(false)
   colorBlindMode              String   @default("none")
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime
-  cognitiveAccessibility      Boolean  @default(false)
   colourMode                  String   @default("light-mode")
+  visualAccessibility         Boolean  @default(false)
   hearingAccessibility        Boolean  @default(false)
   motorDexterityAccessibility Boolean  @default(false)
+  cognitiveAccessibility      Boolean  @default(false)
   screenMagnifier             Boolean  @default(false)
-  visualAccessibility         Boolean  @default(false)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime
   User                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 

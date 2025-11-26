@@ -5,15 +5,38 @@ import { Separator } from './ui/separator';
 
 interface AccessibleVideoPlayerProps {
   gameName: string;
-  youtubeUrl: string;      // Pass the YouTube URL
+  youtubeUrl?: string;      // Make optional since it can be empty
   transcript?: string;      // Optional transcript prop
 }
 
 export function AccessibleVideoPlayer({ gameName, youtubeUrl, transcript }: AccessibleVideoPlayerProps) {
+  // Handle empty or invalid YouTube URL
+  if (!youtubeUrl || youtubeUrl.trim() === '') {
+    return (
+      <section aria-labelledby="video-heading" className="space-y-4">
+        <h2 id="video-heading" className="text-xl font-bold">{gameName} Trailer</h2>
+        <div className="bg-muted rounded-lg p-8 text-center">
+          <p className="text-muted-foreground">No trailer available for this game.</p>
+        </div>
+      </section>
+    );
+  }
   // Extract video ID from URL
   const videoIdMatch = youtubeUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|watch\?v=))([\w-]+)/);
   const videoId = videoIdMatch ? videoIdMatch[1] : '';
   console.log('Transcript for testing purposes:', transcript);
+
+  // If we couldn't extract a valid video ID
+  if (!videoId) {
+    return (
+      <section aria-labelledby="video-heading" className="space-y-4">
+        <h2 id="video-heading" className="text-xl font-bold">{gameName} Trailer</h2>
+        <div className="bg-muted rounded-lg p-8 text-center">
+          <p className="text-muted-foreground">Invalid video URL provided.</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section aria-labelledby="video-heading" className="space-y-4">
