@@ -60,7 +60,8 @@ export function GameDetailPage() {
     const [game, setGame] = useState<Game | null>(null);
     const [accessibilityTags, setAccessibilityTags] = useState<Array<{
         id: string;
-        tag: string;
+        tag?: string;
+        name?: string;
         category: string;
         verified: boolean;
     }>>([]);
@@ -128,7 +129,7 @@ export function GameDetailPage() {
     const fetchAccessibilityTags = async (gameId: string) => {
         try {
             // Try a conventional backend endpoint for accessibility tags for a game
-            const response = await fetch(`http://localhost:3000/games/${gameId}/accessibility-tags`);
+            const response = await fetch(`http://localhost:3000/accessibility-tags/game/${gameId}`);
             if (!response.ok) {
                 // If the route does not exist, treat as no tags rather than crashing
                 if (response.status === 404) {
@@ -650,7 +651,7 @@ export function GameDetailPage() {
                         >
                             <Icon className="w-3 h-3" aria-hidden="true" />
                             {tag.verified && <Check className="w-3 h-3" aria-label="Verified" />}
-                            {tag.tag}
+                            {tag.name ?? tag.tag}
                         </Badge>
                         );
                     })}
@@ -755,9 +756,9 @@ export function GameDetailPage() {
                             <div key={tag.id} className="flex items-center space-x-2">
                             <Checkbox
                                 id={`tag-${tag.id}`}
-                                checked={selectedAccessibilityTags.includes(tag.tag)}
-                                onCheckedChange={() => toggleAccessibilityTag(tag.tag)}
-                                aria-label={`Select ${tag.tag}`}
+                                // prefer name, fallback to tag
+                                checked={selectedAccessibilityTags.includes(tag.name ?? tag.tag ?? '')}
+                                onCheckedChange={() => toggleAccessibilityTag(tag.name ?? tag.tag ?? '')}
                             />
                             <label
                                 htmlFor={`tag-${tag.id}`}

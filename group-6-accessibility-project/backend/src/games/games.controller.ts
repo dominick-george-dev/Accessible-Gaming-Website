@@ -52,7 +52,6 @@ export class GamesController {
     async getAccessibilityTagsForGame(@Param('id') id: string) {
         try {
             // delegate to a dedicated service that returns an array of tags
-            console.log('GET /games/:id/accessibility-tags called for id=', id); // DELETE AFTER DEBUGGING
             return await this.gamesService.getAccessibilityTagsForGame(Number(id));
         } catch (error) {
             if (error instanceof HttpException) throw error;
