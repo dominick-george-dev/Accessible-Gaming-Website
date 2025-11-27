@@ -8,7 +8,7 @@ import {
   BarChart3, 
   Code,
   Menu,
-  Mic,
+  Undo, // <-- keep Undo only
   LogOut,
   ChevronDown
 } from 'lucide-react';
@@ -48,8 +48,7 @@ interface HeaderProps {
   onLogout: () => void;
   onToggleMagnifier: () => void;
   magnifierEnabled: boolean;
-  onToggleVoiceControls?: () => void;
-  voiceControlsEnabled?: boolean;
+  onUndo?: () => void;
   user?: {
     name: string;
     role: string;
@@ -323,8 +322,7 @@ export function Header({
   onLogout,
   onToggleMagnifier,
   magnifierEnabled,
-  onToggleVoiceControls,
-  voiceControlsEnabled = false,
+  onUndo,
   user
 }: HeaderProps) {
   const location = useLocation();
@@ -419,19 +417,15 @@ export function Header({
 
           {/* Header Actions */}
           <div className="flex items-center gap-2 lg:gap-4 relative z-30 navbar-header-actions flex-shrink-0">
-            {/* Voice Controls Toggle Button */}
+            {/* Undo Button (replaces mic) */}
             <Button
-              variant={voiceControlsEnabled ? 'default' : 'outline'}
+              variant="outline"
               size="icon"
-              onClick={onToggleVoiceControls}
-              aria-label={voiceControlsEnabled ? 'Disable voice controls' : 'Enable voice controls'}
-              aria-pressed={voiceControlsEnabled}
+              aria-label="Undo"
               className="relative z-30"
+              onClick={onUndo}
             >
-              <Mic className="w-5 h-5" />
-              {voiceControlsEnabled && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" aria-hidden="true" />
-              )}
+              <Undo className="w-5 h-5" />
             </Button>
 
             {/* Magnifier Toggle Button */}

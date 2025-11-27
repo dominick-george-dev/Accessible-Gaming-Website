@@ -5,8 +5,10 @@ import { Breadcrumbs } from './Breadcrumbs';
 import { LoadingBar } from './LoadingBar';
 import { UndoButton } from './UndoButton';
 import { toast } from 'sonner';
-import { addUndoAction } from '../utils/undoManager';
+import { addUndoAction, undoManager } from '../utils/undoManager';
 import { useAuth } from '../hooks/useAuth';
+import { MessageCircle } from 'lucide-react';
+import { AidenChatPanel, CHAT_PANEL_WIDTH } from './AidenChatPanel';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -24,13 +26,33 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [magnifierEnabled, setMagnifierEnabled] = useState(false);
-  const [voiceControlsEnabled, setVoiceControlsEnabled] = useState(false);
   const [user, setUser] = useState<{
     name: string;
     role: string;
     isAdmin: boolean;
     isPublisher: boolean;
   } | null>(null);
+
+  const [isAidenOpen, setIsAidenOpen] = useState(false);
+
+  // Ensure only one of sidebar or chat is open at a time
+  function handleOpenAiden(open: boolean) {
+    if (open) {
+      setIsAidenOpen(true);
+      setIsDesktopSidebarOpen(false);
+      setIsMobileSidebarOpen(false);
+    } else {
+      setIsAidenOpen(false);
+    }
+  }
+  function handleOpenSidebar(open: boolean) {
+    if (open) {
+      setIsDesktopSidebarOpen(true);
+      setIsAidenOpen(false);
+    } else {
+      setIsDesktopSidebarOpen(false);
+    }
+  }
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -114,22 +136,6 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userData');
     navigate('/');
-  };  const handleToggleSidebar = () => {
-    const newState = !isDesktopSidebarOpen;
-    const previousState = isDesktopSidebarOpen;
-    
-    setIsDesktopSidebarOpen(newState);
-    localStorage.setItem('isDesktopSidebarOpen', JSON.stringify(newState));
-    
-    // Add undo action for sidebar toggle
-    addUndoAction(
-      `${newState ? 'Show' : 'Hide'} sidebar`,
-      () => {
-        setIsDesktopSidebarOpen(previousState);
-        localStorage.setItem('isDesktopSidebarOpen', JSON.stringify(previousState));
-        toast(`Sidebar ${previousState ? 'shown' : 'hidden'}`);
-      }
-    );
   };const handleToggleMagnifier = () => {
     const previousState = magnifierEnabled;
     setMagnifierEnabled(!magnifierEnabled);
@@ -144,21 +150,13 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     );
     
     toast(`Screen magnifier ${!previousState ? 'enabled' : 'disabled'}`);
-  };const handleToggleVoiceControls = () => {
-    const previousState = voiceControlsEnabled;
-    setVoiceControlsEnabled(!voiceControlsEnabled);
-    
-    // Add undo action for voice controls
-    addUndoAction(
-      `${!previousState ? 'Enable' : 'Disable'} voice controls`,
-      () => {
-        setVoiceControlsEnabled(previousState);
-        toast(`Voice controls ${previousState ? 'enabled' : 'disabled'}`);
-      }
-    );
-    
-    toast(`Voice controls ${!previousState ? 'enabled' : 'disabled'}`);
-  };return (    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      {/* Desktop Sidebar - Conditionally shown */}
+  };
+
+  const handleUndo = () => {
+    undoManager.executeUndo();
+  };
+
+  return (    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      {/* Desktop Sidebar - Conditionally shown */}
       {isDesktopSidebarOpen && (
         <div className="hidden lg:block">
           <Sidebar isLoggedIn={isLoggedIn} />
@@ -176,20 +174,26 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         className={`w-full max-w-full overflow-x-hidden main-content-wrapper content-shrink-transition ${
           isDesktopSidebarOpen ? 'shrunk-content' : ''
         }`}
+        style={{ 
+          paddingTop: 'calc(4rem + 3rem)', /* Header + Breadcrumbs + spacing */
+          transition: 'margin-right 0.5s cubic-bezier(0.4,0,0.2,1), width 0.5s cubic-bezier(0.4,0,0.2,1)',
+          marginRight: isAidenOpen ? CHAT_PANEL_WIDTH : 0,
+          width: isAidenOpen ? `calc(100% - ${CHAT_PANEL_WIDTH}px)` : '100%'
+        }}
+        tabIndex={-1}
       >        {/* Top Header */}        <Header
           selectedGameName={selectedGameName}
           selectedPublisherName={selectedPublisherName}
           onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
-          onToggleSidebar={handleToggleSidebar}
+          onToggleSidebar={() => handleOpenSidebar(!isDesktopSidebarOpen)}
           isSidebarOpen={isDesktopSidebarOpen}
           isLoggedIn={isLoggedIn}
           onLogin={handleLogin}
           onLogout={handleLogout}
           onToggleMagnifier={handleToggleMagnifier}
           magnifierEnabled={magnifierEnabled}
-          onToggleVoiceControls={handleToggleVoiceControls}
-          voiceControlsEnabled={voiceControlsEnabled}
           user={user}
+          onUndo={handleUndo}
         />
 
         {/* Dynamic Loading Bar */}
@@ -217,6 +221,25 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
 
         {/* Undo Button */}
         <UndoButton />
+
+        {/* Chat Bot Button (bottom right, large, circular, colorful) */}
+        {!isAidenOpen && (
+          <button
+            onClick={() => handleOpenAiden(true)}
+            aria-label="Open Aiden chat bot"
+            className="fixed bottom-8 right-8 z-50 w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl flex items-center justify-center hover:scale-105 transition-transform focus:outline-none focus:ring-4 focus:ring-blue-300"
+          >
+            <MessageCircle className="w-12 h-12 text-white drop-shadow-lg" />
+          </button>
+        )}
+        {/* Chat Bot Panel (reuse AidenChatPanel if present) */}
+        <AidenChatPanel 
+          open={isAidenOpen} 
+          onOpenChange={handleOpenAiden} 
+          onWakeWord={() => {
+            handleOpenAiden(true);
+          }}
+        />
       </div>
     </div>
   );

@@ -12,7 +12,8 @@ export class GamesService {
         // Ensure id is a valid positive integer
         if (typeof id !== 'number' || !Number.isInteger(id) || id < 1) {
             throw new BadRequestException('Invalid game ID');
-        }        try {
+        }        
+        try {
             const game = await this.databaseService.game.findUnique({
                 where: {
                     id,
@@ -27,7 +28,6 @@ export class GamesService {
                     genre: true,
                     releaseDate: true,
                     developer: true,
-                    publisher: true,
                     rating: true,
                     createdAt: true,
                     updatedAt: true,
@@ -47,7 +47,9 @@ export class GamesService {
             // Don't leak database errors
             throw new BadRequestException('Failed to retrieve game');
         }
-    }    async findAllWithPagination(page: number = 1, limit: number = 20) {
+    }    
+    
+    async findAllWithPagination(page: number = 1, limit: number = 20) {
         // Validate and sanitize inputs
         const validatedPage = Math.max(1, Math.floor(page) || 1);
         const validatedLimit = Math.min(
@@ -57,7 +59,8 @@ export class GamesService {
 
         const skip = (validatedPage - 1) * validatedLimit;
 
-        try {            const [games, total] = await Promise.all([
+        try {            
+            const [games, total] = await Promise.all([
                 this.databaseService.game.findMany({
                     skip,
                     take: validatedLimit,
@@ -71,7 +74,6 @@ export class GamesService {
                         genre: true,
                         releaseDate: true,
                         developer: true,
-                        publisher: true,
                         rating: true,
                         createdAt: true,
                         updatedAt: true,
@@ -92,7 +94,7 @@ export class GamesService {
                     totalPages: Math.ceil(total / validatedLimit),
                 },
             };
-        } catch (error) {
+        } catch {
             // Don't leak database errors
             throw new BadRequestException('Failed to retrieve games');
         }

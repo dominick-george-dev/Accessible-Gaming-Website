@@ -91,7 +91,9 @@ function App() {
     navigate('/login');
   };
 
-  return (
+return (
+  <div className="p-4">
+    {/* ...your existing app... */}
     <Routes>
       {/* Routes with Layout wrapper */}
       <Route path="/" element={
@@ -149,7 +151,8 @@ function App() {
         } 
       />
     </Routes>
-  )
+  </div>
+);
 }
 
 export default App
