@@ -1,4 +1,5 @@
 export interface AccessibilityTag {
+  tag: string;
   id: string;
   name: string;
   category: 'visual' | 'hearing' | 'dexterity' | 'cognitive';

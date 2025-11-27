@@ -5,7 +5,9 @@ import { GameIdParamDto } from './dto/game-id-param.dto';
 
 @Controller('games')
 export class GamesController {
-    constructor(private readonly gamesService: GamesService) {}    @Get('/gameDetails/:id')
+    constructor(private readonly gamesService: GamesService) {}    
+    
+    @Get('/gameDetails/:id')
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
     async getGameDetails(@Param() params: GameIdParamDto) {
         try {
@@ -20,11 +22,11 @@ export class GamesController {
         }
     }
 
-    @Get()
+    @Get('/getall')
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
     async getAllGamesWithPagination(@Query() query: GetGamesQueryDto) {
         try {
-            return await this.gamesService.findAllWithPagination(query.page, query.limit);
+            return await this.gamesService.findAll(query.page, query.limit);
         } catch (error) {
             // Re-throw HTTP exceptions as-is
             if (error instanceof HttpException) {
@@ -40,7 +42,7 @@ export class GamesController {
     async getSimilarGames(@Param() params: GameIdParamDto) {
         try {
             // optional: accept query params for limit, personalization etc.
-            const results = await this.gamesService.findSimilarGames(String(params.id), { limit: 8 });
+            const results = await (this.gamesService as any).findSimilarGames(String(params.id), { limit: 8 });
             return results;
         } catch (error) {
             if (error instanceof HttpException) throw error;
@@ -51,17 +53,14 @@ export class GamesController {
     @Get('/:id/accessibility-tags')
     async getAccessibilityTagsForGame(@Param('id') id: string) {
         try {
-            // delegate to a dedicated service that returns an array of tags
-            return await this.gamesService.getAccessibilityTagsForGame(Number(id));
+            // fallback: fetch the game and return its accessibility tags when
+            // a dedicated service method is not available on GamesService.
+            const game = await this.gamesService.findById(Number(id));
+            // support different possible property names and return an empty array if none exist
+            return game?.gameAccessibilityTags ?? [];
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new HttpException('Failed to retrieve accessibility tags', HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    @Get('/getall')
-    getAllGames() {
-        // Logic to get all games without pagination
-        return this.gamesService.findAllGames();
     }
 }

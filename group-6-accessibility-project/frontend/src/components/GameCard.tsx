@@ -3,66 +3,66 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Star, Heart, Check, Eye, Ear, Hand, Brain } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-
+ 
 interface GameCardProps {
   game: Game;
   isFavorite: boolean;
   onToggleFavorite: (gameId: string) => void;
   onClick: () => void;
 }
-
-
+ 
+ 
 // Helper function to get category color and icon
 const getCategoryStyle = (category: string) => {
   switch (category) {
     case 'visual':
-      return { 
+      return {
         color: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800',
-        icon: Eye 
+        icon: Eye
       };
     case 'hearing':
-      return { 
+      return {
         color: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800',
-        icon: Ear 
+        icon: Ear
       };
     case 'dexterity':
-      return { 
+      return {
         color: 'bg-green-100 text-green-700 border-green-300 dark:bg-green-950 dark:text-green-300 dark:border-green-800',
-        icon: Hand 
+        icon: Hand
       };
     case 'cognitive':
-      return { 
+      return {
         color: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800',
-        icon: Brain 
+        icon: Brain
       };
     default:
-      return { 
+      return {
         color: 'bg-secondary text-secondary-foreground',
-        icon: Check 
+        icon: Check
       };
   }
 };
-
+ 
 export function GameCard({ game, isFavorite, onToggleFavorite, onClick }: GameCardProps) {
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleFavorite(game.id);
   };
-
+ 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onClick();
     }
   };
-
+ 
   const handleFavoriteKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onToggleFavorite(game.id);
     }
   };
-
+ 
   return (
     <Card
       className="overflow-hidden cursor-pointer transition-all hover:shadow-lg focus-within:ring-2 focus-within:ring-primary"
@@ -117,7 +117,7 @@ export function GameCard({ game, isFavorite, onToggleFavorite, onClick }: GameCa
             </div>
           </div>
         </div>
-
+ 
         {/* Genres */}
         {game.genre && game.genre.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -133,7 +133,7 @@ export function GameCard({ game, isFavorite, onToggleFavorite, onClick }: GameCa
             )}
           </div>
         )}
-
+ 
         {/* Accessibility Tags */}
         <div
           className="flex flex-wrap gap-2"
@@ -143,7 +143,7 @@ export function GameCard({ game, isFavorite, onToggleFavorite, onClick }: GameCa
           {(game.accessibilityTags ?? []).slice(0, 3).map((tag) => {
             const style = getCategoryStyle(tag.category);
             const Icon = style.icon;
-
+ 
             return (
               <Badge
                 key={tag.id}
@@ -156,14 +156,15 @@ export function GameCard({ game, isFavorite, onToggleFavorite, onClick }: GameCa
               </Badge>
             );
           })}
-
+ 
           {(game.accessibilityTags?.length ?? 0) > 3 && (
             <Badge variant="outline" role="listitem" className="gap-1.5 text-xs">
               +{game.accessibilityTags.length - 3} more
             </Badge>
           )}        </div>
       </div>
-
+ 
     </Card>
   );
 }
+ 

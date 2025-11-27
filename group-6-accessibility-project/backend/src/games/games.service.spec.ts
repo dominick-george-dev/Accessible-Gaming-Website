@@ -33,12 +33,12 @@ describe('GamesService', () => {
   });
 
   it('throws on invalid (non-numeric) id', async () => {
-    await expect(service.findSimilarGames('not-a-number')).rejects.toThrow('Invalid game ID');
+    await expect((service as any).findSimilarGames('not-a-number')).rejects.toThrow('Invalid game ID');
   });
 
   it('throws when base game not found', async () => {
     dbMock.game.findUnique.mockResolvedValueOnce(null);
-    await expect(service.findSimilarGames(2)).rejects.toThrow('Game with ID 2 not found');
+    await expect((service as any).findSimilarGames(2)).rejects.toThrow('Game with ID 2 not found');
   });
 
   it('returns empty array when there are no other games', async () => {
@@ -51,7 +51,7 @@ describe('GamesService', () => {
     dbMock.game.findUnique.mockResolvedValueOnce(base);
     // findAllGames uses game.findMany -> return empty array to simulate no other games
     dbMock.game.findMany.mockResolvedValueOnce([]);
-    const res = await service.findSimilarGames(1);
+    const res = await (service as any).findSimilarGames(1);
     expect(res).toEqual([]);
   });
 
@@ -84,7 +84,7 @@ describe('GamesService', () => {
       { id: 11, name: 'hints' },
     ]);
 
-    const res = await service.findSimilarGames(1, { limit: 2 });
+    const res = await (service as any).findSimilarGames(1, { limit: 2 });
     expect(Array.isArray(res)).toBe(true);
     expect(res.length).toBe(2);
     // game2 should score higher and come first
@@ -122,7 +122,7 @@ describe('GamesService', () => {
     // accessibilityTags.findMany should not be needed for this branch; if called, return empty
     dbMock.accessibilityTags.findMany.mockResolvedValueOnce([]);
 
-    const res = await service.findSimilarGames('1', { limit: 5 });
+    const res = await (service as any).findSimilarGames('1', { limit: 5 });
     // Two other games expected (ids 2 and 3), each should include empty accessibilityTags arrays
     expect(res.length).toBe(2);
     expect(res.map((g: any) => g.id).sort()).toEqual([2, 3]);

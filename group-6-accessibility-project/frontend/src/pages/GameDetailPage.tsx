@@ -58,13 +58,13 @@ export function GameDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [game, setGame] = useState<Game | null>(null);
-    const [accessibilityTags, setAccessibilityTags] = useState<Array<{
-        id: string;
-        tag?: string;
-        name?: string;
-        category: string;
-        verified: boolean;
-    }>>([]);
+const [accessibilityTags, setAccessibilityTags] = useState<Array<{
+    id: string;
+    tag?: string;
+    name?: string;
+    category: string;
+    verified: boolean;
+}>>([]);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isHelpful, setIsHelpful] = useState<Record<number, boolean>>({});
@@ -448,11 +448,11 @@ export function GameDetailPage() {
             <div className="space-y-4 lg:space-y-6">
             <div>
                 <div className="flex items-start justify-between gap-3 mb-2 lg:mb-3">
-                <h1 ref={headingRef} tabIndex={-1} className="flex-1">{game.title}</h1>                
+                <h1 className="flex-1">{game.title}</h1>
                 <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => onToggleFavorite()}
+                    onClick={onToggleFavorite}
                     aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                     aria-pressed={isFavorite}
                     className="flex-shrink-0"
