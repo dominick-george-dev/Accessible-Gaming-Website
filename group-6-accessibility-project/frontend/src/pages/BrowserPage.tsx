@@ -36,7 +36,8 @@ export function BrowsePage() {
     const loadGames = async () => {
       setLoading(true);
       try {
-        const res = await fetch('http://localhost:3000/games/getall');
+        // Use relative path so Vite proxy forwards to backend
+        const res = await fetch('/games/getall');
         if (!res.ok) throw new Error('Failed to fetch games');
         const data: Game[] = await res.json();
         setGames(data);

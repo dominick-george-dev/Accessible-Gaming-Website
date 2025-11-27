@@ -9,6 +9,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": "http://localhost:3001",
+      "/games": "http://localhost:3001",
     },
   },
 })

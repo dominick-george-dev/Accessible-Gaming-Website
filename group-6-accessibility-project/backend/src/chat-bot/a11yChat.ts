@@ -1,5 +1,6 @@
 import express, { Request, Response, Router } from "express";
 import { z } from "zod";
+import fetch from 'node-fetch';
 
 const router: Router = express.Router();
 
@@ -10,12 +11,19 @@ interface ChatMessage {
 
 type ChatContext = { route?: string; featureFlags?: Record<string, boolean> };
 
-const AllowedRoutes = ["/", "/games", "/settings", "/help"] as const;
+const AllowedRoutes = ["/", "/browserpage", "/favourites", "/accessibility", "/profile", "/login" , "/signup"] as const;
 
 const CommandSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("NAVIGATE"),
     target: z.enum(AllowedRoutes),
+  }),
+  z.object({
+    type: z.literal("CLICK_UNDO"),
+  }),
+  z.object({
+    type: z.literal("TOGGLE_MAGNIFIER"),
+    enabled: z.boolean(),
   }),
 ]);
 
@@ -64,10 +72,14 @@ router.post("/a11y-chat", async (req: Request, res: Response) => {
       content:
         "You are an accessibility helper for this application.\n" +
         "You may also control the app ONLY using an allowed command.\n\n" +
-        "Allowed command:\n" +
-        `- NAVIGATE: target must be one of ${JSON.stringify(AllowedRoutes)}\n\n` +
+        "Allowed commands:\n" +
+        `- NAVIGATE: target must be one of ${JSON.stringify(AllowedRoutes)}\n` +
+        "- CLICK_UNDO: click the undo button if available\n" +
+        "- TOGGLE_MAGNIFIER: enable or disable the magnifier (enabled: true/false)\n\n" +
         "IMPORTANT: Output ONLY valid JSON in this exact shape:\n" +
         '{"reply":"...", "command":{"type":"NAVIGATE","target":"/games"}}\n' +
+        '{"reply":"...", "command":{"type":"CLICK_UNDO"}}\n' +
+        '{"reply":"...", "command":{"type":"TOGGLE_MAGNIFIER", "enabled":true}}\n' +
         "If no command is needed, omit command.\n\n" +
         "App context:\n" +
         JSON.stringify(safeContext),
