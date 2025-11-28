@@ -3,15 +3,21 @@ import { Button } from "../components/ui/button";
 import type { Game } from "../types/game";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight, ArrowRight, Sparkles } from "lucide-react";
 
 export function HomePage() {
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<string[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [topShownCount, setTopShownCount] = useState<number>(3);
 
   const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:3000";
+ 
+  const handleShowMoreTop = () => {
+    // show another row of 3 games (increment by 3, capped to available top-rated)
+    setTopShownCount((prev) => Math.min(prev + 3, topRatedAll.length));
+  };
 
   const resolveImageUrl = (g: any): string | null => {
     const candidate =
@@ -41,7 +47,7 @@ export function HomePage() {
     const loadGames = async () => {
       setLoading(true);
       try {
-        const url = `${API_BASE}/games/getall?page=1&limit=12`;
+        const url = `${API_BASE}/games/getall?page=1&limit=50`;
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) throw new Error(`Failed to fetch games: ${res.status}`);
         const payload = await res.json();
@@ -116,6 +122,16 @@ export function HomePage() {
     if (e.key === "ArrowLeft") prev();
     if (e.key === "ArrowRight") next();
   };
+
+  // rating helper to support various shapes
+  const getRating = (g: any): number => {
+    const r = g?.rating ?? g?.avgRating ?? g?.score ?? g?.rating?.average ?? 0;
+    const n = Number(r);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const topRatedAll = games.slice().sort((a, b) => getRating(b as any) - getRating(a as any));
+  const displayedTopRated = topRatedAll.slice(0, topShownCount);
 
   // Modern slide card style helper
   const SlideCard = ({ game, id }: { game: any; id: string }) => {
@@ -202,7 +218,7 @@ export function HomePage() {
               ) : featured.length === 0 ? (
                 <div className="w-full flex-shrink-0 flex justify-center items-center min-h-[180px] text-muted-foreground">No featured games</div>
               ) : (
-                featured.map((game, i) => {
+                featured.map((game) => {
                   const rawId = (game as any).id ?? (game as any)._id ?? (game as any).slug ?? (game as any).title ?? (game as any).name;
                   const id = typeof rawId === "string" ? rawId : String(rawId);
                   return <SlideCard key={id} game={game} id={id} />;
@@ -231,26 +247,64 @@ export function HomePage() {
               ))}
             </div>
           </div>
+
+        <section
+          className="mt-4 bg-gradient-to-br from-primary/10 to-accent rounded-lg p-4 sm:p-6 lg:p-8 space-y-3 lg:space-y-4"
+          aria-labelledby="hero-heading"
+        >
+          <div className="flex items-start gap-3 lg:gap-4">
+            <Sparkles className="w-6 h-6 lg:w-8 lg:h-8 text-primary flex-shrink-0 mt-1" aria-hidden="true" />
+            <div className="space-y-2 lg:space-y-3 flex-1">
+              <h1 id="hero-heading">Discover Accessible Games</h1>
+              <p className="text-muted-foreground max-w-2xl">
+                Find mobile games designed for everyone. Filter by your accessibility needs and play with confidence.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-start">
+            <Button
+              onClick={() => navigate("/browserpage")}
+              className="gap-2 sm:w-auto"
+              size="lg"
+              aria-label="Browse all games"
+            >
+              Browse Games
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
+            </Button>
+          </div>
+        </section>
         </div>
       </div>
 
-      {/* Games grid */}
-      <div className="px-4 lg:px-6 pb-8">
+      {/* Highest rated games */}
+      <div className="px-4 lg:px-6 pb-6">
         <div className="max-w-5xl mx-auto">
-          <h1 className="sr-only">Browse Accessible Games</h1>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Highest rated</h2>
+            <div className="flex items-center gap-2">
+              {topRatedAll.length > 3 && (
+                <Button variant="outline" onClick={handleShowMoreTop} disabled={displayedTopRated.length >= topRatedAll.length}>
+                  View more
+                </Button>
+              )}
+            </div>
+          </div>
 
           {loading ? (
-            <p className="text-center py-8">Loading games…</p>
+            <p className="text-center py-8">Loading top rated…</p>
+          ) : topRatedAll.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No top rated games yet.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {games.map((game) => {
+              {displayedTopRated.map((game) => {
                 const rawId = (game as any).id ?? (game as any)._id ?? (game as any).slug ?? (game as any).title ?? (game as any).name;
                 const id = typeof rawId === "string" ? rawId : String(rawId);
                 const isFavorite = favorites.includes(id);
                 const imgSrc = resolveImageUrl(game as any);
+                const rating = getRating(game as any);
 
                 return (
-                  <Card key={id} className="group cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleGameClick(id)} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleGameClick(id)}>
+                  <Card key={`top-${id}`} className="group cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleGameClick(id)} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleGameClick(id)}>
                     <CardHeader className="flex flex-row items-center justify-between">
                       <CardTitle className="truncate text-lg font-semibold">{("name" in game ? (game as any).name : (game as any).title) || "Untitled"}</CardTitle>
 
@@ -266,12 +320,9 @@ export function HomePage() {
                         <div className="rounded-md w-full h-40 bg-gray-100 flex items-center justify-center text-sm text-muted-foreground">No image</div>
                       )}
 
-                      <p className="text-sm text-muted-foreground truncate">{Array.isArray((game as any).genre) ? (game as any).genre.join(", ") : (game as any).genre}</p>
-
-                      <div className="flex flex-wrap gap-2">
-                        {((game as any).accessibilityTags || []).map((tag: any) => (
-                          <span key={tag.id ?? tag.name ?? tag} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{tag.name ?? tag.label ?? tag.tag}</span>
-                        ))}
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground truncate">{Array.isArray((game as any).genre) ? (game as any).genre.join(", ") : (game as any).genre}</p>
+                        <span className="text-sm font-medium">{rating > 0 ? rating.toFixed(1) : "—"}</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -279,8 +330,6 @@ export function HomePage() {
               })}
             </div>
           )}
-
-          {!loading && games.length === 0 && <p className="text-center text-muted-foreground py-10">No games found.</p>}
         </div>
       </div>
     </>
