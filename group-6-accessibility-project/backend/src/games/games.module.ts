@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common';
 import { GamesService } from './games.service';
 import { GamesController } from './games.controller';
 import { DatabaseModule } from '../database/database.module';
+import { AccessibilityTagsService } from 'src/accessibility-tags/accessibility-tags.service';
+import { DatabaseService } from 'src/database/database.service';
 
 @Module({
     imports: [DatabaseModule],
     controllers: [GamesController],
-    providers: [GamesService],
+    providers: [GamesService, DatabaseService, AccessibilityTagsService],
 })
 export class GamesModule {}

@@ -103,7 +103,7 @@ export class AuthService {
         username: true,
         email: true,
         password: true,
-        createdAt: true, // Make sure this is included#
+        createdAt: true,
         role: true,
         },
     });

@@ -15,12 +15,13 @@ import {
   Hand,
   Brain,
 } from "lucide-react";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { ImgCarousel } from "../components/ui/imgCarousel";
 import { AccessibleVideoPlayer } from "../components/AccessibleVideoPlayer";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import type { Game, Review } from "../types/game";
 import { useParams, useNavigate } from "react-router-dom";
+import { addUndoAction } from "../utils/undoManager";
 
 // Helper function to get category color and icon
 const getCategoryStyle = (category: string) => {
@@ -57,16 +58,26 @@ export function GameDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [game, setGame] = useState<Game | null>(null);
-    const [accessibilityTags, setAccessibilityTags] = useState<any[]>([]);
+const [accessibilityTags, setAccessibilityTags] = useState<Array<{
+    id: string;
+    tag?: string;
+    name?: string;
+    category: string;
+    verified: boolean;
+}>>([]);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isHelpful, setIsHelpful] = useState<Record<number, boolean>>({});
     const [loading, setLoading] = useState(true);
+    const [similarGames, setSimilarGames] = useState<Game[]>([]);
+    const [loadingSimilar, setLoadingSimilar] = useState(false);
+    const [similarError, setSimilarError] = useState<string | null>(null);
     const [userRating, setUserRating] = useState(0);
     const [reviewText, setReviewText] = useState("");
     const [selectedAccessibilityTags, setSelectedAccessibilityTags] = useState<
         string[]
     >([]);
+    const headingRef = useRef<HTMLHeadingElement | null>(null);
 
     const isLoggedIn = true; // You can hook this up to your auth system later
 
@@ -80,6 +91,7 @@ export function GameDetailPage() {
                 fetchGameDetails(id),
                 fetchAccessibilityTags(id),
                 fetchReviews(id),
+                fetchSimilarGames(id)
             ]);
             } catch (error) {
             console.error("Error loading game data:", error);
@@ -90,6 +102,14 @@ export function GameDetailPage() {
 
         loadData();
     }, [id]);
+
+    //Focus main heading when game chnages so screen reader announce it to user
+    useEffect(() => {
+        if (game) {
+            //small timeout to ensure heading is in DOM
+            setTimeout(() => headingRef.current?.focus(), 50);
+        }
+    }, [game]);
 
     console.log('reviews:', reviews);
 
@@ -108,13 +128,61 @@ export function GameDetailPage() {
 
     const fetchAccessibilityTags = async (gameId: string) => {
         try {
+            // Try a conventional backend endpoint for accessibility tags for a game
             const response = await fetch(`http://localhost:3000/accessibility-tags/game/${gameId}`);
-            if (!response.ok) throw new Error("Failed to fetch accessibility tags");
+            if (!response.ok) {
+                // If the route does not exist, treat as no tags rather than crashing
+                if (response.status === 404) {
+                    setAccessibilityTags([]);
+                    return;
+                }
+                throw new Error("Failed to fetch accessibility tags");
+            }
             const data = await response.json();
-                setAccessibilityTags(data);
+            setAccessibilityTags(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Error fetching accessibility tags:", error);
-            toast.error("Failed to load accessibility tags");
+            // Ensure state is a consistent empty array on failure
+            setAccessibilityTags([]);
+        }
+    };
+
+    /**
+    * Fetch similar games. Try dedicated endpoint first,
+    * otherwise fall back to client-side filtering/sorting.
+    */
+    const fetchSimilarGames = async (gameId: string) => {
+        setLoadingSimilar(true);
+        setSimilarError(null);
+        try {
+            const token = localStorage.getItem("authToken");
+            const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+            // Call the backend similar endpoint — backend may return { data: [...] } or a plain array
+            const res = await fetch(`http://localhost:3000/games/similar/${gameId}`, { headers });
+            if (!res.ok) {
+                if (res.status === 404) {
+                    setSimilarGames([]);
+                    setSimilarError(null);
+                    return;
+                }
+                throw new Error(`Failed to fetch similar games: ${res.status}`);
+            }
+
+            const payload = await res.json();
+            // Support both shapes: plain array or { data: [...] }
+            const games = Array.isArray(payload)
+                ? payload
+                : Array.isArray(payload?.data)
+                ? payload.data
+                : [];
+            setSimilarGames(games);
+        } catch (err) {
+            console.error("Error fetching similar games:", err);
+            setSimilarError("Unable to load similar games. Please try again later.");
+            setSimilarGames([]);
+        } finally {
+            setLoadingSimilar(false);
         }
     };
 
@@ -130,9 +198,7 @@ export function GameDetailPage() {
             console.error("Error fetching reviews:", error);
             toast.error("Failed to load reviews");
         }
-    };
-
-    const handleHelpfulSubmit = async (id: number) => {
+    };    const handleHelpfulSubmit = async (id: number) => {
         const reviewToUpdate = reviews.find((review) => review.id === id);
         if (!reviewToUpdate) {
             toast.error("Review not found");
@@ -143,6 +209,10 @@ export function GameDetailPage() {
         const newHelpfulCount = isCurrentlyHelpful
             ? reviewToUpdate.helpful - 1
             : reviewToUpdate.helpful + 1;
+
+        // Store previous state for undo
+        const previousHelpfulCount = reviewToUpdate.helpful;
+        const previousHelpfulState = isCurrentlyHelpful;
 
         // Optimistic UI update
         setReviews((prevReviews) =>
@@ -166,13 +236,39 @@ export function GameDetailPage() {
             [id]: !isCurrentlyHelpful,
             }));
 
+            // Add undo action
+            addUndoAction(
+                `${!isCurrentlyHelpful ? 'Mark' : 'Unmark'} review as helpful`,
+                () => {
+                    // Undo the helpful vote
+                    setReviews((prevReviews) =>
+                        prevReviews.map((review) =>
+                            review.id === id ? { ...review, helpful: previousHelpfulCount } : review
+                        )
+                    );
+                    setIsHelpful((prev) => ({
+                        ...prev,
+                        [id]: previousHelpfulState,
+                    }));
+                    // Also call the API to undo the change
+                    fetch(`http://localhost:3000/reviews/${id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ helpful: previousHelpfulCount }),
+                    }).catch(() => {
+                        toast.error("Failed to undo helpful vote");
+                    });
+                }
+            );
+
             toast.success(
             !isCurrentlyHelpful
                 ? "Marked review as helpful!"
                 : "Removed helpful vote."
             );
-        } catch (err) {
+        } catch (error) {
             toast.error("Failed to update review");
+            console.error("Error updating review:", error);
         }
     };
     const handleSubmitReview = async () => {
@@ -209,11 +305,37 @@ export function GameDetailPage() {
                 comment: reviewText,
                 accessibilityFeedback: selectedAccessibilityTags,
                 }),
-            });
-
-            if (!res.ok) throw new Error("Failed to submit review");
+            });            if (!res.ok) throw new Error("Failed to submit review");
             const newReview = await res.json();
+            
+            // Store previous state for undo
+            const previousReviews = reviews;
+            const previousRating = userRating;
+            const previousText = reviewText;
+            const previousTags = selectedAccessibilityTags;
+            
             setReviews((prev) => [...prev, newReview]);
+            
+            // Add undo action for review submission
+            addUndoAction(
+                'Submit review',
+                () => {
+                    // Undo review submission
+                    setReviews(previousReviews);
+                    setUserRating(previousRating);
+                    setReviewText(previousText);
+                    setSelectedAccessibilityTags(previousTags);
+                    
+                    // Call API to delete the review
+                    fetch(`http://localhost:3000/reviews/${newReview.id}`, {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                    }).catch(() => {
+                        toast.error("Failed to undo review submission");
+                    });
+                }
+            );
+            
             toast.success("Review submitted!");
 
             setUserRating(0);
@@ -223,19 +345,36 @@ export function GameDetailPage() {
             toast.error("Error submitting review");
             console.error(error);
         }
-    };
-
-    const toggleAccessibilityTag = (tagName: string) => {
+    };    const toggleAccessibilityTag = (tagName: string) => {
+        const previousTags = [...selectedAccessibilityTags];
+        const wasIncluded = previousTags.includes(tagName);
+        
         setSelectedAccessibilityTags((prev) =>
         prev.includes(tagName)
             ? prev.filter((t) => t !== tagName)
             : [...prev, tagName]
         );
-    };
-
-    const onToggleFavorite = (gameId: string) => {
+        
+        // Add undo action
+        addUndoAction(
+            `${wasIncluded ? 'Remove' : 'Add'} accessibility tag: ${tagName}`,
+            () => {
+                setSelectedAccessibilityTags(previousTags);
+            }
+        );
+    };const onToggleFavorite = () => {
+        const previousFavoriteState = isFavorite;
         setIsFavorite((prev) => !prev);
-        toast(isFavorite ? "Removed from favorites" : "Added to favorites");
+        
+        // Add undo action
+        addUndoAction(
+            `${!previousFavoriteState ? 'Add to' : 'Remove from'} favorites`,
+            () => {
+                setIsFavorite(previousFavoriteState);
+            }
+        );
+        
+        toast(previousFavoriteState ? "Removed from favorites" : "Added to favorites");
     };
 
     const onBack = () => navigate(-1);
@@ -272,12 +411,8 @@ export function GameDetailPage() {
         >
         <path d="M17.6 13.8c0-3 2.5-4.5 2.6-4.5-1.4-2.1-3.6-2.3-4.4-2.4-1.9-.2-3.6 1.1-4.6 1.1-.9 0-2.4-1.1-4-1-2 0-3.9 1.2-5 3C.1 13.4 1.7 18 3.7 20.6c1 1.3 2.2 2.7 3.8 2.7 1.5 0 2.1-.9 4-1 1.8 0 2.4 1 4 1 1.7 0 2.7-1.3 3.7-2.6 1.2-1.5 1.7-3 1.7-3.1-.1 0-3.2-1.2-3.3-4.8zM14.7 5.4c.8-1 1.4-2.4 1.2-3.8-1.2 0-2.7.8-3.5 1.8-.7.9-1.4 2.3-1.2 3.6 1.3.1 2.6-.6 3.5-1.6z" />
         </svg>
-    );
-
-    
-
-    return (
-        <div className="max-w-5xl mx-auto space-y-6 lg:space-y-8">
+    );        return (        <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
+            <div className="max-w-5xl space-y-6 lg:space-y-8">
         {/* Back Button */}
         <Button
             variant="ghost"
@@ -296,10 +431,9 @@ export function GameDetailPage() {
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
             {/* Game Image */}
             <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-            <ImageWithFallback
-                src={game.thumbnail}
+            <ImgCarousel
+                images={game.images}
                 alt={`${game.title} game cover`}
-                className="w-full h-full object-cover"
             />
             {game.verified && (
                 <div
@@ -321,7 +455,7 @@ export function GameDetailPage() {
                 <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => onToggleFavorite(game.id)}
+                    onClick={onToggleFavorite}
                     aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                     aria-pressed={isFavorite}
                     className="flex-shrink-0"
@@ -404,9 +538,86 @@ export function GameDetailPage() {
         <Separator />
         
         {/* Video Trailer */}
-        <AccessibleVideoPlayer gameName={game.title} thumbnailUrl={game.thumbnail} />
+        <AccessibleVideoPlayer
+            gameName={game.title}
+            youtubeUrl={game.trailer}
+            transcript={game.transcript}
+        />
 
-        
+        <Separator />
+            {/* Similar Games Section */}
+            <section aria-labelledby="similar-games-heading" className="mt-2">
+            <h2 id="similar-games-heading" className="mb-3 lg:mb-4">You May Also Like</h2>
+
+            {loadingSimilar ? (
+                <p className="text-muted-foreground">Loading similar games...</p>
+            ) : similarError ? (
+                <p role="alert" className="text-destructive">{similarError}</p>
+            ) : similarGames.length === 0 ? (
+                <div className="space-y-2">
+                    <p className="text-muted-foreground">No similar games found.</p>
+                    <p className="text-muted-foreground">Try browsing popular accessible games below.</p>
+                </div>
+            ) : (
+                // outer provides horizontal scroll when needed; inner flex centers cards
+                <div className="overflow-x-auto">
+                    <div
+                        className="flex gap-4 justify-center items-start px-4 py-1"
+                        role="list"
+                        aria-label="Similar games"
+                    >
+                        {similarGames.map((s) => (
+                            <Card
+                                key={s.id}
+                                className="min-w-[200px] max-w-[220px] p-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary flex-shrink-0"
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Open ${s.title} details.`}
+                                aria-describedby={`similar-${s.id}-tags`}
+                                onClick={() => navigate(`/games/${s.id}`)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        navigate(`/games/${s.id}`);
+                                    }
+                                }}
+                            >
+                                <div className="aspect-[4/3] mb-2 bg-muted rounded overflow-hidden">
+                                    <img
+                                        src={s.images?.[0] || ''}
+                                        alt={`Cover art for ${s.title}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="line-clamp-2">{s.title}</h3>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {s.genre.slice(0,2).map((g) => (
+                                            <Badge key={g} variant="outline" className="text-xs">
+                                                {g}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                    {/* Accessibility tags displayed clearly on each card */}
+                                    <div id={`similar-${s.id}-tags`} className="flex flex-wrap gap-1 mt-2" aria-hidden={false}>
+                                        {(s.accessibilityTags || []).slice(0,3).map((t: any, i: number) => (
+                                            <Badge
+                                                key={(t && (t.id ?? i)) ?? i}
+                                                variant="secondary"
+                                                className="text-xs"
+                                            >
+                                                {typeof t === "string" ? t : (t.name ?? t.tag ?? "")}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </section>
+        <Separator />
 
         {/* Accessibility Features */}
         <section aria-labelledby="accessibility-heading">
@@ -443,7 +654,7 @@ export function GameDetailPage() {
                         >
                             <Icon className="w-3 h-3" aria-hidden="true" />
                             {tag.verified && <Check className="w-3 h-3" aria-label="Verified" />}
-                            {tag.tag}
+                            {tag.name ?? tag.tag}
                         </Badge>
                         );
                     })}
@@ -471,11 +682,23 @@ export function GameDetailPage() {
             <Card className="p-4 lg:p-6 space-y-4">
             <div>
                 <label className="block mb-2">Your Rating</label>
-                <div className="flex gap-2" role="radiogroup" aria-label="Select rating">
-                {[1, 2, 3, 4, 5].map((rating) => (
+                <div className="flex gap-2" role="radiogroup" aria-label="Select rating">                {[1, 2, 3, 4, 5].map((rating) => (
                     <button
                     key={rating}
-                    onClick={() => setUserRating(rating)}
+                    onClick={() => {
+                        const previousRating = userRating;
+                        setUserRating(rating);
+                        
+                        // Add undo action for rating change
+                        if (previousRating !== rating) {
+                            addUndoAction(
+                                `Change rating to ${rating} star${rating > 1 ? 's' : ''}`,
+                                () => {
+                                    setUserRating(previousRating);
+                                }
+                            );
+                        }
+                    }}
                     className="focus:outline-none focus:ring-2 focus:ring-primary rounded"
                     aria-label={`${rating} star${rating > 1 ? 's' : ''}`}
                     role="radio"
@@ -536,9 +759,9 @@ export function GameDetailPage() {
                             <div key={tag.id} className="flex items-center space-x-2">
                             <Checkbox
                                 id={`tag-${tag.id}`}
-                                checked={selectedAccessibilityTags.includes(tag.tag)}
-                                onCheckedChange={() => toggleAccessibilityTag(tag.tag)}
-                                aria-label={`Select ${tag.tag}`}
+                                // prefer name, fallback to tag
+                                checked={selectedAccessibilityTags.includes(tag.name ?? tag.tag ?? '')}
+                                onCheckedChange={() => toggleAccessibilityTag(tag.name ?? tag.tag ?? '')}
                             />
                             <label
                                 htmlFor={`tag-${tag.id}`}
@@ -632,8 +855,8 @@ export function GameDetailPage() {
                 </Card>
                 ))
             )}
-            </div>
-        </section>
+            </div>        </section>
+        </div>
         </div>
     );
 }

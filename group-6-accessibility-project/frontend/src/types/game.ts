@@ -1,4 +1,5 @@
 export interface AccessibilityTag {
+  tag: string;
   id: string;
   name: string;
   category: 'visual' | 'hearing' | 'dexterity' | 'cognitive';
@@ -9,7 +10,9 @@ export interface Game {
   id: string;
   title: string;
   description: string;
-  thumbnail: string;
+  images: string[];
+  trailer: string;
+  transcript: string;
   genre: string[];
   developer: string;
   rating: number;
