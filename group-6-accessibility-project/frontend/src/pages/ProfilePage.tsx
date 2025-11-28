@@ -266,21 +266,17 @@ export default function ProfilePage() {
   };
 
   // Text size adjustment
-const handleTextSizeChange = (increment: number) => {
-  setLocalPreferences(prev => {
-    let currentSize = prev.textSize;
-    if (typeof currentSize !== 'number' || isNaN(currentSize)) {
-      currentSize = 16;
-    }
-    const newSize = Math.max(10, Math.min(32, currentSize + increment));
-    // Call handlePreferenceChange after updating local state
-    handlePreferenceChange('textSize', newSize);
-
-    const action = increment > 0 ? 'increased' : 'decreased';
-    toast.success(`Text size ${action} to ${newSize}px`);
-    return { ...prev, textSize: newSize };
-  });
-};
+  const handleTextSizeChange = (increment: number) => {
+    setLocalPreferences(prev => {
+      const currentSize = (typeof prev.textSize === 'number' && !isNaN(prev.textSize)) ? prev.textSize : 16;
+      const newSize = Math.max(10, Math.min(32, currentSize + increment));
+      if (newSize === currentSize) return prev; // No change
+      handlePreferenceChange('textSize', newSize);
+      const action = increment > 0 ? 'increased' : 'decreased';
+      toast.success(`Text size ${action} to ${newSize}px`);
+      return { ...prev, textSize: newSize };
+    });
+  };
 
   // Toggle magnifier
   const handleToggleMagnifier = async () => {
@@ -420,8 +416,8 @@ const handleTextSizeChange = (increment: number) => {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => handleTextSizeChange(-2)}
-                aria-label="Decrease text size by 2 pixels"
+                onClick={() => handleTextSizeChange(-1)}
+                aria-label="Decrease text size by 1 pixel"
                 aria-describedby="text-size-label text-size-value"
               >
                 <Minus className="w-4 h-4" aria-hidden="true" />
@@ -440,8 +436,8 @@ const handleTextSizeChange = (increment: number) => {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => handleTextSizeChange(2)}
-                aria-label="Increase text size by 2 pixels"
+                onClick={() => handleTextSizeChange(1)}
+                aria-label="Increase text size by 1 pixel"
                 aria-describedby="text-size-label text-size-value"
               >
                 <Plus className="w-4 h-4" aria-hidden="true" />

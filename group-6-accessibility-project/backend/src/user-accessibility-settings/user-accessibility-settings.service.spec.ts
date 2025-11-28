@@ -47,7 +47,7 @@ describe('UserAccessibilitySettingsService', () => {
       const result = await service.getUserAccessibilitySettingsWithDefaults(1);
 
       expect(result).toEqual({
-        textSize: '16',
+        textSize: 16,
         fontFamily: 'default',
         highContrast: false,
         colorBlindMode: 'none',

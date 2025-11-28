@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { DatabaseService } from '../database/database.service';
 import { JwtService } from '@nestjs/jwt';
+import { UserAccessibilitySettingsService } from '../user-accessibility-settings/user-accessibility-settings.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -30,6 +31,7 @@ describe('AuthService', () => {
           provide: JwtService,
           useValue: mockJwtService,
         },
+        UserAccessibilitySettingsService, // <-- Added this line
       ],
     }).compile();
 
