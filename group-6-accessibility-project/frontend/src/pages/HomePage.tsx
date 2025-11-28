@@ -170,7 +170,7 @@ export function HomePage() {
                 aria-label={favorites.includes(id) ? "Remove from favorites" : "Add to favorites"}
                 className="p-2 rounded-md hover:bg-gray-100"
               >
-                <Heart className={`w-5 h-5 ${favorites.includes(id) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                <Heart className={`w-5 h-5 ${favorites.includes(id) ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
               </button>
             </div>
             <p className="text-xs text-muted-foreground mt-3 line-clamp-2">{(game as any).shortDescription ?? (game as any).summary ?? ""}</p>
@@ -309,7 +309,12 @@ export function HomePage() {
                       <CardTitle className="truncate text-lg font-semibold">{("name" in game ? (game as any).name : (game as any).title) || "Untitled"}</CardTitle>
 
                       <Button variant={isFavorite ? "default" : "outline"} size="icon" onClick={(e) => { e.stopPropagation(); handleToggleFavorite(id); }} aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}>
-                        <Heart className={`w-5 h-5 ${isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                        <Heart className={`w-5 h-5 transition-colors ${
+                          favorites.includes(id)
+                            ? "fill-red-500 text-red-500"
+                            : "text-muted-foreground"
+                          }`} 
+                        />
                       </Button>
                     </CardHeader>
 
