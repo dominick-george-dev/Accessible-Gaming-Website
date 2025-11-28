@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -10,13 +10,13 @@ import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';
 
 interface LoginPageProps {
-  onLogin: (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => void;
   onNavigateToSignup: () => void;
 }
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
+  const { setLoginState } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -74,7 +74,9 @@ export function LoginPage() {
         localStorage.setItem('user', JSON.stringify(data.user));
         
         toast.success('Login successful! Welcome back.');
-        onLogin(data.user.username, data.user.email);
+        // Update auth state and redirect
+        setLoginState(true, data.user);
+        return; // Prevent further navigation
       } else {
         // Handle API errors
         if (data.message && data.message.includes('Invalid email or password')) {

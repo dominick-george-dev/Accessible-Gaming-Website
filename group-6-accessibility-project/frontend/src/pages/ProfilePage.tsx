@@ -282,13 +282,6 @@ const handleTextSizeChange = (increment: number) => {
   });
 };
 
-  // Keyboard handler for text size buttons
-  const handleKeyDown = (e: React.KeyboardEvent, increment: number) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleTextSizeChange(increment);
-    }
-  };
   // Toggle magnifier
   const handleToggleMagnifier = async () => {
     // Check if user is still authenticated
@@ -428,7 +421,6 @@ const handleTextSizeChange = (increment: number) => {
                 variant="outline"
                 size="icon"
                 onClick={() => handleTextSizeChange(-2)}
-                onKeyDown={(e) => handleKeyDown(e, -2)}
                 aria-label="Decrease text size by 2 pixels"
                 aria-describedby="text-size-label text-size-value"
               >
@@ -449,7 +441,6 @@ const handleTextSizeChange = (increment: number) => {
                 variant="outline"
                 size="icon"
                 onClick={() => handleTextSizeChange(2)}
-                onKeyDown={(e) => handleKeyDown(e, 2)}
                 aria-label="Increase text size by 2 pixels"
                 aria-describedby="text-size-label text-size-value"
               >
