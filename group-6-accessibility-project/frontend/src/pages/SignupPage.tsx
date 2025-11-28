@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Eye, EyeOff, AlertCircle, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../hooks/useAuth';
 
 interface PasswordValidation {
   minLength: boolean;
@@ -17,6 +18,7 @@ interface PasswordValidation {
 
 export function SignupPage() {
   const navigate = useNavigate();
+  const { setLoginState } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -109,6 +111,8 @@ export function SignupPage() {
 
       const data = await response.json();      if (response.ok) {
         localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setLoginState(true, data.user);
         toast.success('Account created successfully! You are now logged in.');
         
         // Redirect to previous page if available, otherwise go to home
