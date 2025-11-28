@@ -20,10 +20,16 @@ export function MakeAccountPublisherPage() {
       const userData = JSON.parse(storedUser);
       setUser(userData);
       
-      // Pre-fill display name with username
+      // If user is already a publisher, redirect to dashboard
+      if (userData.role === 'PUBLISHER') {
+        window.location.href = '/publisher-dashboard';
+        return; // Exit early to prevent further execution
+      }
+      
+      // Pre-fill display name with username (only if not already a publisher)
       setDisplayName(userData.username);
     }
-  }, []);
+}, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
