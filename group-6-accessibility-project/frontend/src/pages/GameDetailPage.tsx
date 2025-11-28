@@ -151,7 +151,6 @@ const [accessibilityTags, setAccessibilityTags] = useState<Array<{
     * Fetch similar games. Try dedicated endpoint first,
     * otherwise fall back to client-side filtering/sorting.
     */
-
     const fetchSimilarGames = async (gameId: string) => {
         setLoadingSimilar(true);
         setSimilarError(null);
@@ -159,11 +158,10 @@ const [accessibilityTags, setAccessibilityTags] = useState<Array<{
             const token = localStorage.getItem("authToken");
             const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
-            // Call the backend similar endpoint — backend returns games already scored and with tags
+            // Call the backend similar endpoint — backend may return { data: [...] } or a plain array
             const res = await fetch(`http://localhost:3000/games/similar/${gameId}`, { headers });
             if (!res.ok) {
                 if (res.status === 404) {
-                    // no server route / game not found — show friendly message and do not attempt heavy client fallback
                     setSimilarGames([]);
                     setSimilarError(null);
                     return;
@@ -171,9 +169,14 @@ const [accessibilityTags, setAccessibilityTags] = useState<Array<{
                 throw new Error(`Failed to fetch similar games: ${res.status}`);
             }
 
-            const data = await res.json();
-            // assume backend returns an array of games including accessibility tags
-            setSimilarGames(Array.isArray(data) ? data : []);
+            const payload = await res.json();
+            // Support both shapes: plain array or { data: [...] }
+            const games = Array.isArray(payload)
+                ? payload
+                : Array.isArray(payload?.data)
+                ? payload.data
+                : [];
+            setSimilarGames(games);
         } catch (err) {
             console.error("Error fetching similar games:", err);
             setSimilarError("Unable to load similar games. Please try again later.");

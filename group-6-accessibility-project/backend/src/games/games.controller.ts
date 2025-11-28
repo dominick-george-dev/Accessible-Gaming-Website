@@ -43,7 +43,8 @@ export class GamesController {
         try {
             // optional: accept query params for limit, personalization etc.
             const results = await (this.gamesService as any).findSimilarGames(String(params.id), { limit: 8 });
-            return results;
+            // Return the common list shape the frontend expects
+            return { data: results };
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new HttpException('Failed to retrieve similar games', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -51,16 +52,20 @@ export class GamesController {
     }
 
     @Get('/:id/accessibility-tags')
-    async getAccessibilityTagsForGame(@Param('id') id: string) {
-        try {
-            // fallback: fetch the game and return its accessibility tags when
-            // a dedicated service method is not available on GamesService.
-            const game = await this.gamesService.findById(Number(id));
-            // support different possible property names and return an empty array if none exist
-            return game?.gameAccessibilityTags ?? [];
-        } catch (error) {
-            if (error instanceof HttpException) throw error;
-            throw new HttpException('Failed to retrieve accessibility tags', HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+  async getAccessibilityTagsForGame(@Param('id') id: string) {
+    try {
+      // Prefer a dedicated service method if implemented
+      const svc: any = this.gamesService as any;
+      if (typeof svc.getAccessibilityTagsForGame === 'function') {
+        return await svc.getAccessibilityTagsForGame(Number(id));
+      }
+
+      // Fallback: use findById result (note: findById flattens tags to `accessibilityTags`)
+      const game = await this.gamesService.findById(Number(id));
+      return game?.accessibilityTags ?? [];
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new HttpException('Failed to retrieve accessibility tags', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
 }
