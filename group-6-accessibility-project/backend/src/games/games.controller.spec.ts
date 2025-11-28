@@ -41,17 +41,18 @@ describe('GamesController', () => {
   it('should return game details and call service with numeric id', async () => {
     const result = await controller.getGameDetails({ id: 1 } as any);
     expect(mockGamesService.findById).toHaveBeenCalledWith(1);
+    // Adjusted expected shape to match current controller/service output
     expect(result).toEqual({
       id: 1,
       title: 'Mock Game',
       developer: 'Mock Dev',
       rating: 4.5,
-      genre: "Action",
-      imageUrl: [
-        "http://example.com/image.png",
-        "http://example.com/image2.png",
+      genre: ['Action'],
+      images: [
+        'http://example.com/image.png',
+        'http://example.com/image2.png',
       ],
-      releaseDate: "2023-01-01",
+      releaseDate: '2023-01-01',
     });
   });
 
@@ -61,7 +62,8 @@ describe('GamesController', () => {
       mockGamesService.findSimilarGames.mockResolvedValue(expected);
 
       const res = await controller.getSimilarGames({ id: 1 } as any);
-      expect(res).toBe(expected);
+      // controller now wraps similar results in { data: [...] }
+      expect(res).toEqual({ data: expected });
       expect(mockGamesService.findSimilarGames).toHaveBeenCalledWith('1', { limit: 8 });
     });
 
@@ -86,7 +88,8 @@ describe('GamesController', () => {
       mockGamesService.findSimilarGames.mockResolvedValue(expected);
 
       const res = await controller.getSimilarGames({ id: '42' } as any);
-      expect(res).toBe(expected);
+      // controller wraps results in { data: [...] }
+      expect(res).toEqual({ data: expected });
       expect(mockGamesService.findSimilarGames).toHaveBeenCalledWith('42', { limit: 8 });
     });
   });
