@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner'; 
+import { useAuth } from '../hooks/useAuth';
 
 interface LoginPageProps {
   onLogin: (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => void;

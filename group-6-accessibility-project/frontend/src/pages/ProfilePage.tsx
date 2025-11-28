@@ -266,15 +266,21 @@ export default function ProfilePage() {
   };
 
   // Text size adjustment
-  const handleTextSizeChange = (increment: number) => {
-    const currentSize = localPreferences.textSize;
+const handleTextSizeChange = (increment: number) => {
+  setLocalPreferences(prev => {
+    let currentSize = prev.textSize;
+    if (typeof currentSize !== 'number' || isNaN(currentSize)) {
+      currentSize = 16;
+    }
     const newSize = Math.max(10, Math.min(32, currentSize + increment));
-    
+    // Call handlePreferenceChange after updating local state
     handlePreferenceChange('textSize', newSize);
-    
+
     const action = increment > 0 ? 'increased' : 'decreased';
     toast.success(`Text size ${action} to ${newSize}px`);
-  };
+    return { ...prev, textSize: newSize };
+  });
+};
 
   // Keyboard handler for text size buttons
   const handleKeyDown = (e: React.KeyboardEvent, increment: number) => {

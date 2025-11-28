@@ -1,0 +1,28 @@
+/* Colorblind filter styles for accessibility */
+svg.colorblind-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.colorblind-protanopia {
+  filter: url(#protanopia-filter);
+}
+.colorblind-deuteranopia {
+  filter: url(#deuteranopia-filter);
+}
+.colorblind-tritanopia {
+  filter: url(#tritanopia-filter);
+}
+.colorblind-achromatopsia {
+  filter: grayscale(100%) contrast(1.2);
+}
+html {
+  transition: filter 0.3s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    transition: none;
+  }
+}
