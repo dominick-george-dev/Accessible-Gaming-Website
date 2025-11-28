@@ -22,6 +22,7 @@ model Game {
   publisherId           Int?
   trailer               String?
   transcript            String?
+  Favoritie             Favoritie[]
   Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
@@ -69,6 +70,7 @@ model User {
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
   role                      roles                      @default(USER)
+  Favoritie                 Favoritie[]
   Publisher                 Publisher[]
   Review                    Review[]
   UserAccessibilitySettings UserAccessibilitySettings?
@@ -77,7 +79,7 @@ model User {
 model UserAccessibilitySettings {
   id                          Int      @id @default(autoincrement())
   userId                      Int      @unique
-  textSize                    String   @default("16")
+  textSize                    String   @default("medium")
   fontFamily                  String   @default("default")
   highContrast                Boolean  @default(false)
   colorBlindMode              String   @default("none")
@@ -88,7 +90,7 @@ model UserAccessibilitySettings {
   cognitiveAccessibility      Boolean  @default(false)
   screenMagnifier             Boolean  @default(false)
   createdAt                   DateTime @default(now())
-  updatedAt                   DateTime
+  updatedAt                   DateTime @default(now())
   User                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -106,6 +108,14 @@ model View {
   gameId   Int
   viewedAt DateTime @default(now())
   Game     Game     @relation(fields: [gameId], references: [id])
+}
+
+model Favoritie {
+  id     Int   @id @default(autoincrement())
+  userID Int?
+  gameID Int?
+  Game   Game? @relation(fields: [gameID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gameID")
+  User   User? @relation(fields: [userID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "userID")
 }
 
 enum roles {

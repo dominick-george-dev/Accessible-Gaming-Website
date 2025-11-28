@@ -37,7 +37,7 @@ export class UserAccessibilitySettingsService {
   }  async getUserAccessibilitySettings(userId: number) {
     return await this.database.userAccessibilitySettings.findUnique({
       where: { userId },
-      include: { user: true },
+      include: { User: true },
     });
   }
   async updateUserAccessibilitySettings(
@@ -64,7 +64,7 @@ export class UserAccessibilitySettingsService {
       update: data,
       create: {
         ...data,
-        user: {
+        User: {
           connect: { id: userId },
         },
       },

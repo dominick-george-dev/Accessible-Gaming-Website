@@ -16,8 +16,8 @@ export class UsersService {
     return await this.database.user.findUnique({
       where: { id },
       include: {
-        accessibilitySettings: true,
-        reviews: true,
+        UserAccessibilitySettings: true,
+        Review: true,
       },
     });
   }
@@ -25,7 +25,7 @@ export class UsersService {
   async findAllUsers() {
     return await this.database.user.findMany({
       include: {
-        accessibilitySettings: true,
+        UserAccessibilitySettings: true,
       },
     });
   }
