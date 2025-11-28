@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
-import { Separator } from '../components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Separator } from '../components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
 import { Checkbox } from '../components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Building, Plus, Edit, Trash2, Tag, Check, X, Eye, Ear, Hand, Brain, BarChart3, LogOut, AlertCircle } from 'lucide-react';
+import { Building, Plus, Edit, Trash2, Tag, Check, X, Eye, Ear, Hand, Brain, BarChart3, LogOut, AlertCircle, Upload, ImageIcon } from 'lucide-react';
 import { Alert, AlertDescription } from '../components/ui/alert';
+import { TrendingUp, Users, Calendar } from 'lucide-react';
 
 interface Game {
     id: number;
@@ -72,6 +72,113 @@ const getCategoryColor = (category: string) => {
     }
 };
 
+// New Analytics Component (add this after PublisherDashboard function)
+function AnalyticsDashboard({ games }: { games: Game[] }) {
+    return (
+        <div className="space-y-6">
+            {/* Analytics Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="p-6">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-blue-100 dark:bg-blue-950 p-3 rounded-lg">
+                            <Eye className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground text-sm">Total Views</p>
+                            <p className="text-2xl font-bold">0</p>
+                            <p className="text-xs text-green-600">+0% from last month</p>
+                        </div>
+                    </div>
+                </Card>
+
+                <Card className="p-6">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-green-100 dark:bg-green-950 p-3 rounded-lg">
+                            <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground text-sm">Active Users</p>
+                            <p className="text-2xl font-bold">0</p>
+                            <p className="text-xs text-green-600">+0% from last month</p>
+                        </div>
+                    </div>
+                </Card>
+
+                <Card className="p-6">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-purple-100 dark:bg-purple-950 p-3 rounded-lg">
+                            <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground text-sm">Engagement Rate</p>
+                            <p className="text-2xl font-bold">0%</p>
+                            <p className="text-xs text-green-600">+0% from last month</p>
+                        </div>
+                    </div>
+                </Card>
+
+                <Card className="p-6">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-orange-100 dark:bg-orange-950 p-3 rounded-lg">
+                            <Calendar className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground text-sm">Reviews</p>
+                            <p className="text-2xl font-bold">0</p>
+                            <p className="text-xs text-green-600">+0% from last month</p>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+
+            {/* Coming Soon Section */}
+            <Card className="p-12 text-center">
+                <TrendingUp className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-2xl font-semibold mb-2">Analytics Dashboard</h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    Detailed analytics and insights about your games' performance will be available here soon.
+                    Track views, user engagement, reviews, and accessibility feature usage.
+                </p>
+                <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        Game Performance Metrics
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        User Engagement Analytics
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        Accessibility Usage Reports
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        Review & Rating Trends
+                    </div>
+                </div>
+            </Card>
+
+            {/* Placeholder Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="p-6">
+                    <h4 className="text-lg font-semibold mb-4">Views Over Time</h4>
+                    <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
+                        <p className="text-muted-foreground">Chart coming soon</p>
+                    </div>
+                </Card>
+
+                <Card className="p-6">
+                    <h4 className="text-lg font-semibold mb-4">Accessibility Feature Usage</h4>
+                    <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
+                        <p className="text-muted-foreground">Chart coming soon</p>
+                    </div>
+                </Card>
+            </div>
+        </div>
+    );
+}
+
 export function PublisherDashboard() {
     const [user, setUser] = useState<any>(null);
     const [publisher, setPublisher] = useState<Publisher | null>(null);
@@ -79,6 +186,7 @@ export function PublisherDashboard() {
     const [accessibilityTags, setAccessibilityTags] = useState<AccessibilityTag[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState('games');
 
     useEffect(() => {
         checkAuthentication();
@@ -256,7 +364,7 @@ export function PublisherDashboard() {
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8 p-4">
-            {/* Header */}
+            {/* Header - keep exactly the same */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
@@ -265,7 +373,7 @@ export function PublisherDashboard() {
                             <h1 className="text-3xl font-bold text-gray-900">
                                 {publisher?.displayName || 'Publisher Dashboard'}
                             </h1>
-                            <p className="text-muted-foreground text-left">
+                            <p className="text-muted-foreground">
                                 Welcome back, {user?.username}
                             </p>
                         </div>
@@ -279,7 +387,7 @@ export function PublisherDashboard() {
 
             <Separator />
 
-            {/* Error Alert */}
+            {/* Error Alert - keep exactly the same */}
             {error && (
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
@@ -287,56 +395,80 @@ export function PublisherDashboard() {
                 </Alert>
             )}
 
-            {/* Platform Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-blue-100 dark:bg-blue-950 p-3 rounded-lg">
-                            <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                        </div>
-                        <div className="text-left">
-                            <p className="text-muted-foreground">Your Games</p>
-                            <p className="text-3xl text-left">{games.length}</p>
-                        </div>
-                    </div>
-                </Card>
+            {/* NEW: Tabbed Interface */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="games" className="flex items-center gap-2">
+                        <Building className="w-4 h-4" />
+                        Games Management
+                    </TabsTrigger>
+                    <TabsTrigger value="analytics" className="flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4" />
+                        Analytics
+                    </TabsTrigger>
+                </TabsList>
 
-                <Card className="p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-green-100 dark:bg-green-950 p-3 rounded-lg">
-                            <Check className="w-6 h-6 text-green-600 dark:text-green-400" aria-hidden="true" />
-                        </div>
-                        <div className="text-left">
-                            <p className="text-muted-foreground">Verified Games</p>
-                            <p className="text-3xl text-left">{games.filter(g => g.hasBeenVerified).length}</p>
-                        </div>
-                    </div>
-                </Card>
+                {/* Analytics Tab */}
+                <TabsContent value="analytics" className="space-y-6">
+                    <AnalyticsDashboard games={games} />
+                </TabsContent>
 
-                <Card className="p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-purple-100 dark:bg-purple-950 p-3 rounded-lg">
-                            <Eye className="w-6 h-6 text-purple-600 dark:text-purple-400" aria-hidden="true" />
-                        </div>
-                        <div className="text-left">
-                            <p className="text-muted-foreground">Views</p>
-                            <p className="text-3xl text-left">0</p>
-                        </div>
-                    </div>
-                </Card>
-            </div>
+                {/* Games Management Tab */}
+                <TabsContent value="games" className="space-y-6">
+                    {/* Platform Overview - moved from main component */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card className="p-6">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-blue-100 dark:bg-blue-950 p-3 rounded-lg">
+                                    <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-muted-foreground">Your Games</p>
+                                    <p className="text-3xl text-left">{games.length}</p>
+                                </div>
+                            </div>
+                        </Card>
 
-            {/* Games Management */}
-            <GamesManagement
-                games={games}
-                accessibilityTags={accessibilityTags}
-                onAddGame={handleAddGame}
-                onUpdateGame={handleUpdateGame}
-                onDeleteGame={handleDeleteGame}
-            />
+                        <Card className="p-6">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-green-100 dark:bg-green-950 p-3 rounded-lg">
+                                    <Check className="w-6 h-6 text-green-600 dark:text-green-400" aria-hidden="true" />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-muted-foreground">Verified Games</p>
+                                    <p className="text-3xl text-left">{games.filter(g => g.hasBeenVerified).length}</p>
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="p-6">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-purple-100 dark:bg-purple-950 p-3 rounded-lg">
+                                    <Eye className="w-6 h-6 text-purple-600 dark:text-purple-400" aria-hidden="true" />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-muted-foreground">Views</p>
+                                    <p className="text-3xl text-left">0</p>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+
+                    {/* Games Management */}
+                    <GamesManagement
+                        games={games}
+                        accessibilityTags={accessibilityTags}
+                        onAddGame={handleAddGame}
+                        onUpdateGame={handleUpdateGame}
+                        onDeleteGame={handleDeleteGame}
+                    />
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }
+
+
 
 // Games Management Component
 function GamesManagement({
@@ -425,7 +557,7 @@ function GamesManagement({
                                                     </Badge>
                                                 )}
                                             </div>
-                                            <p className="text-muted-foreground">{game.description}</p>
+                                            <p className="text-muted-foreground text-left">{game.description}</p>
                                             <div className="flex gap-2 mt-2 flex-wrap">
                                                 {game.genre.map((g) => (
                                                     <Badge key={g} variant="outline">
@@ -433,7 +565,7 @@ function GamesManagement({
                                                     </Badge>
                                                 ))}
                                             </div>
-                                            <div className="mt-2 text-sm text-muted-foreground">
+                                            <div className="mt-2 text-sm text-muted-foreground text-left">
                                                 <span>
                                                     {game.rating && game.rating > 0 ? `Rating: ${game.rating}/5 • ` : ''}
                                                     Developer: {game.developer}
@@ -503,7 +635,7 @@ function GamesManagement({
 
                                     {/* Accessibility Tags */}
                                     <div>
-                                        <p className="text-sm mb-2 font-medium">
+                                        <p className="text-sm mb-2 font-medium text-left">
                                             Accessibility Features ({game.gameAccessibilityTags?.length || 0}):
                                         </p>
                                         <div className="flex flex-wrap gap-2">
@@ -520,7 +652,7 @@ function GamesManagement({
                                                     );
                                                 })
                                             ) : (
-                                                <span className="text-muted-foreground">No accessibility tags</span>
+                                                <span className="text-muted-foreground text-left">No accessibility tags</span>
                                             )}
                                         </div>
                                     </div>
@@ -552,11 +684,15 @@ function GameForm({
         developer: initialData?.developer || '',
         genre: initialData?.genre?.join(', ') || '',
         releaseDate: initialData?.releaseDate ? new Date(initialData.releaseDate).toISOString().split('T')[0] : '',
-        images: initialData?.images?.join(', ') || '',
         trailer: initialData?.trailer || '',
         transcript: initialData?.transcript || '',
         selectedTags: initialData?.gameAccessibilityTags?.map((rel: any) => rel.accessibilityTagsId) || [] as number[],
     });
+
+    const [uploadedImages, setUploadedImages] = useState<string[]>(
+        initialData?.images || []
+    );
+    const [uploading, setUploading] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -573,15 +709,50 @@ function GameForm({
             genre: formData.genre.split(',').map(g => g.trim()).filter(g => g),
             rating: 0,
             releaseDate: new Date(formData.releaseDate).toISOString(),
-            images: formData.images
-                ? formData.images.split(',').map(img => img.trim()).filter(img => img)
-                : [], // Make sure this is always an array
+            images: uploadedImages, // Make sure this is always an array
             trailer: formData.trailer || null,
             transcript: formData.transcript || null,
             selectedTags: formData.selectedTags, // This will be handled in the service
         };
 
         onSubmit(gameData);
+    };
+
+    const handleImageUpload = async (files: FileList) => {
+        if (!files || files.length === 0) return;
+
+        setUploading(true);
+        const uploadFormData = new FormData();
+
+        Array.from(files).forEach(file => {
+            uploadFormData.append('images', file);
+        });
+
+        try {
+            const response = await fetch('http://localhost:3000/upload/images', {
+                method: 'POST',
+                body: uploadFormData,
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setUploadedImages(prev => [...prev, ...result.urls]);
+                // Clear the file input
+                (document.getElementById('image-upload') as HTMLInputElement).value = '';
+            } else {
+                alert('Failed to upload images: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error uploading images:', error);
+            alert('Error uploading images');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const removeImage = (index: number) => {
+        setUploadedImages(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleTagChange = (tagId: number, checked: boolean) => {
@@ -661,26 +832,16 @@ function GameForm({
                                 onChange={(e) => setFormData({ ...formData, releaseDate: e.target.value })}
                             />
                         </div>
+                    </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="game-images">Images (comma-separated URLs)</Label>
-                            <Input
-                                id="game-images"
-                                value={formData.images}
-                                onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-                                placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="game-trailer">Trailer URL</Label>
-                            <Input
-                                id="game-trailer"
-                                value={formData.trailer}
-                                onChange={(e) => setFormData({ ...formData, trailer: e.target.value })}
-                                placeholder="https://youtube.com/watch?v=..."
-                            />
-                        </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="game-trailer">Trailer URL</Label>
+                        <Input
+                            id="game-trailer"
+                            value={formData.trailer}
+                            onChange={(e) => setFormData({ ...formData, trailer: e.target.value })}
+                            placeholder="https://youtube.com/watch?v=..."
+                        />
                     </div>
 
                     <div className="space-y-2">
@@ -704,6 +865,60 @@ function GameForm({
                             rows={4}
                         />
                     </div>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="image-upload">Game Images</Label>
+
+                    {/* Upload Area */}
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        <div className="text-center">
+                            <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                            <div className="mt-2">
+                                <label
+                                    htmlFor="image-upload"
+                                    className="cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md inline-flex items-center gap-2"
+                                >
+                                    <Upload className="h-4 w-4" />
+                                    {uploading ? 'Uploading...' : 'Upload Images'}
+                                </label>
+                                <input
+                                    id="image-upload"
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
+                                    disabled={uploading}
+                                />
+                            </div>
+                            <p className="text-sm text-gray-500 mt-2">
+                                PNG, JPG, GIF up to 10MB each. Multiple files supported.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Image Preview Grid */}
+                    {uploadedImages.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                            {uploadedImages.map((imageUrl, index) => (
+                                <div key={index} className="relative group">
+                                    <img
+                                        src={imageUrl}
+                                        alt={`Game image ${index + 1}`}
+                                        className="w-full h-24 object-cover rounded-lg border"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeImage(index)}
+                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Accessibility Tags */}

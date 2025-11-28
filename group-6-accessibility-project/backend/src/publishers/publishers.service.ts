@@ -118,21 +118,34 @@ export class PublishersService {
     return publisher;
   }
 
-  async findByUserId(userId: number) {
-    const publisher = await this.databaseService.publisher.findFirst({
-      where: { userId },
-      include: {
-        User: {
-          select: {
-            username: true,
-            email: true,
-            role: true
+  // Add this method to your PublishersService class
+async findByUserId(userId: number) {
+  const publisher = await this.databaseService.publisher.findFirst({
+    where: { userId },
+    include: {
+      User: {
+        select: {
+          username: true,
+          email: true,
+          role: true
+        }
+      },
+      Game: {
+        include: {
+          gameAccessibilityTags: {
+            include: {
+              accessibilityTags: true
+            }
           }
-        },
-        Game: true
+        }
       }
-    });
+    }
+  });
 
-    return publisher;
+  if (!publisher) {
+    throw new NotFoundException('Publisher account not found for this user');
   }
+
+  return publisher;
+}
 }

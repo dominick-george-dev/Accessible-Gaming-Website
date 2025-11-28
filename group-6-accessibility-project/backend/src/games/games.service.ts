@@ -18,19 +18,29 @@ export class GamesService {
     async create(createGameDto: any) {
         console.log('Received data:', createGameDto);
 
-        const { accessibilityTagIds, selectedTags, ...gameData } = createGameDto;
+        const { accessibilityTagIds, selectedTags, id, ...gameData } = createGameDto;
 
         // Use either accessibilityTagIds or selectedTags (they're the same thing)
         const tagIds = accessibilityTagIds || selectedTags || [];
 
         console.log('Game data to save:', gameData);
         console.log('Tag IDs:', tagIds);
+        console.log('Excluded ID:', id);
 
         // Create the game
         const game = await this.databaseService.game.create({
             data: {
-                ...gameData,
+                title: gameData.title,
+                description: gameData.description,
+                developer: gameData.developer,
+                genre: gameData.genre,
+                rating: gameData.rating || 0,
                 releaseDate: new Date(gameData.releaseDate),
+                images: gameData.images || [],
+                trailer: gameData.trailer || null,
+                transcript: gameData.transcript || null,
+                publisherId: gameData.publisherId,
+                hasBeenVerified: false, 
             }
         });
 
@@ -129,14 +139,27 @@ export class GamesService {
     }
 
     async remove(id: number) {
-        // Delete related accessibility tags first
+    try {
+        // 1. Delete reviews first (they reference the game)
+        await this.databaseService.review.deleteMany({
+            where: { gameId: id }
+        });
+        // 2. Delete game accessibility tags (junction table)
         await this.databaseService.gameAccessibilityTags.deleteMany({
             where: { gameId: id }
         });
-        // Delete the game
-        return this.databaseService.game.delete({
+        // 3. Finally delete the game itself
+        const deletedGame = await this.databaseService.game.delete({
             where: { id }
         });
+
+        console.log(`Game ${id} and all related records deleted successfully`);
+        return deletedGame;
+
+    } catch (error) {
+        console.error('Error deleting game:', error);
+        throw new Error(`Failed to delete game: ${error.message}`);
     }
+}
 }
 
