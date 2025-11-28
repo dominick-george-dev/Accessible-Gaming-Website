@@ -21,18 +21,16 @@ export class AccessibilityTagsService {
   
   // Get all accessibility tags for a specific game
   async findAllByGameId(gameId: number) {
-  // Get all tag IDs related to this game
-  const tagLinks = await this.databaseService.gameAccessibilityTags.findMany({
-    where: { gameId },
-    select: { accessibilityTagsId: true },
-  });
+  // Fetch join rows and include the related accessibility tag objects directly
+    const tagLinks = await this.databaseService.gameAccessibilityTags.findMany({
+      where: { gameId },
+      include: { accessibilityTags: true },
+    });
 
-  const tagIds = tagLinks.map(tag => tag.accessibilityTagsId);
+    if (!tagLinks || tagLinks.length === 0) return [];
 
-  // Fetch all tags with those IDs
-  return this.databaseService.accessibilityTags.findMany({
-    where: { id: { in: tagIds } },
-  });
+    // Map to the included tag objects and filter any nulls
+    return tagLinks.map((l) => l.accessibilityTags).filter(Boolean);
 }
 
   // Get a specific accessibility tag by ID

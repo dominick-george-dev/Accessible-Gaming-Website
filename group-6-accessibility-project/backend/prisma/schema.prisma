@@ -17,14 +17,15 @@ model Game {
   createdAt             DateTime                @default(now())
   developer             String
   rating                Float
+  hasBeenVerified       Boolean                 @default(false)
   images                String[]
+  publisherId           Int?
   trailer               String?
   transcript            String?
-  hasBeenVerified       Boolean                 @default(false)
-  publisherId           Int?
   Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
+  View                  View[]
 }
 
 model AccessibilityTags {
@@ -61,16 +62,16 @@ model Review {
 }
 
 model User {
-  id                    Int                        @id @default(autoincrement())
-  email                 String                     @unique
-  username              String                     @unique
-  createdAt             DateTime                   @default(now())
-  updatedAt             DateTime                   @updatedAt
-  password              String                     @default("NEEDS_PASSWORD_RESET") @db.VarChar(255)
-  role                  roles                      @default(USER)
-  Publisher             Publisher[]
-  reviews               Review[]
-  accessibilitySettings UserAccessibilitySettings?
+  id                        Int                        @id @default(autoincrement())
+  email                     String                     @unique
+  username                  String                     @unique
+  password                  String                     @default("NEEDS_PASSWORD_RESET") @db.VarChar(255)
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  role                      roles                      @default(USER)
+  Publisher                 Publisher[]
+  Review                    Review[]
+  UserAccessibilitySettings UserAccessibilitySettings?
 }
 
 model UserAccessibilitySettings {
@@ -80,15 +81,15 @@ model UserAccessibilitySettings {
   fontFamily                  String   @default("default")
   highContrast                Boolean  @default(false)
   colorBlindMode              String   @default("none")
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
-  cognitiveAccessibility      Boolean  @default(false)
   colourMode                  String   @default("light-mode")
+  visualAccessibility         Boolean  @default(false)
   hearingAccessibility        Boolean  @default(false)
   motorDexterityAccessibility Boolean  @default(false)
+  cognitiveAccessibility      Boolean  @default(false)
   screenMagnifier             Boolean  @default(false)
-  visualAccessibility         Boolean  @default(false)
-  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime
+  User                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Publisher {
@@ -100,15 +101,15 @@ model Publisher {
   User           User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "userId")
 }
 
+model View {
+  id       Int      @id @default(autoincrement())
+  gameId   Int
+  viewedAt DateTime @default(now())
+  Game     Game     @relation(fields: [gameId], references: [id])
+}
+
 enum roles {
   USER
   ADMIN
   PUBLISHER
-}
-
-enum categories {
-  Visual
-  Hearing
-  Dexterity
-  Cognitive
 }
