@@ -15,12 +15,13 @@ import {
   Hand,
   Brain,
 } from "lucide-react";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { ImgCarousel } from "../components/ui/imgCarousel";
 import { AccessibleVideoPlayer } from "../components/AccessibleVideoPlayer";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { Game, Review } from "../types/game";
 import { useParams, useNavigate } from "react-router-dom";
+import { addUndoAction } from "../utils/undoManager";
 
 // Helper function to get category color and icon
 const getCategoryStyle = (category: string) => {
@@ -57,7 +58,12 @@ export function GameDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [game, setGame] = useState<Game | null>(null);
-    const [accessibilityTags, setAccessibilityTags] = useState<any[]>([]);
+    const [accessibilityTags, setAccessibilityTags] = useState<Array<{
+        id: string;
+        tag: string;
+        category: string;
+        verified: boolean;
+    }>>([]);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isHelpful, setIsHelpful] = useState<Record<number, boolean>>({});
@@ -130,9 +136,7 @@ export function GameDetailPage() {
             console.error("Error fetching reviews:", error);
             toast.error("Failed to load reviews");
         }
-    };
-
-    const handleHelpfulSubmit = async (id: number) => {
+    };    const handleHelpfulSubmit = async (id: number) => {
         const reviewToUpdate = reviews.find((review) => review.id === id);
         if (!reviewToUpdate) {
             toast.error("Review not found");
@@ -143,6 +147,10 @@ export function GameDetailPage() {
         const newHelpfulCount = isCurrentlyHelpful
             ? reviewToUpdate.helpful - 1
             : reviewToUpdate.helpful + 1;
+
+        // Store previous state for undo
+        const previousHelpfulCount = reviewToUpdate.helpful;
+        const previousHelpfulState = isCurrentlyHelpful;
 
         // Optimistic UI update
         setReviews((prevReviews) =>
@@ -166,13 +174,39 @@ export function GameDetailPage() {
             [id]: !isCurrentlyHelpful,
             }));
 
+            // Add undo action
+            addUndoAction(
+                `${!isCurrentlyHelpful ? 'Mark' : 'Unmark'} review as helpful`,
+                () => {
+                    // Undo the helpful vote
+                    setReviews((prevReviews) =>
+                        prevReviews.map((review) =>
+                            review.id === id ? { ...review, helpful: previousHelpfulCount } : review
+                        )
+                    );
+                    setIsHelpful((prev) => ({
+                        ...prev,
+                        [id]: previousHelpfulState,
+                    }));
+                    // Also call the API to undo the change
+                    fetch(`http://localhost:3000/reviews/${id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ helpful: previousHelpfulCount }),
+                    }).catch(() => {
+                        toast.error("Failed to undo helpful vote");
+                    });
+                }
+            );
+
             toast.success(
             !isCurrentlyHelpful
                 ? "Marked review as helpful!"
                 : "Removed helpful vote."
             );
-        } catch (err) {
+        } catch (error) {
             toast.error("Failed to update review");
+            console.error("Error updating review:", error);
         }
     };
     const handleSubmitReview = async () => {
@@ -209,11 +243,37 @@ export function GameDetailPage() {
                 comment: reviewText,
                 accessibilityFeedback: selectedAccessibilityTags,
                 }),
-            });
-
-            if (!res.ok) throw new Error("Failed to submit review");
+            });            if (!res.ok) throw new Error("Failed to submit review");
             const newReview = await res.json();
+            
+            // Store previous state for undo
+            const previousReviews = reviews;
+            const previousRating = userRating;
+            const previousText = reviewText;
+            const previousTags = selectedAccessibilityTags;
+            
             setReviews((prev) => [...prev, newReview]);
+            
+            // Add undo action for review submission
+            addUndoAction(
+                'Submit review',
+                () => {
+                    // Undo review submission
+                    setReviews(previousReviews);
+                    setUserRating(previousRating);
+                    setReviewText(previousText);
+                    setSelectedAccessibilityTags(previousTags);
+                    
+                    // Call API to delete the review
+                    fetch(`http://localhost:3000/reviews/${newReview.id}`, {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                    }).catch(() => {
+                        toast.error("Failed to undo review submission");
+                    });
+                }
+            );
+            
             toast.success("Review submitted!");
 
             setUserRating(0);
@@ -223,19 +283,36 @@ export function GameDetailPage() {
             toast.error("Error submitting review");
             console.error(error);
         }
-    };
-
-    const toggleAccessibilityTag = (tagName: string) => {
+    };    const toggleAccessibilityTag = (tagName: string) => {
+        const previousTags = [...selectedAccessibilityTags];
+        const wasIncluded = previousTags.includes(tagName);
+        
         setSelectedAccessibilityTags((prev) =>
         prev.includes(tagName)
             ? prev.filter((t) => t !== tagName)
             : [...prev, tagName]
         );
-    };
-
-    const onToggleFavorite = (gameId: string) => {
+        
+        // Add undo action
+        addUndoAction(
+            `${wasIncluded ? 'Remove' : 'Add'} accessibility tag: ${tagName}`,
+            () => {
+                setSelectedAccessibilityTags(previousTags);
+            }
+        );
+    };const onToggleFavorite = () => {
+        const previousFavoriteState = isFavorite;
         setIsFavorite((prev) => !prev);
-        toast(isFavorite ? "Removed from favorites" : "Added to favorites");
+        
+        // Add undo action
+        addUndoAction(
+            `${!previousFavoriteState ? 'Add to' : 'Remove from'} favorites`,
+            () => {
+                setIsFavorite(previousFavoriteState);
+            }
+        );
+        
+        toast(previousFavoriteState ? "Removed from favorites" : "Added to favorites");
     };
 
     const onBack = () => navigate(-1);
@@ -272,12 +349,8 @@ export function GameDetailPage() {
         >
         <path d="M17.6 13.8c0-3 2.5-4.5 2.6-4.5-1.4-2.1-3.6-2.3-4.4-2.4-1.9-.2-3.6 1.1-4.6 1.1-.9 0-2.4-1.1-4-1-2 0-3.9 1.2-5 3C.1 13.4 1.7 18 3.7 20.6c1 1.3 2.2 2.7 3.8 2.7 1.5 0 2.1-.9 4-1 1.8 0 2.4 1 4 1 1.7 0 2.7-1.3 3.7-2.6 1.2-1.5 1.7-3 1.7-3.1-.1 0-3.2-1.2-3.3-4.8zM14.7 5.4c.8-1 1.4-2.4 1.2-3.8-1.2 0-2.7.8-3.5 1.8-.7.9-1.4 2.3-1.2 3.6 1.3.1 2.6-.6 3.5-1.6z" />
         </svg>
-    );
-
-    
-
-    return (
-        <div className="max-w-5xl mx-auto space-y-6 lg:space-y-8">
+    );        return (        <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
+            <div className="max-w-5xl space-y-6 lg:space-y-8">
         {/* Back Button */}
         <Button
             variant="ghost"
@@ -296,10 +369,9 @@ export function GameDetailPage() {
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
             {/* Game Image */}
             <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-            <ImageWithFallback
-                src={game.thumbnail}
+            <ImgCarousel
+                images={game.images}
                 alt={`${game.title} game cover`}
-                className="w-full h-full object-cover"
             />
             {game.verified && (
                 <div
@@ -317,11 +389,10 @@ export function GameDetailPage() {
             <div className="space-y-4 lg:space-y-6">
             <div>
                 <div className="flex items-start justify-between gap-3 mb-2 lg:mb-3">
-                <h1 className="flex-1">{game.title}</h1>
-                <Button
+                <h1 className="flex-1">{game.title}</h1>                <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => onToggleFavorite(game.id)}
+                    onClick={() => onToggleFavorite()}
                     aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                     aria-pressed={isFavorite}
                     className="flex-shrink-0"
@@ -404,7 +475,11 @@ export function GameDetailPage() {
         <Separator />
         
         {/* Video Trailer */}
-        <AccessibleVideoPlayer gameName={game.title} thumbnailUrl={game.thumbnail} />
+        <AccessibleVideoPlayer
+            gameName={game.title}
+            youtubeUrl={game.trailer}
+            transcript={game.transcript}
+        />
 
         
 
@@ -471,11 +546,23 @@ export function GameDetailPage() {
             <Card className="p-4 lg:p-6 space-y-4">
             <div>
                 <label className="block mb-2">Your Rating</label>
-                <div className="flex gap-2" role="radiogroup" aria-label="Select rating">
-                {[1, 2, 3, 4, 5].map((rating) => (
+                <div className="flex gap-2" role="radiogroup" aria-label="Select rating">                {[1, 2, 3, 4, 5].map((rating) => (
                     <button
                     key={rating}
-                    onClick={() => setUserRating(rating)}
+                    onClick={() => {
+                        const previousRating = userRating;
+                        setUserRating(rating);
+                        
+                        // Add undo action for rating change
+                        if (previousRating !== rating) {
+                            addUndoAction(
+                                `Change rating to ${rating} star${rating > 1 ? 's' : ''}`,
+                                () => {
+                                    setUserRating(previousRating);
+                                }
+                            );
+                        }
+                    }}
                     className="focus:outline-none focus:ring-2 focus:ring-primary rounded"
                     aria-label={`${rating} star${rating > 1 ? 's' : ''}`}
                     role="radio"
@@ -632,8 +719,8 @@ export function GameDetailPage() {
                 </Card>
                 ))
             )}
-            </div>
-        </section>
+            </div>        </section>
+        </div>
         </div>
     );
 }
