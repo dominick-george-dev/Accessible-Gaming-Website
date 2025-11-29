@@ -1,0 +1,55 @@
+stages:
+  - test
+  - build
+
+variables:
+  NODE_ENV: test
+  SUBDIR: "group-6-accessibility-project"
+  BACKEND_DIR: "$CI_PROJECT_DIR/$SUBDIR/backend"
+  FRONTEND_DIR: "$CI_PROJECT_DIR/$SUBDIR/frontend"
+
+cache:
+  key: ${CI_PROJECT_PATH}
+  paths:
+    - $BACKEND_DIR/node_modules
+    - $FRONTEND_DIR/node_modules
+
+test:backend:
+  image: node:20-alpine
+  stage: test
+  before_script:
+    - cd "$BACKEND_DIR" || cd "$SUBDIR/backend"
+    - npm ci
+  script:
+    # run unit tests (uses "test" script in backend/package.json)
+    - npm run test -- --coverage
+  artifacts:
+    when: always
+    paths:
+      - $BACKEND_DIR/coverage
+    expire_in: 1 week
+  only:
+    - branches
+
+build:images:
+  image: docker:24
+  stage: build
+  services:
+    - name: docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+  before_script:
+    - docker info
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" "$FRONTEND_DIR"
+    - docker build -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" "$BACKEND_DIR"
+    - |
+      if [ -n "$CI_REGISTRY" ] && [ -n "$CI_REGISTRY_USER" ] && [ -n "$CI_REGISTRY_PASSWORD" ]; then
+        echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+        docker push "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" || true
+        docker push "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" || true
+      else
+        echo "No registry credentials configured; skipping push."
+      fi
+  only:
+    - branches
