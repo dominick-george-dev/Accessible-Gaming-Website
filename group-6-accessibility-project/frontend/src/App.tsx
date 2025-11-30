@@ -2,26 +2,11 @@ import './App.css'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import { GameDetailPage } from './pages/GameDetailPage'
 import { BrowsePage } from './pages/BrowserPage'
+import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
-
-// Create placeholder pages for the navigation items
-const HomePage = () => (
-  <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-    <div className="max-w-5xl">
-      <h2 className="text-2xl font-bold mb-6">Welcome to AccessPlay</h2>
-      <p className="text-muted-foreground mb-4">
-        Discover accessible games designed for everyone. Browse our collection of games 
-        with detailed accessibility information to find the perfect game for you.
-      </p>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Add featured games or content here */}
-      </div>
-    </div>
-  </div>
-);
 
 const FavoritesPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
