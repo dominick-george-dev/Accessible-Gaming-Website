@@ -55,7 +55,7 @@ export function PieChartCard({ title, data, nameKey, valueKey, colors }: PieChar
                   />
                   <span>{item[nameKey]}</span>
                 </div>
-                <Badge variant="secondary">{item[valueKey]} games</Badge>
+                <Badge variant="secondary">{item[valueKey]} accessibility features</Badge>
               </div>
             ))}
           </div>

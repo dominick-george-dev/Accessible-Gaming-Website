@@ -4,7 +4,7 @@ import { DatabaseService } from '../database/database.service';
 import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
 
 // Utility to build a fresh DB mock each time
-function createMockDB() {
+function createMockDB(publisherId = 10) {
   return {
     game: {
       count: jest.fn(),
@@ -25,6 +25,9 @@ function createMockDB() {
     favourites: {
       count: jest.fn(),
       findMany: jest.fn(),
+    },
+    publisher: {
+      findUnique: jest.fn().mockResolvedValue({ id: publisherId }),
     },
   };
 }

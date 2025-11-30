@@ -12,7 +12,6 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/decorator/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 
 @Controller('analytics')
 @UseGuards(JwtAuthGuard, RolesGuard, ThrottlerGuard)
@@ -22,10 +21,10 @@ export class AnalyticsController {
   @Get('publisher')
   @Roles('ADMIN', 'PUBLISHER')
   getPublisherAnalytics(@Req() req: any) {
-    const publisherId = req.user.userId;
-    if (!publisherId) {
-      throw new BadRequestException('Publisher ID not found in request');
+    const userId = req.user.userId;
+    if (!userId) {
+      throw new BadRequestException('User ID not found in request');
     }
-    return this.analyticsService.getPublisherAnalytics(publisherId);
+    return this.analyticsService.getPublisherAnalytics(userId);
   }
 }

@@ -97,7 +97,7 @@ model UserAccessibilitySettings {
 
 model Publisher {
   id             Int     @id @default(autoincrement())
-  userId         Int
+  userId         Int      @unique
   displayName    String?
   profilePicture String?
   Game           Game[]

@@ -23,11 +23,20 @@ function ensureNumber(value: any, field: string): number {
 export class AnalyticsService {
   constructor(private readonly db: DatabaseService) {}
 
-  async getPublisherAnalytics(publisherId: number) {
+  async getPublisherAnalytics(userId: number) {
     try {
-
       // Validate input early to prevent injection attacks
-      ensureNumber(publisherId, "publisherId");
+      ensureNumber(userId, "userId");
+      
+      //fetch publisher ID from user ID
+      const publisher = await this.db.publisher.findUnique({
+        where: { userId },
+        select: { id: true }
+      });
+      if (!publisher) {
+        throw new BadRequestException('Publisher not found for the given user ID');
+      }
+      const publisherId = publisher.id;
 
       // Total games
       const totalGamesPromise = this.db.game.count({

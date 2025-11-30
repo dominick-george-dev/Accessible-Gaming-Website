@@ -426,7 +426,7 @@ export function GameDetailPage() {
                 <div className="flex items-center gap-3 lg:gap-4 flex-wrap mb-3 lg:mb-4">
                 <div className="flex items-center gap-2">
                     <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" aria-hidden="true" />
-                    <span>{game.rating}</span>
+                    <span>{Number(game.rating).toFixed(1)}</span>
                     <span className="text-muted-foreground">({reviews.length})</span>
                 </div>
                 <Separator orientation="vertical" className="h-6 hidden sm:block" />
