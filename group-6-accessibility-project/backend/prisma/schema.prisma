@@ -22,6 +22,7 @@ model Game {
   publisherId           Int?
   trailer               String?
   transcript            String?
+  Favoritie             Favoritie[]
   Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
@@ -69,6 +70,7 @@ model User {
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
   role                      roles                      @default(USER)
+  Favoritie                 Favoritie[]
   Publisher                 Publisher[]
   Review                    Review[]
   UserAccessibilitySettings UserAccessibilitySettings?
@@ -106,6 +108,14 @@ model View {
   gameId   Int
   viewedAt DateTime @default(now())
   Game     Game     @relation(fields: [gameId], references: [id])
+}
+
+model Favoritie {
+  id     Int   @id @default(autoincrement())
+  userID Int?
+  gameID Int?
+  Game   Game? @relation(fields: [gameID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gameID")
+  User   User? @relation(fields: [userID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "userID")
 }
 
 enum roles {

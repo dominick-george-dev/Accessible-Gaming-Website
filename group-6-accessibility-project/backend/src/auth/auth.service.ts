@@ -2,17 +2,18 @@ import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { DatabaseService } from '../database/database.service';
+import { roles } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
   constructor(
     private databaseService: DatabaseService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   // Hash password with high security (12 rounds)
   async hashPassword(password: string): Promise<string> {
-    const saltRounds = 12; 
+    const saltRounds = 12;
     return bcrypt.hash(password, saltRounds);
   }
 
@@ -58,16 +59,17 @@ export class AuthService {
           id: true,
           username: true,
           email: true,
+          role: true,
           createdAt: true,
-          // Don't return password in response
         },
       });
 
       // Generate JWT token
-      const payload = { 
-        sub: user.id, 
-        username: user.username, 
-        email: user.email 
+      const payload = {
+        sub: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role
       };
       const token = this.jwtService.sign(payload);
 
@@ -78,6 +80,7 @@ export class AuthService {
           id: user.id,
           username: user.username,
           email: user.email,
+          role: user.role,
           createdAt: user.createdAt,
         },
       };
@@ -100,8 +103,9 @@ export class AuthService {
         username: true,
         email: true,
         password: true,
-        createdAt: true, // Make sure this is included
-        },
+        createdAt: true,
+        role: true,
+      },
     });
 
     if (!user) {
@@ -115,10 +119,11 @@ export class AuthService {
     }
 
     // Generate JWT token
-    const payload = { 
-      sub: user.id, 
-      username: user.username, 
-      email: user.email 
+    const payload = {
+      sub: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role
     };
     const token = this.jwtService.sign(payload);
 
@@ -129,6 +134,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
+        role: user.role,
         createdAt: user.createdAt,
       },
     };
@@ -147,5 +153,38 @@ export class AuthService {
       },
     });
     return user;
+  }
+
+  // Add a method to get current user info from token
+  async getCurrentUser(userId: number) {
+    try {
+      const user = await this.databaseService.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      return {
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt,
+        }
+      };
+    } catch (error) {
+      console.error('Get current user error:', error);
+      throw new UnauthorizedException('Failed to get user information');
+    }
   }
 }
