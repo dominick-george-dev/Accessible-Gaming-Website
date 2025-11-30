@@ -7,6 +7,8 @@ import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
+import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
+import { PublisherDashboard } from './pages/PublisherDashboard'
 
 const FavoritesPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
@@ -42,9 +44,6 @@ const ProfilePage = () => (
     </div>
   </div>
 );
-import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
-import { LogoutPage } from './pages/LogoutPage'
-import { PublisherDashboard } from './pages/PublisherDashboard'
 
 function App() {
   const { setLoginState } = useAuth();
