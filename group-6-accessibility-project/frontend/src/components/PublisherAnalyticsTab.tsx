@@ -7,6 +7,7 @@ import { Card } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { useParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { BarChart3, Eye, Star, TrendingUp } from "lucide-react";
 
 export function PublisherAnalyticsTab() {
   const [analytics, setAnalytics] = useState<any | null>(null);
@@ -105,23 +106,52 @@ export function PublisherAnalyticsTab() {
       {/* High-level stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-6">
-          <p>Total Games</p>
-          <h2 className="text-3xl">{analytics.totalGames}</h2>
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-100 dark:bg-blue-950 p-3 rounded-lg">
+              <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+            </div>
+            <div className="text-left mt-2">
+              <p>Total Games</p>
+              <h2 className="text-3xl">{analytics.totalGames}</h2>
+            </div>
+          </div>
         </Card>
 
         <Card className="p-6">
-          <p>Total Views</p>
-          <h2 className="text-3xl">{analytics.games.reduce((s: number, g: any) => s + g.totalViews, 0)}</h2>
+          <div className="flex items-center gap-4">
+            
+            <div className="bg-blue-100 dark:bg-blue-950 p-3 rounded-lg">
+              <Eye className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="text-left mt-2">
+              <p>Total Views</p>
+              <h2 className="text-3xl">{analytics.games.reduce((s: number, g: any) => s + g.totalViews, 0)}</h2>
+            </div>
+          </div>
         </Card>
 
         <Card className="p-6">
-          <p>Total Reviews</p>
-          <h2 className="text-3xl">{analytics.games.reduce((s: number, g: any) => s + g.totalReviews, 0)}</h2>
+          <div className="flex items-center gap-4">
+            <div className="bg-green-100 dark:bg-green-950 p-3 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" aria-hidden="true" />
+            </div>
+            <div className="text-left mt-2">
+              <p>Total Reviews</p>
+              <h2 className="text-3xl">{analytics.games.reduce((s: number, g: any) => s + g.totalReviews, 0)}</h2>
+            </div>
+          </div>
         </Card>
 
         <Card className="p-6">
-          <p>Avg Rating</p>
-          <h2 className="text-3xl">{analytics.avgTotalRating.toFixed(1)}</h2>
+          <div className="flex items-center gap-4">
+            <div className="bg-yellow-100 dark:bg-yellow-950 p-3 rounded-lg">
+              <Star className="w-6 h-6 text-yellow-600 dark:text-yellow-400" aria-hidden="true" />
+            </div>
+            <div className="text-left mt-2">
+              <p>Avg Rating</p>
+              <h2 className="text-3xl">{analytics.avgTotalRating.toFixed(1)}</h2>
+            </div>
+          </div>
         </Card>
       </div>
 
