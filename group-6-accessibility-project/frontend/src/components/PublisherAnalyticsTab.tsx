@@ -50,7 +50,7 @@ export function PublisherAnalyticsTab() {
   if (unauthorized) return <p style={{ color: "red" }}>Unauthorized access. You do not have permission to view this data.</p>;
   if (!analytics) return <p>Failed to load analytics...</p>;
 
-  
+  console.log("Analytics Data:", analytics);
   // Handle clicks on table row
   const handleRowClick = (game: any) => {
     setSelectedGame(game);
@@ -174,8 +174,7 @@ export function PublisherAnalyticsTab() {
                     <td className="text-right p-3">{games.totalViews.toLocaleString()}</td>
                     <td className="text-right p-3">{games.totalReviews.toLocaleString()}</td>                    
                     <td className="text-right p-3">{games?.avgRating.toFixed(1) || 'N/A'}</td>
-                    {/* Favourites will be implented once the favourites page is imleplemented*/}
-                    <td className="text-right p-3">N/A</td>
+                    <td className="text-right p-3">{games?.favourites.length || 'N/A'}</td>
                   </tr>
                 );
               })}

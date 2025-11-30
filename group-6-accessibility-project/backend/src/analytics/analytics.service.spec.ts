@@ -20,7 +20,11 @@ function createMockDB() {
     },
     gameAccessibilityTags: {
       findMany: jest.fn(),
-    }
+    },
+    favourites: {
+      count: jest.fn(),
+      findMany: jest.fn(),
+    },
   };
 }
 
@@ -54,7 +58,7 @@ describe('AnalyticsService', () => {
       title: "Game A",
       publisherId,
       _count: { views: 5, reviews: 2 },
-      reviews: [{ rating: 4 }, { rating: 2 }],
+      reviews: [{ rating: 4 }, { rating: 3 }],
     },
     {
       id: 2,
@@ -90,6 +94,12 @@ describe('AnalyticsService', () => {
 
   const mockAvgRating = { _avg: { rating: 3.6 } };
 
+  const mockFavourites = [
+    { gameId: 1, userId: 100 },
+    { gameId: 1, userId: 101 },
+    { gameId: 2, userId: 102 },
+  ];
+
   function mockAllDB() {
     db.game.count.mockResolvedValue(2);
     db.review.aggregate.mockResolvedValue(mockAvgRating);
@@ -98,6 +108,14 @@ describe('AnalyticsService', () => {
     db.gameAccessibilityTags.findMany.mockResolvedValue(mockAccessibility);
     db.game.findMany.mockResolvedValue(mockGames);
     db.view.findMany.mockResolvedValue(mockDailyViews);
+    db.favourites.findMany.mockResolvedValue(mockFavourites);
+    db.favourites.count.mockImplementation(({ where }) => {
+      // Simulate count by gameId
+      if (where && where.gameId) {
+        return Promise.resolve(mockFavourites.filter(f => f.gameId === where.gameId).length);
+      }
+      return Promise.resolve(mockFavourites.length);
+    });
   }
 
   // Returns analytics
@@ -131,7 +149,7 @@ describe('AnalyticsService', () => {
 
     const gameA = result.games[0];
     expect(gameA.gameId).toBe(1);
-    expect(gameA.avgRating).toBe(3.0); // (4 + 2) / 2
+    expect(gameA.avgRating).toBe(3.5); // (4 + 3) / 2
     expect(gameA.totalViews).toBe(5);
     expect(gameA.totalReviews).toBe(2);
 
@@ -198,11 +216,23 @@ describe('AnalyticsService', () => {
     ]);
   });
 
+  it('should return favourite count per game in analytics', async () => {
+    mockAllDB();
+    const result = await service.getPublisherAnalytics(publisherId);
+    const gameA = result.games.find(g => g.gameId === 1);
+    const gameB = result.games.find(g => g.gameId === 2);
+    expect(gameA && gameA.favourites.length).toBe(2);
+    expect(gameB && gameB.favourites.length).toBe(1);
+  });
+
   it('should throw InternalServerErrorException for db failures', async () => {
     db.game.count.mockRejectedValue(new Error('DB error'));
-
-    await expect(service.getPublisherAnalytics(publisherId))
-      .rejects.toThrow(InternalServerErrorException);
+    try {
+      await service.getPublisherAnalytics(publisherId);
+      fail('Expected InternalServerErrorException');
+    } catch (err) {
+      expect(err).toBeInstanceOf(InternalServerErrorException);
+    }
   });
 });
 
@@ -243,6 +273,8 @@ describe("AnalyticsService Security & Sanitization", () => {
     db.view.findMany.mockResolvedValue([
       { gameId: 1, viewedAt: new Date("2025-01-01") }
     ]);
+    db.favourites.findMany.mockResolvedValue([]);
+    db.favourites.count.mockResolvedValue(0);
   }
 
   // Should protect from XSS in game titles

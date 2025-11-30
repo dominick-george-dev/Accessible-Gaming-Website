@@ -17,11 +17,12 @@ model Game {
   createdAt             DateTime                @default(now())
   developer             String
   rating                Float
+  hasBeenVerified       Boolean                 @default(false)
   images                String[]
+  publisherId           Int?
   trailer               String?
   transcript            String?
-  hasBeenVerified       Boolean                 @default(false)
-  publisherId           Int?
+  Favourites            Favourites[]
   Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
@@ -69,6 +70,8 @@ model User {
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
   role                      roles                      @default(USER)
+  AccessibilityIssues       AccessibilityIssues[]
+  Favourites                Favourites[]
   Publisher                 Publisher[]
   Review                    Review[]
   UserAccessibilitySettings UserAccessibilitySettings?
@@ -100,12 +103,30 @@ model Publisher {
   Game           Game[]
   User           User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "userId")
 }
+
 model View {
-  id        Int      @id @default(autoincrement())
-  gameId    Int
-  viewedAt  DateTime @default(now())
-  game      Game     @relation(fields: [gameId], references: [id])
+  id       Int      @id @default(autoincrement())
+  gameId   Int
+  viewedAt DateTime @default(now())
+  game     Game     @relation(fields: [gameId], references: [id])
 }
+
+model AccessibilityIssues {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  message   String   @default("No Message Added")
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Favourites {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  gameId Int
+  Game   Game @relation(fields: [gameId], references: [id])
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 enum roles {
   USER
   ADMIN

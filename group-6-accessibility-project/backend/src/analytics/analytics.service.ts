@@ -95,6 +95,14 @@ export class AnalyticsService {
           viewedAt: 'asc'
         }
       });
+      //Favourites per game
+      const favouritesPromise = this.db.favourites.findMany({
+        where: { Game: { publisherId } },
+        select: {
+          gameId: true,
+          userId: true,
+        }
+      });
 
       // Execute all queries in parallel
       const [
@@ -104,7 +112,8 @@ export class AnalyticsService {
         topRated,
         accessibilityTags,
         games,
-        dailyViewsRaw
+        dailyViewsRaw,
+        favourites
       ] = await Promise.all([
         totalGamesPromise,
         avgRatingPromise,
@@ -112,7 +121,8 @@ export class AnalyticsService {
         topRatedPromise,
         accessibilityTagsPromise,
         gamesPromise,
-        dailyViewsPromise
+        dailyViewsPromise,
+        favouritesPromise
       ]);
 
       // Process game-level analytics
@@ -141,6 +151,8 @@ export class AnalyticsService {
           .map(([date, count]) => ({ date, count }))
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+        // Map favourites for this game
+        const gameFavourites = favourites.filter(f => f.gameId === game.id);
 
         return {
           gameId: game.id,
@@ -148,7 +160,8 @@ export class AnalyticsService {
           totalViews: game._count.views,
           totalReviews: game._count.reviews,
           avgRating,
-          dailyViews
+          dailyViews,
+          favourites: gameFavourites
         };
       });
 
