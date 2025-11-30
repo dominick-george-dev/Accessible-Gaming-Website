@@ -4,6 +4,8 @@ stages:
 
 variables:
   NODE_ENV: test
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_TLS_CERTDIR: ""
   SUBDIR: "group-6-accessibility-project"
   BACKEND_DIR: "$CI_PROJECT_DIR/$SUBDIR/backend"
   FRONTEND_DIR: "$CI_PROJECT_DIR/$SUBDIR/frontend"
