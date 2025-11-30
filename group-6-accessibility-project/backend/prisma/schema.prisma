@@ -26,6 +26,7 @@ model Game {
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
   View                  View[]
+  favourites            Favourites[]
 }
 
 model AccessibilityTags {
@@ -61,6 +62,22 @@ model Review {
   User                  User     @relation(fields: [userId], references: [id])
 }
 
+model AccessibilityIssues {
+  id                          Int      @id @default(autoincrement())
+  userId                      Int      @unique
+  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message                     String   @default("No Message Added")
+  createdAt                   DateTime @default(now())
+}
+
+model Favourites {
+  id                        Int                        @id @default(autoincrement())
+  userId                    Int                        @unique
+  gameId                    Int                        @unique
+  game                      Game                       @relation(fields: [gameId], references: [id])
+  User                      User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model User {
   id                        Int                        @id @default(autoincrement())
   email                     String                     @unique
@@ -72,6 +89,8 @@ model User {
   Publisher                 Publisher[]
   Review                    Review[]
   UserAccessibilitySettings UserAccessibilitySettings?
+  UserAccessibilityIssues  AccessibilityIssues?
+  Favourites                Favourites[]
 }
 
 model UserAccessibilitySettings {
