@@ -10,11 +10,14 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AppService } from './app.service';
-
+import { PublishersModule } from './publishers/publishers.module';
+import { UploadModule } from './upload/upload.module';
+import { UploadController } from './api/upload/upload.controller';
+import { AwsService } from './services/aws/aws.service';
 
 
 @Module({
-  imports: [GamesModule, DatabaseModule, AccessibilityTagsModule, ReviewsModule, UsersModule, AuthModule, AnalyticsModule,
+  imports: [GamesModule, DatabaseModule, AccessibilityTagsModule, ReviewsModule, UsersModule, AuthModule, AnalyticsModule, PublishersModule, UploadModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -24,8 +27,8 @@ import { AppService } from './app.service';
       ],
     }),
   ],
-  controllers: [AppController],
-  providers: [AppService, {
+  controllers: [AppController, UploadController],
+  providers: [AppService, AwsService, {
     provide: 'APP_GUARD',
     useClass: ThrottlerGuard,
   }],
