@@ -3,6 +3,9 @@
 /node_modules
 /build
 
+# Keys
+/jenkins/project.key
+
 # Logs
 logs
 *.log

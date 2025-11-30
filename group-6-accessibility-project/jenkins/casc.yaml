@@ -1,0 +1,69 @@
+jenkins:
+  systemMessage: "Accessible Gaming Website CI/CD Pipeline"
+  numExecutors: 2
+  mode: NORMAL
+  scmCheckoutRetryCount: 3
+  
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin123}"
+
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+        - "Overall/Read:authenticated"
+
+  globalNodeProperties:
+    - envVars:
+        env:
+          - key: "DOCKER_HOST"
+            value: "unix:///var/run/docker.sock"
+          - key: "PATH"
+            value: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: "docker-hub"
+              username: "${DOCKER_HUB_USERNAME}"
+              password: "${DOCKER_HUB_PASSWORD}"
+              description: "Docker Hub Credentials"
+          - string:
+              scope: GLOBAL
+              id: "jwt-secret"
+              secret: "${JWT_SECRET}"
+              description: "JWT Secret"
+          - string:
+              scope: GLOBAL
+              id: "database-url"
+              secret: "${DATABASE_URL}"
+              description: "Database Connection URL"
+
+jobs:
+  - script: >
+      pipelineJob('accessible-gaming-pipeline') {
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://git.cardiff.ac.uk/c23069362/team-6-accessible-gaming-website.git')
+                  credentials(project.key: 'gitlab-credentials')
+                }
+                branch('*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+          }
+        }
+        triggers {
+          githubPush()
+        }
+      }
