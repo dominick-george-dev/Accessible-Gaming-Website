@@ -9,6 +9,7 @@ function createMockDB() {
     game: {
       count: jest.fn(),
       findMany: jest.fn(),
+      aggregate: jest.fn(),
     },
     review: {
       aggregate: jest.fn(),
@@ -59,6 +60,7 @@ describe('AnalyticsService', () => {
       publisherId,
       _count: { views: 5, reviews: 2 },
       reviews: [{ rating: 4 }, { rating: 3 }],
+      rating: 3.5, // Add rating field for analytics
     },
     {
       id: 2,
@@ -66,6 +68,7 @@ describe('AnalyticsService', () => {
       publisherId,
       _count: { views: 3, reviews: 1 },
       reviews: [{ rating: 5 }],
+      rating: 5, // Add rating field for analytics
     }
   ];
 
@@ -102,15 +105,25 @@ describe('AnalyticsService', () => {
 
   function mockAllDB() {
     db.game.count.mockResolvedValue(2);
-    db.review.aggregate.mockResolvedValue(mockAvgRating);
+    db.game.aggregate.mockResolvedValue({ _avg: { rating: 3.6 } });
     db.view.groupBy.mockResolvedValue(mockTopViewed);
-    db.review.groupBy.mockResolvedValue(mockTopRated);
+    db.game.findMany.mockImplementation(({ orderBy, take, select }) => {
+      // For topRatedPromise
+      if (orderBy && orderBy.rating === 'desc' && take === 5 && select) {
+        return Promise.resolve([
+          { id: 2, rating: 4.8 },
+          { id: 1, rating: 3.0 },
+        ]);
+      }
+      // For gamesPromise
+      return Promise.resolve(mockGames);
+    });
     db.gameAccessibilityTags.findMany.mockResolvedValue(mockAccessibility);
-    db.game.findMany.mockResolvedValue(mockGames);
+    db.review.aggregate.mockResolvedValue(mockAvgRating); // For legacy tests
+    db.review.groupBy.mockResolvedValue(mockTopRated); // For legacy tests
     db.view.findMany.mockResolvedValue(mockDailyViews);
     db.favourites.findMany.mockResolvedValue(mockFavourites);
     db.favourites.count.mockImplementation(({ where }) => {
-      // Simulate count by gameId
       if (where && where.gameId) {
         return Promise.resolve(mockFavourites.filter(f => f.gameId === where.gameId).length);
       }
@@ -168,12 +181,14 @@ describe('AnalyticsService', () => {
   // Empty datasets still return valid structure
   it('should handle empty analytics gracefully', async () => {
     db.game.count.mockResolvedValue(0);
-    db.review.aggregate.mockResolvedValue({ _avg: { rating: null } });
+    db.game.aggregate.mockResolvedValue({ _avg: { rating: null } });
     db.view.groupBy.mockResolvedValue([]);
-    db.review.groupBy.mockResolvedValue([]);
-    db.gameAccessibilityTags.findMany.mockResolvedValue([]);
     db.game.findMany.mockResolvedValue([]);
+    db.gameAccessibilityTags.findMany.mockResolvedValue([]);
+    db.review.aggregate.mockResolvedValue({ _avg: { rating: null } });
+    db.review.groupBy.mockResolvedValue([]);
     db.view.findMany.mockResolvedValue([]);
+    db.favourites.findMany.mockResolvedValue([]);
 
     const res = await service.getPublisherAnalytics(publisherId);
 
@@ -189,6 +204,7 @@ describe('AnalyticsService', () => {
   it('should round ratings to 1 decimal place', async () => {
     mockAllDB();
     mockGames[0].reviews = [{ rating: 3.3333 }, { rating: 3.3333 }];
+    mockGames[0].rating = 3.3; // Set rating to rounded value
 
     const res = await service.getPublisherAnalytics(publisherId);
 
@@ -258,16 +274,19 @@ describe("AnalyticsService Security & Sanitization", () => {
 
   function mockDefaults() {
     db.game.count.mockResolvedValue(1);
-    db.review.aggregate.mockResolvedValue({ _avg: { rating: 5 } });
+    db.game.aggregate.mockResolvedValue({ _avg: { rating: 5 } });
     db.view.groupBy.mockResolvedValue([]);
+    db.review.aggregate.mockResolvedValue({ _avg: { rating: 5 } });
     db.review.groupBy.mockResolvedValue([]);
     db.gameAccessibilityTags.findMany.mockResolvedValue([]);
     db.game.findMany.mockResolvedValue([
       {
         id: 1,
         title: "<script>alert('xss')</script>",
+        publisherId: 1,
         _count: { views: 1, reviews: 1 },
-        reviews: [{ rating: 5 }]
+        reviews: [{ rating: 5 }],
+        rating: 5, // Add rating for XSS/sanitization tests
       }
     ]);
     db.view.findMany.mockResolvedValue([

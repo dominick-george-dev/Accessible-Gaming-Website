@@ -156,7 +156,8 @@ export function GameDetailPage() {
             console.error("Error fetching reviews:", error);
             toast.error("Failed to load reviews");
         }
-    };    const handleHelpfulSubmit = async (id: number) => {
+    };    
+    const handleHelpfulSubmit = async (id: number) => {
         const reviewToUpdate = reviews.find((review) => review.id === id);
         if (!reviewToUpdate) {
             toast.error("Review not found");

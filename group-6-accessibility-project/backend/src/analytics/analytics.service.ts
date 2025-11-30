@@ -34,9 +34,9 @@ export class AnalyticsService {
         where: { publisherId }
       });
 
-      // Average rating across all games
-      const avgRatingPromise = this.db.review.aggregate({
-        where: { game: { publisherId } },
+      // Average rating across all games (use the Game table, not reviews)
+      const avgRatingPromise = this.db.game.aggregate({
+        where: { publisherId },
         _avg: { rating: true }
       });
 
@@ -52,14 +52,14 @@ export class AnalyticsService {
       });
 
       // Top 5 rated games
-      const topRatedPromise = this.db.review.groupBy({
-        by: ["gameId"],
-        where:{
-          game:{publisherId}
+      const topRatedPromise = this.db.game.findMany({
+        where: { publisherId },
+        orderBy: { rating: 'desc' },
+        take: 5,
+        select: {
+          id: true,
+          rating: true,
         },
-        _avg: { rating: true },
-        orderBy: { _avg: { rating: "desc" } },
-        take: 5
       });
 
       // Accessibility features grouped by CATEGORY
@@ -127,14 +127,8 @@ export class AnalyticsService {
 
       // Process game-level analytics
       const perGameAnalytics = games.map(game => {
-        const avgRating = game.reviews.length > 0
-            ? Number(
-                (
-                  game.reviews.reduce((a, r) => a + r.rating, 0) /
-                  game.reviews.length
-                ).toFixed(1) // To 1 decimal place
-              )
-            : 0;
+        // Use the rating from the games table (already averaged by trigger)
+        const avgRating = typeof game.rating === 'number' ? Number(game.rating.toFixed(1)) : 0;
 
         // Aggregate daily views for this game
         const dailyViewsMap: Record<string, number> = {};
@@ -181,10 +175,10 @@ export class AnalyticsService {
       return {
         totalGames,
         avgTotalRating: Number((avgRatingResult._avg.rating || 0).toFixed(1)),
-        topViewedGames: topViewed.map(t =>({...t})),
-        topRatedGames: topRated.map(r => ({
-          gameId: r.gameId,
-          avgRating: Number((r._avg.rating || 0).toFixed(1))
+        topViewedGames: topViewed.map(t => ({ ...t })),
+        topRatedGames: topRated.map(g => ({
+          gameId: g.id,
+          avgRating: typeof g.rating === 'number' ? Number(g.rating.toFixed(1)) : 0
         })),
         accessibilityFeatureDistribution,
         games: perGameAnalytics

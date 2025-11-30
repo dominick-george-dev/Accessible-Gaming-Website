@@ -1,3 +1,8 @@
+-- Drop existing triggers and function if they exist
+DROP TRIGGER IF EXISTS review_after_insert_update ON "Review";
+DROP TRIGGER IF EXISTS review_after_delete ON "Review";
+DROP FUNCTION IF EXISTS update_game_rating();
+
 -- Trigger function to update game rating after review changes
 CREATE OR REPLACE FUNCTION update_game_rating()
 RETURNS TRIGGER AS $$
