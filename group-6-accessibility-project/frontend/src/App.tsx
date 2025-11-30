@@ -47,27 +47,38 @@ const ProfilePage = () => (
 
 function App() {
   const { setLoginState } = useAuth();
-  const navigate = useNavigate();  const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => {
-    console.log('User logged in:', userData);
-    // Set login state and user data - this will now handle redirect
-    setLoginState(true, { 
-      username: userData.username, 
-      email: userData.email, 
-      isAdmin: userData.isAdmin || false, 
-      isPublisher: userData.isPublisher || false 
-    });
+  const navigate = useNavigate();  
+  
+  const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
+  console.log('User logged in:', userData);
+  const processedUserData = {
+    id: userData.id,
+    username: userData.username,
+    email: userData.email,
+    role: userData.role || 'USER',
+    isAdmin: userData.role === 'ADMIN',
+    isPublisher: userData.role === 'PUBLISHER' 
   };
+  
+  console.log('Processed user data:', processedUserData); 
+  setLoginState(true, processedUserData);
+};
 
-  const handleSignup = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => {
-    console.log('User signed up:', userData);
-    // Set login state and user data - this will now handle redirect
-    setLoginState(true, { 
-      username: userData.username, 
-      email: userData.email, 
-      isAdmin: userData.isAdmin || false, 
-      isPublisher: userData.isPublisher || false 
-    });
+const handleSignup = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
+  console.log('User signed up:', userData);
+
+  const processedUserData = { 
+    id: userData.id,
+    username: userData.username,
+    email: userData.email,
+    role: userData.role || 'USER',
+    isAdmin: userData.role === 'ADMIN',
+    isPublisher: userData.role === 'PUBLISHER'  
   };
+  
+  console.log('Processed user data:', processedUserData); // Debug log
+  setLoginState(true, processedUserData);
+};
 
   // Navigation functions that preserve redirect path
   const handleNavigateToSignup = () => {

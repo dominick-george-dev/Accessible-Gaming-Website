@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger
 } from './ui/dropdown-menu';
 import { useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
 
 interface SidebarProps {
   isLoggedIn: boolean;
@@ -70,12 +71,12 @@ export function Sidebar({ isLoggedIn }: SidebarProps) {
     { id: 'accessibility', icon: AlertCircle, label: 'Accessibility', path: '/accessibility' },
     { id: 'profile', icon: User, label: 'Profile', path: '/profile' },
   ];
-  
+
   // Get user info to determine what to show
   const getUserInfo = () => {
     if (!isLoggedIn) return { role: null, isAdmin: false, isPublisher: false };
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const user = JSON.parse(localStorage.getItem('userData') || '{}');
     return {
       role: user.role,
       isAdmin: user.role === 'ADMIN',

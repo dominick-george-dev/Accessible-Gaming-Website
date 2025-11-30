@@ -15,7 +15,7 @@ export function MakeAccountPublisherPage() {
 
   useEffect(() => {
     // Get current user from localStorage
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem('userData');
     if (storedUser) {
       const userData = JSON.parse(storedUser);
       setUser(userData);

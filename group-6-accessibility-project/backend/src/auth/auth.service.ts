@@ -9,11 +9,11 @@ export class AuthService {
   constructor(
     private databaseService: DatabaseService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   // Hash password with high security (12 rounds)
   async hashPassword(password: string): Promise<string> {
-    const saltRounds = 12; 
+    const saltRounds = 12;
     return bcrypt.hash(password, saltRounds);
   }
 
@@ -65,9 +65,9 @@ export class AuthService {
       });
 
       // Generate JWT token
-      const payload = { 
-        sub: user.id, 
-        username: user.username, 
+      const payload = {
+        sub: user.id,
+        username: user.username,
         email: user.email,
         role: user.role
       };
@@ -105,7 +105,7 @@ export class AuthService {
         password: true,
         createdAt: true,
         role: true,
-        },
+      },
     });
 
     if (!user) {
@@ -119,9 +119,9 @@ export class AuthService {
     }
 
     // Generate JWT token
-    const payload = { 
-      sub: user.id, 
-      username: user.username, 
+    const payload = {
+      sub: user.id,
+      username: user.username,
       email: user.email,
       role: user.role
     };
@@ -153,5 +153,38 @@ export class AuthService {
       },
     });
     return user;
+  }
+
+  // Add a method to get current user info from token
+  async getCurrentUser(userId: number) {
+    try {
+      const user = await this.databaseService.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      return {
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt,
+        }
+      };
+    } catch (error) {
+      console.error('Get current user error:', error);
+      throw new UnauthorizedException('Failed to get user information');
+    }
   }
 }

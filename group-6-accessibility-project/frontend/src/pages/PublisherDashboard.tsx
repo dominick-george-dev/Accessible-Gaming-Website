@@ -195,7 +195,7 @@ export function PublisherDashboard() {
     }, []);
 
     const checkAuthentication = () => {
-        const storedUser = localStorage.getItem('user');
+        const storedUser = localStorage.getItem('userData');
         const token = localStorage.getItem('access_token');
 
         if (!storedUser || !token) {
@@ -208,7 +208,7 @@ export function PublisherDashboard() {
         // Handle missing role for existing users
         if (!userData.role) {
             userData.role = 'USER';
-            localStorage.setItem('user', JSON.stringify(userData));
+            localStorage.setItem('userData', JSON.stringify(userData));
         }
 
         if (userData.role !== 'PUBLISHER') {
@@ -222,7 +222,7 @@ export function PublisherDashboard() {
     const loadPublisherData = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const user = JSON.parse(localStorage.getItem('userData') || '{}');
 
             const response = await fetch(`http://localhost:3000/publishers/user/${user.id}`, {
                 headers: {
@@ -378,10 +378,6 @@ export function PublisherDashboard() {
                             </p>
                         </div>
                     </div>
-                    <Button onClick={handleLogout} variant="outline" size="sm">
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Logout
-                    </Button>
                 </div>
             </div>
 
