@@ -140,19 +140,22 @@ const VOICE_COMMANDS: VoiceCommandCategory[] = [
 export function AccessibilityPage() {
     
   const [issueReport, setIssueReport] = useState('');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');  
+  const userId = user?.id;
 
   const handleReportIssue = async () => {
     if (issueReport.trim() === '') {
       toast.error('Please describe the issue');
       return;
     }
+    console.log('Submitting with userId:', user?.id);
     try {
       // Replace userId with the actual logged-in user's ID
         const response = await fetch('http://localhost:3000/accessibility-issues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: 1, // <-- Replace with actual user ID
+          userId: userId,
           message: issueReport,
         }),
       });
