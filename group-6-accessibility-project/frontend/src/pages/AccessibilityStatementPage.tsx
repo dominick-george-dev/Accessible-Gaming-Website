@@ -141,46 +141,51 @@ export function AccessibilityPage() {
     
   const [issueReport, setIssueReport] = useState('');
 
-  const handleReportIssue = () => {
+  const handleReportIssue = async () => {
     if (issueReport.trim() === '') {
       toast.error('Please describe the issue');
       return;
     }
-    toast.success('Issue reported successfully. Thank you for your feedback!');
-    setIssueReport('');
+    try {
+      // Replace userId with the actual logged-in user's ID
+        const response = await fetch('http://localhost:3000/accessibility-issues', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: 1, // <-- Replace with actual user ID
+          message: issueReport,
+        }),
+      });
+      if (response.ok) {
+        toast.success('Issue reported successfully. Thank you for your feedback!');
+        setIssueReport('');
+      } else {
+        toast.error('Failed to submit issue.');
+      }
+    } catch (error) {
+      toast.error('Network error.');
+    }
   };
 
   return (
-    
     <div className="max-w-4xl mx-auto space-y-6 lg:space-y-8">
-
-      {/* Mission Statement */}
-      <MissionStatement />
-
-      <Separator />
-
-      {/* WCAG Compliance */}
-      <ComplianceSection />
-
-      <Separator />
-
-      {/* Platform Features */}
-      <FeaturesSection features={ACCESSIBILITY_FEATURES} />
-
-      <Separator />
-
-      {/* Voice Commands Help */}
-      <VoiceCommandsSection commands={VOICE_COMMANDS} />
-
-      <Separator />
-
-      {/* Report Issue */}
       <ReportIssueSection
         issueReport={issueReport}
         setIssueReport={setIssueReport}
         onSubmit={handleReportIssue}
       />
-
+      {/* Mission Statement */}
+      <MissionStatement />
+      <Separator />
+      {/* WCAG Compliance */}
+      <ComplianceSection />
+      <Separator />
+      {/* Platform Features */}
+      <FeaturesSection features={ACCESSIBILITY_FEATURES} />
+      <Separator />
+      {/* Voice Commands Help */}
+      <VoiceCommandsSection commands={VOICE_COMMANDS} />
+      <Separator />
       {/* Contact */}
       <ContactSection />
     </div>

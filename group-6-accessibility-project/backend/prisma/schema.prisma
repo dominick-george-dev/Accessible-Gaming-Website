@@ -22,11 +22,11 @@ model Game {
   publisherId           Int?
   trailer               String?
   transcript            String?
+  favourites            Favourites[]
   Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
   View                  View[]
-  favourites            Favourites[]
 }
 
 model AccessibilityTags {
@@ -63,19 +63,19 @@ model Review {
 }
 
 model AccessibilityIssues {
-  id                          Int      @id @default(autoincrement())
-  userId                      Int      @unique
-  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  message                     String   @default("No Message Added")
-  createdAt                   DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  message   String   @default("No Message Added")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Favourites {
-  id                        Int                        @id @default(autoincrement())
-  userId                    Int                        @unique
-  gameId                    Int                        @unique
-  game                      Game                       @relation(fields: [gameId], references: [id])
-  User                      User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     Int  @id @default(autoincrement())
+  userId Int
+  gameId Int
+  game   Game @relation(fields: [gameId], references: [id])
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
@@ -86,11 +86,11 @@ model User {
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
   role                      roles                      @default(USER)
+  UserAccessibilityIssues   AccessibilityIssues[]
+  Favourites                Favourites[]
   Publisher                 Publisher[]
   Review                    Review[]
   UserAccessibilitySettings UserAccessibilitySettings?
-  UserAccessibilityIssues  AccessibilityIssues?
-  Favourites                Favourites[]
 }
 
 model UserAccessibilitySettings {

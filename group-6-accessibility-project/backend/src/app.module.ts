@@ -6,10 +6,10 @@ import { AccessibilityTagsModule } from './accessibility-tags/accessibility-tags
 import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-
+import { AccessibilityIssuesModule } from './accessibility-issues/accessibility-issues.module';
 
 @Module({
-  imports: [GamesModule, DatabaseModule, AccessibilityTagsModule, ReviewsModule, UsersModule, AuthModule],
+  imports: [GamesModule, DatabaseModule, AccessibilityTagsModule, ReviewsModule, UsersModule, AuthModule, AccessibilityIssuesModule],
   controllers: [AppController],
 })
 export class AppModule {}
