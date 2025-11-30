@@ -8,6 +8,10 @@ variables:
   BACKEND_DIR: "$CI_PROJECT_DIR/$SUBDIR/backend"
   FRONTEND_DIR: "$CI_PROJECT_DIR/$SUBDIR/frontend"
 
+services:
+  - name: docker:24-dind
+    command: ["--tls=false"]
+
 cache:
   key: ${CI_PROJECT_PATH}
   paths:
@@ -31,13 +35,9 @@ test:backend:
   only:
     - branches
 
-build:images:
+build:
   image: docker:24
   stage: build
-  services:
-    - name: docker:dind
-  variables:
-    DOCKER_DRIVER: overlay2
   before_script:
     - docker info
   script:
