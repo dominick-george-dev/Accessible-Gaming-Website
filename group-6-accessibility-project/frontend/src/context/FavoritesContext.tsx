@@ -1,76 +1,108 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
 import type { ReactNode } from "react";
+import { useUser } from "./UserContext";
 
-export type FavoritesContextType = {
-  favorites: string[];
-  addFavorite: (id: string) => void;
-  removeFavorite: (id: string) => void;
-  toggle: (id: string) => void;
-};
-
-const API_URL = "http://localhost:3000/favorites";
+interface FavoritesContextType {
+  favorites: number[];
+  toggle: (gameId: number) => void;
+  loading: boolean;
+  error: string | null;
+}
 
 export const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
-export function FavoritesProvider({ children, userId }: { children: ReactNode; userId: number }) {
-  const [favorites, setFavorites] = useState<string[]>([]);
+export function FavoritesProvider({ children }: { children: ReactNode }) {
+  const { user } = useUser();
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load favorites from backend
-  useEffect(() => {
-    const loadFavorites = async () => {
-      try {
-        const res = await fetch(`${API_URL}/${userId}`);
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`Failed to load favorites: ${res.status} ${res.statusText} - ${text}`);
-        }
-        const data = await res.json();
-        setFavorites(data.map((f: any) => f.gameId.toString()));
-      } catch (err) {
-        console.error("Error loading favorites:", err);
-        setFavorites([]);
-      }
-    };
-    if (userId) loadFavorites();
-  }, [userId]);
+useEffect(() => {
+  if (!user) {
+    setFavorites([]);
+    setLoading(false);
+    setError(null);
+    return;
+  }
 
-  // Toggle favorite
-  const toggle = async (id: string) => {
+  let cancelled = false;
+
+  const loadFavorites = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      const res = await fetch(`${API_URL}/toggle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, gameId: parseInt(id) }),
-      });
+      const res = await fetch(`http://localhost:3000/favorites/${user.id}`);
 
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Failed to toggle favorite: ${res.status} ${res.statusText} - ${text}`);
+        if (res.status === 404) {
+          // No favorites yet
+          if (!cancelled) setFavorites([]);
+          return;
+        }
+        throw new Error(`HTTP error ${res.status}`);
       }
 
-      setFavorites(prev => (prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]));
-    } catch (err) {
-      console.error("Error toggling favorite:", err);
+      const json = await res.json();
+
+      if (!cancelled) {
+        // Make sure favorites is always a number array
+        setFavorites(
+          Array.isArray(json.data)
+            ? json.data.map((f: any) => Number(f.gameId ?? f.id ?? f))
+            : []
+        );
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch favorites:", err);
+      if (!cancelled) {
+        setFavorites([]);
+        setError(err.message || "Unknown error");
+      }
+    } finally {
+      if (!cancelled) setLoading(false);
     }
   };
 
-  const addFavorite = (id: string) => {
-    if (!favorites.includes(id)) toggle(id);
-  };
+  loadFavorites();
 
-  const removeFavorite = (id: string) => {
-    if (favorites.includes(id)) toggle(id);
+  return () => {
+    cancelled = true;
+  };
+}, [user]);
+
+  const toggle = async (gameId: number) => {
+    if (!user) return;
+
+    try {
+      const action = favorites.includes(gameId) ? "remove" : "add";
+
+     const res = await fetch(`http://localhost:3000/favorites/toggle`, {
+      method: "POST",
+       headers: { "Content-Type": "application/json" },
+       body: JSON.stringify({ userId: user.id, gameId }),
+    });
+
+      if (!res.ok) throw new Error(`Failed to update: ${res.status}`);
+
+      setFavorites(prev =>
+        action === "add" ? [...prev, gameId] : prev.filter(id => id !== gameId)
+      );
+    } catch (err: any) {
+      console.error("Toggle favorite failed:", err);
+      setError(err.message || "Failed to update favorite");
+    }
   };
 
   return (
-    <FavoritesContext.Provider value={{ favorites, addFavorite, removeFavorite, toggle }}>
+    <FavoritesContext.Provider value={{ favorites, toggle, loading, error }}>
       {children}
     </FavoritesContext.Provider>
   );
 }
 
 export function useFavorites() {
-  const ctx = useContext(FavoritesContext);
-  if (!ctx) throw new Error("useFavorites must be used inside <FavoritesProvider>");
-  return ctx;
+  const context = useContext(FavoritesContext);
+  if (!context) throw new Error("useFavorites must be used within FavoritesProvider");
+  return context;
 }

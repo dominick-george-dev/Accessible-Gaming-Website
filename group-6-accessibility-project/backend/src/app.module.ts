@@ -1,4 +1,3 @@
-// app.module.ts
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { GamesModule } from './games/games.module';
@@ -8,25 +7,26 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
-import { ThrottlerModule } from '@nestjs/throttler';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppService } from './app.service';
 import { PublishersModule } from './publishers/publishers.module';
 import { UploadModule } from './upload/upload.module';
-import { UploadController } from './api/upload/upload.controller';
 import { AwsService } from './services/aws/aws.service';
+import { FavoritesModule } from './favorites/favorites.module';
 
 
 @Module({
   imports: [
-    GamesModule,
-    DatabaseModule,
-    AccessibilityTagsModule,
-    ReviewsModule,
-    UsersModule,
-    AuthModule,
-    FavoritesModule, // ✅ register the module
-  , AnalyticsModule, PublishersModule, UploadModule,
+  GamesModule,
+  DatabaseModule,
+  AccessibilityTagsModule,
+  ReviewsModule,
+  UsersModule,
+  AuthModule,
+  AnalyticsModule,
+  PublishersModule,
+  UploadModule,
+  FavoritesModule, 
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -36,10 +36,14 @@ import { AwsService } from './services/aws/aws.service';
       ],
     }),
   ],
-  controllers: [AppController, UploadController],
-  providers: [AppService, AwsService, {
-    provide: 'APP_GUARD',
-    useClass: ThrottlerGuard,
-  }],
+  controllers: [AppController],
+  providers: [
+    AppService,
+    AwsService,
+    {
+      provide: 'APP_GUARD',
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

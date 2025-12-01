@@ -1,4 +1,3 @@
-// /src/pages/MyFavoritesPage.tsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Game } from "../types/game";
@@ -10,32 +9,105 @@ import { toast } from "sonner";
 import { Input } from "../components/ui/input";
 import { useFavorites } from "../context/FavoritesContext";
 
+// Hook to get user from localStorage
+function useUser() {
+  const [user, setUser] = useState<{ id: number; username: string; email: string; isAdmin: boolean; isPublisher: boolean } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const userData = localStorage.getItem("userData");
+    if (isLoggedIn && userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch {
+        setUser(null);
+      }
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+  }, []);
+
+  return { user, loading };
+}
+
 export function MyFavoritesPage() {
   const navigate = useNavigate();
   const { favorites, toggle } = useFavorites();
   const [games, setGames] = useState<Game[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingGames, setLoadingGames] = useState(false);
 
+  const { user, loading: loadingUser } = useUser();
+
+  // Fetch all games
   useEffect(() => {
+    if (!user) return;
+
+    let cancelled = false;
+
     const loadGames = async () => {
+      setLoadingGames(true);
       try {
         const res = await fetch("http://localhost:3000/games/getall");
-        if (!res.ok) throw new Error("Failed to fetch games");
-        const data: Game[] = await res.json();
-        setGames(data);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+
+        const json = await res.json();
+        if (!cancelled) setGames(Array.isArray(json.data) ? json.data : []);
       } catch (err) {
-        toast.error("Failed to load games");
-        setGames([]);
+        if (!cancelled) {
+          console.error(err);
+          toast.error("Failed to load games");
+          setGames([]);
+        }
+      } finally {
+        if (!cancelled) setLoadingGames(false);
       }
     };
-    loadGames();
-  }, []);
 
-  const favoriteGames = games.filter(game => favorites.includes(game.id.toString()));
+    loadGames();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  if (loadingUser) {
+    return (
+      <div className="px-4 py-12 text-center">
+        <p>Checking login status...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="px-4 py-12 text-center space-y-4">
+        <p>You need to log in to view and favorite games.</p>
+        <Button onClick={() => navigate("/login")}>Go to Login</Button>
+      </div>
+    );
+  }
+
+  if (loadingGames) {
+    return (
+      <div className="px-4 py-12 text-center">
+        <p>Loading your games...</p>
+      </div>
+    );
+  }
+
+  // ✅ Convert game.id to number to match favorites array
+  const favoriteGames = games.filter(game => favorites.includes(Number(game.id)));
 
   const suggestions = favoriteGames
-    .filter(game => searchQuery.length >= 2 && game.title?.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(
+      game =>
+        searchQuery.length >= 2 &&
+        game.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     .map(game => game.title ?? "")
     .slice(0, 5);
 
@@ -44,6 +116,7 @@ export function MyFavoritesPage() {
     const genres = Array.isArray(game.genre) ? game.genre : [];
     const tags = Array.isArray(game.accessibilityTags) ? game.accessibilityTags : [];
     const q = searchQuery.toLowerCase();
+
     return (
       q === "" ||
       title.toLowerCase().includes(q) ||
@@ -56,8 +129,10 @@ export function MyFavoritesPage() {
     <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
       <div className="max-w-5xl">
         <h2 className="text-2xl font-bold mb-6">My Favorites</h2>
+
+        {/* Search */}
         <div className="mb-4 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none"/>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
           <Input
             type="search"
             placeholder="Search your favorite games..."
@@ -67,6 +142,7 @@ export function MyFavoritesPage() {
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             className="pl-10 w-full"
           />
+
           {showSuggestions && suggestions.length > 0 && (
             <Card className="absolute top-full mt-1 w-full z-50 p-2">
               {suggestions.map((s, idx) => (
@@ -93,8 +169,8 @@ export function MyFavoritesPage() {
               <GameCard
                 key={game.id}
                 game={game}
-                isFavorite={favorites.includes(game.id.toString())}
-                onToggleFavorite={() => toggle(game.id.toString())}
+                isFavorite={favorites.includes(Number(game.id))}
+                onToggleFavorite={() => toggle(Number(game.id))}
                 onClick={() => navigate(`/games/${game.id}`)}
               />
             ))}
