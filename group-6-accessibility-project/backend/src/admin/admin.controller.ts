@@ -1,11 +1,16 @@
-import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query, UsePipes, ValidationPipe, HttpException, HttpStatus, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query, UsePipes, ValidationPipe, HttpException, HttpStatus, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/decorator/roles.decorator';
 
 @Controller('admin')
 export class AdminController {
     constructor(private readonly adminService: AdminService) { }
 
-    @Get('/admin')
+    @Get()
+    @Roles('admin')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
     async getAdminPage() {
         try {

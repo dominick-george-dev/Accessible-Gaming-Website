@@ -3,7 +3,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Separator } from '../components/ui/separator';
-import { Building, Eye, Ear, Hand, Brain, AlertCircle } from 'lucide-react';
+import { Building, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { TrendingUp, } from 'lucide-react';
 import AdminDeleteAndVerifyTab from '../components/AdminDeleteAndVerifyTab';
@@ -29,46 +29,8 @@ interface AccessibilityTag {
     category: string;
 }
 
-interface Publisher {
-    id: number;
-    displayName: string;
-    profilePicture?: string;
-    Game: Game[];
-}
-
-const categoryIcons = {
-    visual: Eye,
-    hearing: Ear,
-    dexterity: Hand,
-    cognitive: Brain,
-    Audio: Ear,
-    Visual: Eye,
-    Motor: Hand,
-    Cognitive: Brain,
-};
-
-// Helper function to get category color
-const getCategoryColor = (category: string) => {
-    const lowerCategory = category.toLowerCase();
-    switch (lowerCategory) {
-        case 'visual':
-            return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800';
-        case 'hearing':
-        case 'audio':
-            return 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800';
-        case 'dexterity':
-        case 'motor':
-            return 'bg-green-100 text-green-700 border-green-300 dark:bg-green-950 dark:text-green-300 dark:border-green-800';
-        case 'cognitive':
-            return 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800';
-        default:
-            return 'bg-secondary text-secondary-foreground';
-    }
-};
-
 export function AdminDashboard() {
     const [user, setUser] = useState<any>(null);
-    const [publisher, setPublisher] = useState<Publisher | null>(null);
     const [admin, setAdmin] = useState<any>(null);
     const [games, setGames] = useState<Game[]>([]);
     const [accessibilityTags, setAccessibilityTags] = useState<AccessibilityTag[]>([]);
@@ -77,9 +39,12 @@ export function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('games');
 
     useEffect(() => {
-        checkAuthentication();
-        loadPublisherData();
-        loadAccessibilityTags();
+        const init = async () => {
+            await checkAuthentication();
+            await loadAccessibilityTags();
+            setLoading(false);
+        };
+        init();
     }, []);
 
     const checkAuthentication = () => {
@@ -99,42 +64,14 @@ export function AdminDashboard() {
             localStorage.setItem('userData', JSON.stringify(userData));
         }
 
-        if (userData.role !== 'PUBLISHER') {
-            setError('Access denied. Publisher account required.');
-            return;
-        }
-
         if (userData.role !== 'ADMIN') {
             setError('Access denied. Admin account required.');
             return;
         }
 
         setUser(userData);
-    };
-
-    const loadPublisherData = async () => {
-        try {
-            const token = localStorage.getItem('access_token');
-            const user = JSON.parse(localStorage.getItem('userData') || '{}');
-
-            const response = await fetch(`http://localhost:3000/publishers/user/${user.id}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                const publisherData = await response.json();
-                setPublisher(publisherData);
-                setGames(publisherData.Game || []);
-            } else {
-                setError('Failed to load publisher data');
-            }
-        } catch (error) {
-            setError('Error loading publisher data');
-        } finally {
-            setLoading(false);
-        }
+        setAdmin(userData);
+        return true;
     };
 
     const loadAccessibilityTags = async () => {
@@ -183,9 +120,9 @@ export function AdminDashboard() {
                     <div className="flex items-center gap-3">
                         <Building className="w-8 h-8 text-primary" aria-hidden="true" />
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">
+                            {/* <h1 className="text-3xl font-bold text-gray-900">
                                 {publisher?.displayName || 'Publisher Dashboard'}
-                            </h1>
+                            </h1> */}
                             <p className="text-muted-foreground">
                                 Welcome back, {user?.username}
                             </p>

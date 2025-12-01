@@ -12,7 +12,7 @@ import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
 import { PublisherDashboard } from './pages/PublisherDashboard'
 import { Toaster } from "./components/ui/sonner";
-import AdminDeleteAndVerifyTab from './components/AdminDeleteAndVerifyTab'
+import { AdminDashboard } from './pages/AdminDashboard'
 
 const FavoritesPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
@@ -130,10 +130,9 @@ function App() {
             <MakeAccountPublisherPage />
           </Layout>
         } />
-        {/* ✅ Add the admin route with proper access control */}
         <Route path="/admin" element={
           <Layout>
-            <AdminDeleteAndVerifyTab />
+            <AdminDashboard />
           </Layout>
         } />
         {/* Authentication pages without Layout (they have their own layout) */}
