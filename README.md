@@ -1,55 +1,253 @@
-# Team 6 - Accessible Gaming Website
+# Accessible Gaming Platform — Team 6
 
+A modern, production-ready, full-stack web application for accessible gaming, built with React, NestJS, Prisma, Neon PostgreSQL, AWS S3, CloudFront, and Docker. This document provides clear onboarding, local development, environment configuration, deployment, and operational instructions.
 
+---
 
-## Name
-AccessPlay
+## 📚 Table of Contents
+- [Project Overview](#project-overview)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Repository Structure](#repository-structure)
+- [Environment Variables](#environment-variables)
+- [Local Development](#local-development)
+- [Running with Docker Compose](#running-with-docker-compose)
+- [Database (Prisma + Neon)](#database-prisma--neon)
+- [AWS S3 & CloudFront](#aws-s3--cloudfront)
+- [Testing](#testing)
+- [Production Deployment](#production-deployment)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
 
-## Description
-A trusted multipage accessible platform for finding new accessible mobile games to meet you accessible needs.
+---
 
-## Clone project
-Open bash in your chosen file directory and clone the project via https.
+## 🧩 Project Overview
+This platform enables users to discover, review, and interact with accessible games. It features:
+- High-performance React frontend (Vite, TypeScript, TailwindCSS)
+- Secure, JWT-authenticated NestJS API
+- Neon PostgreSQL database with Prisma ORM
+- AWS S3 for asset storage (with optional CloudFront CDN)
+- Dockerized for easy local and production deployment
+- Role-based authentication and protected routes
+
+---
+
+## 🛠️ Tech Stack
+**Frontend:**
+- React (Vite)
+- TypeScript
+- TailwindCSS
+- Axios
+
+**Backend:**
+- Node.js + NestJS
+- Prisma ORM
+- Passport + JWT Auth
+- Class Validator / Transformer
+
+**Infrastructure:**
+- Neon PostgreSQL (cloud-hosted)
+- AWS S3 (assets)
+- AWS CloudFront (optional CDN)
+- Docker + Docker Compose
+- Nginx (optional for production)
+
+---
+
+## 🏗️ Architecture
 ```
-git clone https://git.cardiff.ac.uk/<your_username>/team-6-accessible-gaming-website.git
+┌─────────────────────────────┐
+│      React Frontend         │
+│  (Vite + TailwindCSS)       │
+│   http(s)://<frontend>      │
+└─────────────┬───────────────┘
+              │ (HTTPS)
+              ▼
+┌─────────────────────────────┐
+│      NestJS Backend         │
+│  Auth, APIs, ACL, Prisma    │
+│   http(s)://<backend>       │
+└─────────────┬───────────────┘
+              │ Prisma
+              ▼
+┌─────────────────────────────┐
+│     Neon PostgreSQL DB      │
+└─────────────────────────────┘
+              │ File Uploads
+              ▼
+┌─────────────────────────────┐
+│        AWS S3 Bucket        │
+└─────────────────────────────┘
+              │ CDN (Optional)
+              ▼
+┌─────────────────────────────┐
+│      AWS CloudFront         │
+└─────────────────────────────┘
 ```
 
-## Start backend
-Open up a terminal in your IDE, and ensure you are in the project directory.
+---
+
+## 📁 Repository Structure
 ```
-cd .\group-6-accessibility-project\backend\
+project-root/
+│
+├── backend/
+│   ├── src/                # NestJS source code
+│   ├── prisma/             # Prisma schema & migrations
+│   ├── Dockerfile
+│   └── package.json
+│
+├── frontend/
+│   ├── src/                # React source code
+│   ├── Dockerfile
+│   └── package.json
+│
+├── docker-compose.yml
+├── README.md
+└── .env
 ```
 
-Install all dependencies via the terminal.
-```
-npm install
+---
+
+## 🔐 Environment Variables
+Create a root `.env` file with the following (edit values as needed):
+```env
+# BACKEND
+PORT=3000
+JWT_SECRET=super_secret_key_here
+JWT_EXPIRES_IN=24h
+
+# NEON DATABASE
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/db?sslmode=require
+
+# AWS STORAGE
+AWS_ACCESS_KEY_ID=xxxx
+AWS_SECRET_ACCESS_KEY=xxxx
+AWS_S3_BUCKET=my-bucket
+AWS_S3_REGION=eu-west-2
+AWS_CLOUDFRONT_URL=https://xxxx.cloudfront.net
+
+# FRONTEND
+VITE_API_URL=http://localhost:3000
 ```
 
-To run React frontend via the terminal. Enter this command.
-```
-npm run start:dev
-```
+---
 
-## Start frontend
-Open up a terminal in your IDE, and ensure you are in the project directory.
+## 💻 Local Development
+1. **Clone the repository:**
+   ```sh
+   git clone https://github.com/your/repo.git
+   cd project-root
+   ```
+2. **Install dependencies:**
+   - Backend:
+     ```sh
+     cd backend
+     npm install
+     ```
+   - Frontend:
+     ```sh
+     cd ../frontend
+     npm install
+     ```
+3. **Run the backend:**
+   ```sh
+   npm run start:dev
+   ```
+4. **Run the frontend:**
+   ```sh
+   npm run dev
+   ```
+
+---
+
+## 🐳 Running with Docker Compose
+Start the full stack:
+```sh
+docker compose up --build
 ```
-cd group-6-accessible-project\frontend
-```
+This launches:
+- Backend (NestJS)
+- Frontend (React)
+- PostgreSQL (Neon external or local optional)
 
-Install all dependencies via the terminal.
-```
-npm install
-```
+---
 
-To run React frontend via the terminal. Enter this command.
-```
-npm run dev
-```
+## 🗃️ Database (Prisma + Neon)
+- **Run migrations:**
+  ```sh
+  cd backend
+  npx prisma migrate dev
+  ```
+- **Regenerate Prisma client:**
+  ```sh
+  npx prisma generate
+  ```
+- **Open Prisma Studio:**
+  ```sh
+  npx prisma studio
+  ```
 
+---
 
-## Docker & CI/CD Pipeline
+## ☁️ AWS S3 & CloudFront
+1. **Create an S3 bucket** (set region, enable public access or use signed URLs)
+2. **Create IAM user** (with appropriate S3 policies)
+3. **(Optional) Create CloudFront distribution** (origin → S3 bucket)
+4. **Update your .env** with S3 and CloudFront details
 
-...
-***
+---
 
+## 🧪 Testing
+- **Backend:**
+  ```sh
+  npm run test
+  npm run test:e2e
+  npm run test:cov
+  ```
+- **Frontend:**
+  ```sh
+  npm run test
+  ```
 
+---
+
+## 🚀 Production Deployment
+- **Option A — Docker Compose (recommended):**
+  ```sh
+  docker compose -f docker-compose.prod.yml up --build -d
+  ```
+- **Option B — Render / Railway / Fly.io:**
+  - Deploy backend container
+  - Use Neon database
+  - Point frontend env → backend API
+- **Option C — AWS EC2 / Lightsail:**
+  - Install Docker
+  - Clone repo
+  - Run Docker Compose as above
+
+---
+
+## ❗ Troubleshooting
+- **JWT issues:** Ensure JwtAuthGuard is used and Authorization header is correct
+- **.env issues:** Check for correct values and Docker context
+- **Prisma connection:** Use `?sslmode=require` for Neon
+- **CORS:**
+  ```js
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
+  });
+  ```
+- **S3 upload:** Check bucket policy, IAM key, and region
+
+---
+
+## 🤝 Contributing
+- Create a feature branch
+- Follow code style and conventions
+- Submit a pull request
+- Await review
+
+---
+
+© 2025 Team 6 — Accessible Gaming Platform
