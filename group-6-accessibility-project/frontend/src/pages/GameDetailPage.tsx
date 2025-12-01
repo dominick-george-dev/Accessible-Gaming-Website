@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { ImgCarousel } from "../components/ui/imgCarousel";
 import { AccessibleVideoPlayer } from "../components/AccessibleVideoPlayer";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Game, Review } from "../types/game";
 import { useParams, useNavigate } from "react-router-dom";
@@ -74,16 +74,19 @@ const [accessibilityTags, setAccessibilityTags] = useState<Array<{
     const [similarError, setSimilarError] = useState<string | null>(null);
     const [userRating, setUserRating] = useState(0);
     const [reviewText, setReviewText] = useState("");
-    const [selectedAccessibilityTags, setSelectedAccessibilityTags] = useState<
-        string[]
-    >([]);
+    const [selectedAccessibilityTags, setSelectedAccessibilityTags] = useState<string[]>([]);
+    const hasLoggedView = useRef(false);
     const headingRef = useRef<HTMLHeadingElement | null>(null);
 
     const isLoggedIn = true; // You can hook this up to your auth system later
 
     useEffect(() => {
         if (!id) return; // wait until id is available
-
+        //Ensures only ran once for accuracy
+        if (!hasLoggedView.current) {
+            hasLoggedView.current = true;
+        createViewLog(id);
+        }
         const loadData = async () => {
             setLoading(true);
             try {
@@ -125,6 +128,22 @@ const [accessibilityTags, setAccessibilityTags] = useState<Array<{
         toast.error("Failed to load game details");
         }
     };
+
+    const createViewLog = async (gameId: string) => {
+        try{
+            const response = await fetch(`http://localhost:3000/games/view/${gameId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                viewedAt: new Date(),
+                }),
+            })
+            if(!response.ok) throw new Error('Failed to create view')
+
+        } catch (error){
+            console.log("Error creating view", error)
+        }
+    }
 
     const fetchAccessibilityTags = async (gameId: string) => {
         try {
@@ -198,7 +217,8 @@ const [accessibilityTags, setAccessibilityTags] = useState<Array<{
             console.error("Error fetching reviews:", error);
             toast.error("Failed to load reviews");
         }
-    };    const handleHelpfulSubmit = async (id: number) => {
+    };    
+    const handleHelpfulSubmit = async (id: number) => {
         const reviewToUpdate = reviews.find((review) => review.id === id);
         if (!reviewToUpdate) {
             toast.error("Review not found");
@@ -468,7 +488,7 @@ const [accessibilityTags, setAccessibilityTags] = useState<Array<{
                 <div className="flex items-center gap-3 lg:gap-4 flex-wrap mb-3 lg:mb-4">
                 <div className="flex items-center gap-2">
                     <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" aria-hidden="true" />
-                    <span>{game.rating}</span>
+                    <span>{Number(game.rating).toFixed(1)}</span>
                     <span className="text-muted-foreground">({reviews.length})</span>
                 </div>
                 <Separator orientation="vertical" className="h-6 hidden sm:block" />
