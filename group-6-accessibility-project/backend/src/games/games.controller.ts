@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UsePipes, ValidationPipe, HttpException, HttpStatus , ParseIntPipe} from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query, UsePipes, ValidationPipe, HttpException, HttpStatus, ParseIntPipe } from '@nestjs/common';
 import { GamesService } from './games.service';
 import { GetGamesQueryDto } from './dto/get-games-query.dto';
 import { GameIdParamDto } from './dto/game-id-param.dto';
@@ -68,7 +68,7 @@ export class GamesController {
     }
 
     @Post('/view/:id')
-    createView(@Param("id", ParseIntPipe) id: number,@Body() createViewDto: CreateViewDto){
+    createView(@Param("id", ParseIntPipe) id: number, @Body() createViewDto: CreateViewDto) {
         return this.gamesService.createView(id, createViewDto);
     }
 
@@ -122,5 +122,10 @@ export class GamesController {
     @Delete(':id')
     async remove(@Param('id') id: string) {
         return this.gamesService.remove(+id);
+    }
+
+    @Patch(':id/verify')
+    async verify(@Param('id') id: string) {
+        return this.gamesService.verify(+id);
     }
 }

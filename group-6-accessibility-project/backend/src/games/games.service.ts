@@ -3,6 +3,7 @@ import { DatabaseService } from '../database/database.service';
 import { Prisma } from '@prisma/client';
 import { CreateViewDto } from './dto/create-view.dto';
 import { AccessibilityTagsService } from '../accessibility-tags/accessibility-tags.service';
+import { hasLift } from 'rxjs/internal/util/lift';
 
 @Injectable()
 export class GamesService {
@@ -34,6 +35,7 @@ export class GamesService {
                     releaseDate: true,
                     developer: true,
                     rating: true,
+                    hasBeenVerified: true,
                     createdAt: true,
                     updatedAt: true,
                     gameAccessibilityTags: {
@@ -91,6 +93,7 @@ export class GamesService {
                         releaseDate: true,
                         developer: true,
                         rating: true,
+                        hasBeenVerified: true,
                         createdAt: true,
                         updatedAt: true,
                         gameAccessibilityTags: {
@@ -344,9 +347,43 @@ export class GamesService {
     } catch (error) {
         console.error('Error deleting game:', error);
         throw new Error(`Failed to delete game: ${error.message}`);
-    }
-    
+    } 
 }
+
+async verify(id: number) {
+    try {
+        if (!Number.isInteger(id) || id < 1) {
+            throw new BadRequestException('Invalid game ID');
+        }
+
+        // Check if game exists
+        const existingGame = await this.databaseService.game.findUnique({
+            where: { id },
+            select: { id: true, title: true, hasBeenVerified: true }
+        });
+
+        if (!existingGame) {
+            throw new NotFoundException(`Game with ID ${id} not found`);
+        }
+
+        // Update the verification status
+        const verifiedGame = await this.databaseService.game.update({
+            where: { id },
+            data: { hasBeenVerified: true }
+        });
+
+        console.log(`Game ${id} (${existingGame.title}) verified successfully`);
+        return verifiedGame;
+
+    } catch (error) {
+        console.error('Error verifying game:', error);
+        if (error instanceof BadRequestException || error instanceof NotFoundException) {
+            throw error;
+        }
+        throw new Error(`Failed to verify game: ${error.message}`);
+    }
+}
+
 async createView(id: number, dto: CreateViewDto) {
         return this.databaseService.view.create({
             data:{
