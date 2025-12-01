@@ -11,6 +11,7 @@ import { LogOut, User as UserIcon, Settings, Eye, Ear, Hand, Brain, Minus, Plus,
 import { toast } from 'sonner';
 import { Magnifier } from '../components/ui/magnifier';
 import { Header } from '../components/Navigation';
+import { useNavigate } from 'react-router-dom';
 
 // ===== TYPES =====
 
@@ -67,6 +68,7 @@ export default function ProfilePageStandalone() {
   const [user, setUser] = useState<User | null>(null);
   const [magnifierEnabled, setMagnifierEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Fetch user and accessibility settings on mount
   useEffect(() => {
@@ -200,8 +202,27 @@ export default function ProfilePageStandalone() {
     { value: 'deep-space', label: 'Deep Space', description: 'Dark blue/purple gradient theme' },
   ];
 
-  if (loading || !user) {
+  if (loading) {
     return <main className="max-w-4xl mx-auto p-4 lg:p-6"><p>Loading...</p></main>;
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] w-full">
+        <div className="bg-white dark:bg-gray-900 shadow-lg rounded-lg p-8 flex flex-col items-center border border-gray-200 dark:border-gray-700 max-w-md w-full">
+          <h2 className="text-3xl font-bold mb-4 text-primary">Profile</h2>
+          <p className="mb-6 text-lg text-gray-700 dark:text-gray-200 text-center">
+            You must be logged in to access your profile.
+          </p>
+          <button
+            className="px-6 py-2 bg-primary text-white rounded-lg font-semibold shadow hover:bg-primary-foreground transition-colors duration-200"
+            onClick={() => navigate('/login')}
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

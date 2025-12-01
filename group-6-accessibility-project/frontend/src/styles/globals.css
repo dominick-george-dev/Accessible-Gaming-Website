@@ -1,6 +1,4 @@
 @custom-variant dark (&:is(.dark *));
-@import url('https://fonts.googleapis.com/css2?family=OpenDyslexic:wght@400;700&display=swap');
-
 
 :root {
   --font-size: 16px;
@@ -240,8 +238,55 @@ html {
   background-color: #333333;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=OpenDyslexic:wght@400;700&display=swap');
+
 .dyslexia-font, .dyslexia-font * {
   font-family: 'OpenDyslexic', Arial, sans-serif !important;
   letter-spacing: 0.05em;
-  background: inherit;
 }
+
+/* ============================================
+   COLORBLIND FILTER STYLES
+   ============================================ */
+
+/* SVG Filters Container */
+svg.colorblind-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Protanopia Filter (Red-blind) */
+#colorblind-root.colorblind-protanopia {
+  filter: url(#protanopia-filter);
+}
+
+/* Deuteranopia Filter (Green-blind) */
+#colorblind-root.colorblind-deuteranopia {
+  filter: url(#deuteranopia-filter);
+}
+
+/* Tritanopia Filter (Blue-blind) */
+#colorblind-root.colorblind-tritanopia {
+  filter: url(#tritanopia-filter);
+}
+
+/* Achromatopsia Filter (Complete color blindness) */
+#colorblind-root.colorblind-achromatopsia {
+  filter: grayscale(100%) contrast(1.2);
+}
+
+/* Ensure filters apply to entire page */
+html.colorblind-protanopia,
+html.colorblind-deuteranopia,
+html.colorblind-tritanopia,
+html.colorblind-achromatopsia {
+  /* Filter is applied to the root element */
+}
+
+/* Optional: Transition for smooth filter changes */
+html {
+  transition: filter 0.3s ease;
+}
+
