@@ -10,6 +10,7 @@ import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
 import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
 import { PublisherDashboard } from './pages/PublisherDashboard'
+import { Toaster } from "./components/ui/sonner";
 
 const FavoritesPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
@@ -92,6 +93,7 @@ const handleSignup = (userData: { username: string; email: string; isAdmin?: boo
 
   return (
     <>
+    <Toaster />
     <Routes>
       {/* Routes with Layout wrapper */}
       <Route path="/" element={
