@@ -113,6 +113,7 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     setUser(null);
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userData');
+    localStorage.removeItem('user');
     navigate('/');
   };  const handleToggleSidebar = () => {
     const newState = !isDesktopSidebarOpen;

@@ -1,0 +1,19 @@
+# Repo-level ignores
+.git
+.gitignore
+node_modules
+**/node_modules
+dist
+build
+coverage
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+.env
+.env.*.local
+.env.local
+*.pem
+*.key
+*.log
+docker-compose.override.yml
