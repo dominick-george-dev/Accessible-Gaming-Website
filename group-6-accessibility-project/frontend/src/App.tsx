@@ -11,6 +11,7 @@ import { useAuth } from './hooks/useAuth'
 import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
 import { PublisherDashboard } from './pages/PublisherDashboard'
 import { Toaster } from "./components/ui/sonner";
+import AdminDeleteAndVerifyTab from './components/AdminDeleteAndVerifyTab'
 
 const FavoritesPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
@@ -28,7 +29,7 @@ const AccessibilityPage = () => (
     <div className="max-w-5xl">
       <h2 className="text-2xl font-bold mb-6">Accessibility Statement</h2>
       <p className="text-muted-foreground mb-4">
-        AccessPlay is committed to ensuring digital accessibility for people with disabilities. 
+        AccessPlay is committed to ensuring digital accessibility for people with disabilities.
         We are continually improving the user experience for everyone.
       </p>
       {/* Add more accessibility information */}
@@ -49,38 +50,38 @@ const ProfilePage = () => (
 
 function App() {
   const { setLoginState } = useAuth();
-  const navigate = useNavigate();  
-  
+  const navigate = useNavigate();
+
   const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
-  console.log('User logged in:', userData);
-  const processedUserData = {
-    id: userData.id,
-    username: userData.username,
-    email: userData.email,
-    role: userData.role || 'USER',
-    isAdmin: userData.role === 'ADMIN',
-    isPublisher: userData.role === 'PUBLISHER' 
-  };
-  
-  console.log('Processed user data:', processedUserData); 
-  setLoginState(true, processedUserData);
-};
+    console.log('User logged in:', userData);
+    const processedUserData = {
+      id: userData.id,
+      username: userData.username,
+      email: userData.email,
+      role: userData.role || 'USER',
+      isAdmin: userData.role === 'ADMIN',
+      isPublisher: userData.role === 'PUBLISHER'
+    };
 
-const handleSignup = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
-  console.log('User signed up:', userData);
-
-  const processedUserData = { 
-    id: userData.id,
-    username: userData.username,
-    email: userData.email,
-    role: userData.role || 'USER',
-    isAdmin: userData.role === 'ADMIN',
-    isPublisher: userData.role === 'PUBLISHER'  
+    console.log('Processed user data:', processedUserData);
+    setLoginState(true, processedUserData);
   };
-  
-  console.log('Processed user data:', processedUserData); // Debug log
-  setLoginState(true, processedUserData);
-};
+
+  const handleSignup = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
+    console.log('User signed up:', userData);
+
+    const processedUserData = {
+      id: userData.id,
+      username: userData.username,
+      email: userData.email,
+      role: userData.role || 'USER',
+      isAdmin: userData.role === 'ADMIN',
+      isPublisher: userData.role === 'PUBLISHER'
+    };
+
+    console.log('Processed user data:', processedUserData); // Debug log
+    setLoginState(true, processedUserData);
+  };
 
   // Navigation functions that preserve redirect path
   const handleNavigateToSignup = () => {
@@ -140,31 +141,37 @@ const handleSignup = (userData: { username: string; email: string; isAdmin?: boo
           <Layout>
             <MakeAccountPublisherPage />
           </Layout>
-          } />
+        } />
+        {/* ✅ Add the admin route with proper access control */}
+        <Route path="/admin" element={
+          <Layout>
+            <AdminDeleteAndVerifyTab />
+          </Layout>
+        } />
         {/* Authentication pages without Layout (they have their own layout) */}
-      <Route 
-        path="/login" 
-        element={
-          <LoginPage 
-            onLogin={handleLogin}
-            onNavigateToSignup={handleNavigateToSignup}
-          />
-        } 
-      />
-      <Route 
-        path="/signup" 
-        element={
-          <SignupPage 
-            onSignup={handleSignup}
-            onNavigateToLogin={handleNavigateToLogin}
-          />
-        } 
-      />
-      <Route 
-        path="/publisherAnalyticsTab" 
-        element={<PublisherAnalyticsTab />} 
-      />
-    </Routes>
+        <Route
+          path="/login"
+          element={
+            <LoginPage
+              onLogin={handleLogin}
+              onNavigateToSignup={handleNavigateToSignup}
+            />
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <SignupPage
+              onSignup={handleSignup}
+              onNavigateToLogin={handleNavigateToLogin}
+            />
+          }
+        />
+        <Route
+          path="/publisherAnalyticsTab"
+          element={<PublisherAnalyticsTab />}
+        />
+      </Routes>
     </>
   )
 }
