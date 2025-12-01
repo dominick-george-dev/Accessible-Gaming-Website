@@ -146,11 +146,9 @@ export class GamesController {
         console.log('PUT /games/:id endpoint HIT by user:', req.user?.userId, 'role:', req.user?.role);
 
         try {
-            // ✅ Check ownership for publishers
             if (req.user?.role === 'PUBLISHER') {
                 await this.checkGameOwnership(+id, req.user.userId);
             }
-            // Admins can update any game, no ownership check needed
 
             return this.gamesService.update(+id, updateGameDto);
         } catch (error) {
