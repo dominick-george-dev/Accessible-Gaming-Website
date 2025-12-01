@@ -429,4 +429,22 @@ export class GamesService {
             throw new Error(`Failed to revoke verification: ${error.message}`);
         }
     }
+
+    async findGameWithPublisher(id: number) {
+        try {
+            return await this.databaseService.game.findUnique({
+                where: { id },
+                include: {
+                    Publisher: {
+                        select: {
+                            userId: true 
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error finding game with publisher:', error);
+            throw new Error(`Failed to find game: ${error.message}`);
+        }
+    }
 }
