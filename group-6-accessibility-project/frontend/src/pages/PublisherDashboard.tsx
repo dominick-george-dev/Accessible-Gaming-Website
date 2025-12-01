@@ -10,9 +10,9 @@ import { Separator } from '../components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
 import { Checkbox } from '../components/ui/checkbox';
-import { Building, Plus, Edit, Trash2, Tag, Check, X, Eye, Ear, Hand, Brain, BarChart3, LogOut, AlertCircle, Upload, ImageIcon } from 'lucide-react';
+import { Building, Plus, Edit, Trash2, Tag, Check, X, Eye, Ear, Hand, Brain, BarChart3, AlertCircle, Upload, ImageIcon } from 'lucide-react';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { TrendingUp, Users, Calendar } from 'lucide-react';
+import { TrendingUp, } from 'lucide-react';
 import { PublisherAnalyticsTab } from '../components/PublisherAnalyticsTab';
 
 interface Game {
@@ -78,105 +78,6 @@ function AnalyticsDashboard() {
     return (
         <div className="space-y-6">
             <PublisherAnalyticsTab />
-            {/* Analytics Overview Cards
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-blue-100 dark:bg-blue-950 p-3 rounded-lg">
-                            <Eye className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                            <p className="text-muted-foreground text-sm">Total Views</p>
-                            <p className="text-2xl font-bold">0</p>
-                            <p className="text-xs text-green-600">+0% from last month</p>
-                        </div>
-                    </div>
-                </Card>
-
-                <Card className="p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-green-100 dark:bg-green-950 p-3 rounded-lg">
-                            <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                            <p className="text-muted-foreground text-sm">Active Users</p>
-                            <p className="text-2xl font-bold">0</p>
-                            <p className="text-xs text-green-600">+0% from last month</p>
-                        </div>
-                    </div>
-                </Card>
-
-                <Card className="p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-purple-100 dark:bg-purple-950 p-3 rounded-lg">
-                            <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div>
-                            <p className="text-muted-foreground text-sm">Engagement Rate</p>
-                            <p className="text-2xl font-bold">0%</p>
-                            <p className="text-xs text-green-600">+0% from last month</p>
-                        </div>
-                    </div>
-                </Card>
-
-                <Card className="p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-orange-100 dark:bg-orange-950 p-3 rounded-lg">
-                            <Calendar className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                        </div>
-                        <div>
-                            <p className="text-muted-foreground text-sm">Reviews</p>
-                            <p className="text-2xl font-bold">0</p>
-                            <p className="text-xs text-green-600">+0% from last month</p>
-                        </div>
-                    </div>
-                </Card>
-            </div>
-
-            Coming Soon Section
-            <Card className="p-12 text-center">
-                <TrendingUp className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-2xl font-semibold mb-2">Analytics Dashboard</h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    Detailed analytics and insights about your games' performance will be available here soon.
-                    Track views, user engagement, reviews, and accessibility feature usage.
-                </p>
-                <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        Game Performance Metrics
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        User Engagement Analytics
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                        Accessibility Usage Reports
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        Review & Rating Trends
-                    </div>
-                </div>
-            </Card>
-
-            {/* Placeholder Charts Section
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="p-6">
-                    <h4 className="text-lg font-semibold mb-4">Views Over Time</h4>
-                    <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
-                        <p className="text-muted-foreground">Chart coming soon</p>
-                    </div>
-                </Card>
-
-                <Card className="p-6">
-                    <h4 className="text-lg font-semibold mb-4">Accessibility Feature Usage</h4>
-                    <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
-                        <p className="text-muted-foreground">Chart coming soon</p>
-                    </div>
-                </Card>
-            {/* </div> */}
         </div>
     );
 }
@@ -256,10 +157,6 @@ export function PublisherDashboard() {
         } catch (error) {
             console.error('Failed to load accessibility tags:', error);
         }
-    };
-
-    const handleLogout = () => {
-        window.location.href = '/logout';
     };
 
     const handleAddGame = async (gameData: any) => {

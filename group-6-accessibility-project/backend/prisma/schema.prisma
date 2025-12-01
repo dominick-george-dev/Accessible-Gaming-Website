@@ -62,6 +62,22 @@ model Review {
   User                  User     @relation(fields: [userId], references: [id])
 }
 
+model AccessibilityIssues {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  message   String   @default("No Message Added")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Favourites {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  gameId Int
+  Game   Game @relation(fields: [gameId], references: [id])
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model User {
   id                        Int                        @id @default(autoincrement())
   email                     String                     @unique
@@ -70,7 +86,7 @@ model User {
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
   role                      roles                      @default(USER)
-  AccessibilityIssues       AccessibilityIssues[]
+  UserAccessibilityIssues   AccessibilityIssues[]
   Favourites                Favourites[]
   Publisher                 Publisher?
   Review                    Review[]
@@ -109,22 +125,6 @@ model View {
   gameId   Int
   viewedAt DateTime @default(now())
   game     Game     @relation(fields: [gameId], references: [id])
-}
-
-model AccessibilityIssues {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  message   String   @default("No Message Added")
-  createdAt DateTime @default(now())
-  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Favourites {
-  id     Int  @id @default(autoincrement())
-  userId Int
-  gameId Int
-  Game   Game @relation(fields: [gameId], references: [id])
-  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum roles {
