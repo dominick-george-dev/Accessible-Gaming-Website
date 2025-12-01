@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, AlertCircle, X } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 
 interface AccessibilityTag {
     id: number;
@@ -157,11 +158,7 @@ const AccessibilityTagsAdminTab: React.FC = () => {
         }
     };
 
-    const handleDeleteTag = async (tagId: number, tagName: string) => {
-        if (!confirm(`Are you sure you want to delete "${tagName}"? This will affect all games using this tag.`)) {
-            return;
-        }
-
+    const handleDeleteTag = async (tagId: number) => {
         try {
             const token = localStorage.getItem('access_token');
             const response = await fetch(`http://localhost:3000/accessibility-tags/${tagId}`, {
@@ -427,12 +424,30 @@ const AccessibilityTagsAdminTab: React.FC = () => {
                                                         >
                                                             Edit
                                                         </button>
-                                                        <button
-                                                            onClick={() => handleDeleteTag(tag.id, tag.tag)}
-                                                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 px-3 py-1 rounded transition-colors font-medium"
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <button className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 px-3 py-1 rounded transition-colors font-medium">
+                                                                    Delete
+                                                                </button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Delete Accessibility Tag</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        Are you sure you want to delete "{tag.tag}"? This will affect all games using this tag and cannot be undone.
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction
+                                                                        onClick={() => handleDeleteTag(tag.id)}
+                                                                        className="bg-red-600 hover:bg-red-700"
+                                                                    >
+                                                                        Delete
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
                                                     </div>
                                                 </td>
                                             </tr>
