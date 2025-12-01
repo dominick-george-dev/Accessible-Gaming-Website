@@ -5,6 +5,13 @@
   text-align: center;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=OpenDyslexic:wght@400;700&display=swap');
+
+.dyslexia-font, .dyslexia-font * {
+  font-family: 'OpenDyslexic', Arial, sans-serif !important;
+  letter-spacing: 0.05em;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;

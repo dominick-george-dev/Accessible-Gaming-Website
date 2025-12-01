@@ -7,6 +7,7 @@ import { UndoButton } from './UndoButton';
 import { toast } from 'sonner';
 import { addUndoAction } from '../utils/undoManager';
 import { useAuth } from '../hooks/useAuth';
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../utils/applyAccessibilitySettings';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -26,6 +27,7 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
   const [magnifierEnabled, setMagnifierEnabled] = useState(false);
   const [voiceControlsEnabled, setVoiceControlsEnabled] = useState(false);
   const [user, setUser] = useState<{
+    id: string;
     name: string;
     role: string;
     isAdmin: boolean;
@@ -84,37 +86,61 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         try {
           const userData = JSON.parse(savedUserData);
           setUser({
+            id: userData.id,
             name: userData.username || userData.name || 'User',
             role: userData.role || (userData.isAdmin ? 'admin' : userData.isPublisher ? 'publisher' : 'user'),
             isAdmin: userData.isAdmin || false, 
             isPublisher: userData.isPublisher || false 
           });
+          // Apply dyslexia font if enabled in userData
+          if (userData.accessibilityPreferences && typeof userData.accessibilityPreferences.dyslexiaFont === 'boolean') {
+            applyDyslexiaFont(userData.accessibilityPreferences.dyslexiaFont);
+          } else {
+            applyDyslexiaFont(false);
+          }
         } catch {
           // Handle invalid JSON - set to null since we're not logged in properly
           setUser(null);
           setIsLoggedIn(false);
+          applyDyslexiaFont(false);
         }
       }
     } else {
       // Don't set user data if not logged in
       setIsLoggedIn(false);
       setUser(null);
+      applyDyslexiaFont(false);
     }
-  }, []);const handleLogin = () => {
+  }, []);
+  
+  const handleLogin = () => {
+    console.log('handleLogin called');
     // Store the current path for redirect after login
     saveRedirectPath(location.pathname);
-    
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+      console.log('User saved to localStorage:', localStorage.getItem('user'));
+    }
     // Navigate to login page
     navigate('/login');
   };
 
   const handleLogout = () => {
+    console.log('loggout of user', JSON.stringify(user));
     setIsLoggedIn(false);
     setUser(null);
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userData');
+    localStorage.removeItem('user');
+    // Reset accessibility settings to default
+    applyTheme('light', false);
+    applyTextSize(16);
+    applyDyslexiaFont(false);
+    applyColorblindFilter('none');
     navigate('/');
-  };  const handleToggleSidebar = () => {
+  };
+
+  const handleToggleSidebar = () => {
     const newState = !isDesktopSidebarOpen;
     const previousState = isDesktopSidebarOpen;
     
@@ -130,7 +156,9 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         toast(`Sidebar ${previousState ? 'shown' : 'hidden'}`);
       }
     );
-  };const handleToggleMagnifier = () => {
+  };
+
+  const handleToggleMagnifier = () => {
     const previousState = magnifierEnabled;
     setMagnifierEnabled(!magnifierEnabled);
     
@@ -144,7 +172,9 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     );
     
     toast(`Screen magnifier ${!previousState ? 'enabled' : 'disabled'}`);
-  };const handleToggleVoiceControls = () => {
+  };
+
+  const handleToggleVoiceControls = () => {
     const previousState = voiceControlsEnabled;
     setVoiceControlsEnabled(!voiceControlsEnabled);
     
@@ -158,7 +188,26 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     );
     
     toast(`Voice controls ${!previousState ? 'enabled' : 'disabled'}`);
-  };return (    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      {/* Desktop Sidebar - Conditionally shown */}
+  };
+
+  // Example handler for toggling dyslexia font
+  const handleDyslexiaFontToggle = (enabled: boolean) => {
+    if (!user) return;
+    // Update both dyslexiaFont and fontFamily in preferences
+    const newPreferences = {
+      ...user.accessibilityPreferences,
+      dyslexiaFont: enabled,
+      fontFamily: enabled ? 'OpenDyslexic' : 'default',
+    };
+    // Call your update preferences function (replace with your actual function)
+    // Example: handleUpdatePreferences(newPreferences);
+    // Apply font immediately
+    applyDyslexiaFont(enabled);
+  };
+
+  return (    
+    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      
+      {/* Desktop Sidebar - Conditionally shown */}
       {isDesktopSidebarOpen && (
         <div className="hidden lg:block">
           <Sidebar isLoggedIn={isLoggedIn} />
@@ -171,12 +220,17 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         isAdmin={user?.isAdmin || false}
         isPublisher={user?.isPublisher || false}
         isOpen={isMobileSidebarOpen}
-        onClose={() => setIsMobileSidebarOpen(false)}      />{/* Main Layout with content shrinking behavior */}
+        onClose={() => setIsMobileSidebarOpen(false)}      
+      />
+      
+      {/* Main Layout with content shrinking behavior */}
       <div 
         className={`w-full max-w-full overflow-x-hidden main-content-wrapper content-shrink-transition ${
           isDesktopSidebarOpen ? 'shrunk-content' : ''
         }`}
-      >        {/* Top Header */}        <Header
+      >        
+        {/* Top Header */}        
+        <Header
           selectedGameName={selectedGameName}
           selectedPublisherName={selectedPublisherName}
           onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
@@ -193,14 +247,16 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         />
 
         {/* Dynamic Loading Bar */}
-        <LoadingBar />        {/* Breadcrumb Navigation */}
+        <LoadingBar />        
+        {/* Breadcrumb Navigation */}
         <Breadcrumbs 
           selectedGameName={selectedGameName}
           selectedPublisherName={selectedPublisherName}
           isSidebarOpen={isDesktopSidebarOpen}
         />
 
-        {/* Main Content */}        <main 
+        {/* Main Content */}        
+        <main 
           id="main-content" 
           className={`content-with-bottom-nav w-full max-w-full overflow-x-hidden transition-all duration-300 ${
             isDesktopSidebarOpen ? 'lg:pl-52' : 'lg:pl-4'
@@ -213,7 +269,8 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
 
         {/* Bottom Navigation - Only shown on mobile */}
         <div className="lg:hidden">
-          <BottomNav />        </div>
+          <BottomNav />        
+        </div>
 
         {/* Undo Button */}
         <UndoButton />

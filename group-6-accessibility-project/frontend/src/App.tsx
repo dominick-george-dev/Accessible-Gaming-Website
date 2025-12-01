@@ -1,6 +1,7 @@
 import './App.css'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import { GameDetailPage } from './pages/GameDetailPage'
+import ProfilePage from './pages/ProfilePage'
 import { BrowsePage } from './pages/BrowserPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
@@ -28,17 +29,6 @@ const AccessibilityPage = () => (
         We are continually improving the user experience for everyone.
       </p>
       {/* Add more accessibility information */}
-    </div>
-  </div>
-);
-
-const ProfilePage = () => (
-  <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-    <div className="max-w-5xl">
-      <h2 className="text-2xl font-bold mb-6">User Profile</h2>
-      <p className="text-muted-foreground">
-        Manage your account settings and preferences.
-      </p>
     </div>
   </div>
 );
