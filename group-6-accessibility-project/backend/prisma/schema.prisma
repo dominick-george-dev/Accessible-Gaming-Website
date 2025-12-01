@@ -74,7 +74,7 @@ model Favourites {
   id     Int  @id @default(autoincrement())
   userId Int
   gameId Int
-  game   Game @relation(fields: [gameId], references: [id])
+  Game   Game @relation(fields: [gameId], references: [id])
   User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 

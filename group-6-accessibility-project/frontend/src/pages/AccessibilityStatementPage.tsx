@@ -172,11 +172,15 @@ export function AccessibilityPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 lg:space-y-8">
-      <ReportIssueSection
-        issueReport={issueReport}
-        setIssueReport={setIssueReport}
-        onSubmit={handleReportIssue}
-      />
+      {userId ? (
+        <ReportIssueSection
+          issueReport={issueReport}
+          setIssueReport={setIssueReport}
+          onSubmit={handleReportIssue}
+        />
+      ) : (
+        <LoginToSubmitIssue />
+      )}
       {/* Mission Statement */}
       <MissionStatement />
       <Separator />
@@ -442,6 +446,25 @@ function ReportIssueSection({
 
         <Button onClick={onSubmit} className="w-full">
           Submit Report
+        </Button>
+      </Card>
+    </section>
+  );
+}
+
+/**
+ * Login To Submit Issue Section
+ */
+function LoginToSubmitIssue() {
+  return (
+    <section aria-labelledby="login-to-submit-heading">
+      <h2 id="login-to-submit-heading" className="mb-4">
+        Report Accessibility Issue
+      </h2>
+      <Card className="p-4 space-y-4 flex flex-col items-center">
+        <p className="text-muted-foreground mb-4">Login to submit an accessibility issue.</p>
+        <Button asChild className="w-full max-w-xs">
+          <a href="/login">Go to Login</a>
         </Button>
       </Card>
     </section>

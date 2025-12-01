@@ -7,6 +7,7 @@ export class AccessibilityIssuesService {
 
   async handleReportIssue(data: { userId: number; message: string }) {
     console.log('Submitted!')
+    const userIdToUse = data.isAnonymous ? 1 : data.userId;
     return this.databaseService.accessibilityIssues.create({
       data: {
         userId: data.userId,
