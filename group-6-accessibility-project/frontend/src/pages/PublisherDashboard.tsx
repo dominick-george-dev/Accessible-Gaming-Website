@@ -10,7 +10,7 @@ import { Separator } from '../components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
 import { Checkbox } from '../components/ui/checkbox';
-import { Building, Plus, Edit, Trash2, Tag, Check, X, Eye, Ear, Hand, Brain, BarChart3, LogOut, AlertCircle, Upload, ImageIcon } from 'lucide-react';
+import { Building, Plus, Edit, Trash2, Tag, Check, X, Eye, Ear, Hand, Brain, BarChart3, AlertCircle, Upload, ImageIcon } from 'lucide-react';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { TrendingUp, } from 'lucide-react';
 import { PublisherAnalyticsTab } from '../components/PublisherAnalyticsTab';
@@ -157,10 +157,6 @@ export function PublisherDashboard() {
         } catch (error) {
             console.error('Failed to load accessibility tags:', error);
         }
-    };
-
-    const handleLogout = () => {
-        window.location.href = '/logout';
     };
 
     const handleAddGame = async (gameData: any) => {
