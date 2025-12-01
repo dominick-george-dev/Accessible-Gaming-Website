@@ -50,7 +50,6 @@ This platform enables users to discover, review, and interact with accessible ga
 - AWS S3 (assets)
 - AWS CloudFront (optional CDN)
 - Docker + Docker Compose
-- Nginx (optional for production)
 
 ---
 
@@ -113,9 +112,7 @@ project-root/
 Create a root `.env` file with the following (edit values as needed):
 ```env
 # BACKEND
-PORT=3000
 JWT_SECRET=super_secret_key_here
-JWT_EXPIRES_IN=24h
 
 # NEON DATABASE
 DATABASE_URL=postgresql://USER:PASSWORD@HOST/db?sslmode=require
@@ -124,11 +121,8 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST/db?sslmode=require
 AWS_ACCESS_KEY_ID=xxxx
 AWS_SECRET_ACCESS_KEY=xxxx
 AWS_S3_BUCKET=my-bucket
-AWS_S3_REGION=eu-west-2
+AWS_REGION=eu-north-1
 AWS_CLOUDFRONT_URL=https://xxxx.cloudfront.net
-
-# FRONTEND
-VITE_API_URL=http://localhost:3000
 ```
 
 ---
@@ -136,8 +130,8 @@ VITE_API_URL=http://localhost:3000
 ## 💻 Local Development
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/your/repo.git
-   cd project-root
+   git clone https://git.cardiff.ac.uk/c23069362/team-6-accessible-gaming-website.git
+   cd group-6-accessibility-project
    ```
 2. **Install dependencies:**
    - Backend:
@@ -152,10 +146,12 @@ VITE_API_URL=http://localhost:3000
      ```
 3. **Run the backend:**
    ```sh
+   cd backend
    npm run start:dev
    ```
 4. **Run the frontend:**
    ```sh
+   cd frontend
    npm run dev
    ```
 
@@ -175,9 +171,10 @@ This launches:
 
 ## 🗃️ Database (Prisma + Neon)
 - **Run migrations:**
+Ensure you have all the uptodate migrations in your branch for this to work.
   ```sh
   cd backend
-  npx prisma migrate dev
+  npx prisma migrate dev --name example_name
   ```
 - **Regenerate Prisma client:**
   ```sh
@@ -191,6 +188,7 @@ This launches:
 ---
 
 ## ☁️ AWS S3 & CloudFront
+This has already been set up however if you would like to create your own:
 1. **Create an S3 bucket** (set region, enable public access or use signed URLs)
 2. **Create IAM user** (with appropriate S3 policies)
 3. **(Optional) Create CloudFront distribution** (origin → S3 bucket)
@@ -246,7 +244,7 @@ This launches:
 - Create a feature branch
 - Follow code style and conventions
 - Submit a pull request
-- Await review
+- Await review and approve
 
 ---
 
