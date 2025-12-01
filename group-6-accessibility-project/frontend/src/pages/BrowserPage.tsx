@@ -136,8 +136,8 @@ export function BrowsePage() {
   }, [games, searchQuery]);
 
   return (
-    <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-      <div className="max-w-5xl">
+  <div className="browse-page-center px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
+    <div className="max-w-5xl w-full">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Desktop Filters */}
           <div className="hidden lg:block lg:col-span-1">
