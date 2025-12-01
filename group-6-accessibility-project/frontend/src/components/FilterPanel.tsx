@@ -2,7 +2,6 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
-import { ScrollArea } from './ui/scroll-area';
 import { Eye, Ear, Hand, Brain } from 'lucide-react';
 
 interface FilterPanelProps {
