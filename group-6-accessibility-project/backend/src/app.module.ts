@@ -6,6 +6,7 @@ import { AccessibilityTagsModule } from './accessibility-tags/accessibility-tags
 import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { AccessibilityIssuesModule } from './accessibility-issues/accessibility-issues.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerGuard } from '@nestjs/throttler';
@@ -17,7 +18,7 @@ import { AwsService } from './services/aws/aws.service';
 
 
 @Module({
-  imports: [GamesModule, DatabaseModule, AccessibilityTagsModule, ReviewsModule, UsersModule, AuthModule, AnalyticsModule, PublishersModule, UploadModule,
+  imports: [GamesModule, DatabaseModule, AccessibilityTagsModule, AccessibilityIssuesModule, ReviewsModule, UsersModule, AuthModule, AnalyticsModule, PublishersModule, UploadModule, 
     ThrottlerModule.forRoot({
       throttlers: [
         {

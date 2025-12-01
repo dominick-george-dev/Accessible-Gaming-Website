@@ -78,8 +78,8 @@ const [accessibilityTags, setAccessibilityTags] = useState<Array<{
     const hasLoggedView = useRef(false);
     const headingRef = useRef<HTMLHeadingElement | null>(null);
 
-    const isLoggedIn = true; // You can hook this up to your auth system later
-
+    const isLoggedIn = JSON.parse(localStorage.getItem("isLoggedIn") || "false");
+    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
     useEffect(() => {
         if (!id) return; // wait until id is available
         //Ensures only ran once for accuracy
@@ -293,41 +293,50 @@ const [accessibilityTags, setAccessibilityTags] = useState<Array<{
     };
     const handleSubmitReview = async () => {
         if (!isLoggedIn) {
-        toast.error("Please sign in to submit a review");
-        return;
+            toast.error("Please sign in to submit a review");
+            return;
         }
 
         if (userRating === 0) {
-        toast.error("Please select a rating");
-        return;
+            toast.error("Please select a rating");
+            return;
         }
 
         if (!reviewText.trim()) {
-        toast.error("Please write a review");
-        return;
+            toast.error("Please write a review");
+            return;
         }
 
         // If user has already made a review for this game, prevent multiple reviews
-        if(reviews.find((r) => r.userId === 1)){
+        if(reviews.find((r) => r.userId === userData?.id)){
             toast.error("You have already submitted a review for this game");
             return;
-        }; // Replace "1" with actual user ID from auth
+        }
+
+        // Debug log to help diagnose backend errors
+        const reviewPayload = {
+            gameId: game?.id,
+            userId: userData?.id,
+            userName: userData?.username || "Anonymous",
+            rating: userRating,
+            comment: reviewText,
+            accessibilityFeedback: selectedAccessibilityTags,
+        };
+        console.log("Submitting review payload:", reviewPayload);
 
         try {
             const res = await fetch(`http://localhost:3000/reviews`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                gameId: game?.id,
-                userId: 1, // To be implemented with auth system
-                userName: "Anonymous", // Replace with actual user name from auth
-                rating: userRating,
-                comment: reviewText,
-                accessibilityFeedback: selectedAccessibilityTags,
-                }),
-            });            if (!res.ok) throw new Error("Failed to submit review");
+                body: JSON.stringify(reviewPayload),
+            });
+            if (!res.ok) {
+                const errorText = await res.text();
+                toast.error("Failed to submit review: " + errorText);
+                throw new Error("Failed to submit review: " + errorText);
+            }
             const newReview = await res.json();
-            
+
             // Store previous state for undo
             const previousReviews = reviews;
             const previousRating = userRating;
@@ -362,7 +371,7 @@ const [accessibilityTags, setAccessibilityTags] = useState<Array<{
             setReviewText("");
             setSelectedAccessibilityTags([]);
         } catch (error) {
-            toast.error("Error submitting review");
+            toast.error("Error submitting review. Please try again later.");
             console.error(error);
         }
     };    const toggleAccessibilityTag = (tagName: string) => {
