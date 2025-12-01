@@ -19,6 +19,7 @@ export function HomePage() {
     setTopShownCount((prev) => Math.min(prev + 3, topRatedAll.length));
   };
 
+
   const resolveImageUrl = (g: any): string | null => {
     const candidate =
       g?.coverImage ??
@@ -182,7 +183,7 @@ export function HomePage() {
 
   return (
     <>
-      <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
+          <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl font-bold mb-3">Welcome to AccessPlay</h2>
           <p className="text-muted-foreground mb-6">
