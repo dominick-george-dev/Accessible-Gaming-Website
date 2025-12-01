@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,28 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Game model representing a video game
 model Game {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  images      String[] @default([])
-  trailer     String @default("")
-  transcript  String   @default("")
-  genre       String[]
-  releaseDate DateTime
-  updatedAt   DateTime @updatedAt
-  createdAt   DateTime @default(now())
-  developer   String
-  publisher   String
-  rating      Float
-
-  reviews Review[]
-
+  id                    Int                     @id @default(autoincrement())
+  title                 String
+  description           String
+  genre                 String[]
+  releaseDate           DateTime
+  updatedAt             DateTime                @updatedAt
+  createdAt             DateTime                @default(now())
+  developer             String
+  rating                Float
+  hasBeenVerified       Boolean                 @default(false)
+  images                String[]
+  publisherId           Int?
+  trailer               String?
+  transcript            String?
+  Favourites            Favourites[]
+  Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
+  reviews               Review[]
+  View                  View[]
 }
 
-// AccessibilityTags model representing various accessibility features
 model AccessibilityTags {
   id                    Int                     @id @default(autoincrement())
   tag                   String
@@ -44,7 +38,6 @@ model AccessibilityTags {
   gameAccessibilityTags GameAccessibilityTags[]
 }
 
-// Junction table for many-to-many relationship between Game and AccessibilityTags
 model GameAccessibilityTags {
   gameId              Int
   accessibilityTagsId Int
@@ -54,8 +47,6 @@ model GameAccessibilityTags {
   @@id([gameId, accessibilityTagsId])
 }
 
-
-// Review model representing user reviews for games
 model Review {
   id                    Int      @id @default(autoincrement())
   gameId                Int
@@ -75,9 +66,13 @@ model User {
   id                        Int                        @id @default(autoincrement())
   email                     String                     @unique
   username                  String                     @unique
+  password                  String                     @default("NEEDS_PASSWORD_RESET") @db.VarChar(255)
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
-  password                  String                     @default("NEEDS_PASSWORD_RESET") @db.VarChar(255)
+  role                      roles                      @default(USER)
+  AccessibilityIssues       AccessibilityIssues[]
+  Favourites                Favourites[]
+  Publisher                 Publisher[]
   Review                    Review[]
   UserAccessibilitySettings UserAccessibilitySettings?
 }
@@ -89,13 +84,51 @@ model UserAccessibilitySettings {
   fontFamily                  String   @default("default")
   highContrast                Boolean  @default(false)
   colorBlindMode              String   @default("none")
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime
-  cognitiveAccessibility      Boolean  @default(false)
   colourMode                  String   @default("light-mode")
+  visualAccessibility         Boolean  @default(false)
   hearingAccessibility        Boolean  @default(false)
   motorDexterityAccessibility Boolean  @default(false)
+  cognitiveAccessibility      Boolean  @default(false)
   screenMagnifier             Boolean  @default(false)
-  visualAccessibility         Boolean  @default(false)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime
   User                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AccessibilityIssues {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  message   String   @default("No Message Added")
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Favourites {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  gameId Int
+  Game   Game @relation(fields: [gameId], references: [id])
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Publisher {
+  id             Int     @id @default(autoincrement())
+  userId         Int
+  displayName    String?
+  profilePicture String?
+  Game           Game[]
+  User           User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "userId")
+}
+
+model View {
+  id       Int      @id @default(autoincrement())
+  gameId   Int
+  viewedAt DateTime @default(now())
+  Game     Game     @relation(fields: [gameId], references: [id])
+}
+
+enum roles {
+  USER
+  ADMIN
+  PUBLISHER
 }

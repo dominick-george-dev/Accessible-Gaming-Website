@@ -1,25 +1,30 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import type { Game } from '../types/game';
-import { GameCard } from '../components/GameCard';
-import { FilterPanel } from '../components/FilterPanel';
-import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
-import { Card } from '../components/ui/card';
-import { Search } from 'lucide-react';
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-// Add this import for context
-import { useFavorites } from '../hooks/useFavorites.tsx';
-// ...existing code...
+import { GameCard } from "../components/GameCard";
+import { FilterPanel } from "../components/FilterPanel";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Search } from "lucide-react";
 
-const RECENT_SEARCHES_KEY = 'accessplay_recent_searches';
+import { useContext } from "react";
+import { FavoritesContext } from "../context/FavoritesContext.tsx";
+
+import type { Game } from "../types/game";
+
+const RECENT_SEARCHES_KEY = "accessplay_recent_searches";
 const MAX_RECENT_SEARCHES = 5;
 
 export function BrowsePage() {
   const navigate = useNavigate();
+  const favoritesContext = useContext(FavoritesContext);
+  if (!favoritesContext) throw new Error("FavoritesContext must be used inside FavoritesProvider");
+  const { favorites, toggle } = favoritesContext;
+
   const [games, setGames] = useState<Game[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState({
@@ -30,41 +35,32 @@ export function BrowsePage() {
   });
   const [loading, setLoading] = useState(true);
 
-  // Use favorites context instead of local state
-  const { favorites, addFavorite, removeFavorite } = useFavorites();
-
+  // Load recent searches and all games
   useEffect(() => {
-    const storedSearches = localStorage.getItem(RECENT_SEARCHES_KEY);
-    if (storedSearches) setRecentSearches(JSON.parse(storedSearches));
-
-    const loadGames = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch('http://localhost:3000/games/getall');
-        if (!res.ok) throw new Error('Failed to fetch games');
-        const data: Game[] = await res.json();
-        setGames(data);
-      } catch (err) {
-        console.error(err);
-        toast.error('Failed to load games');
-      } finally {
-        setLoading(false);
+  const loadGames = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:3000/games/getall");
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Failed to fetch games: ${res.status} ${res.statusText} - ${text}`);
       }
-    };
-    loadGames();
-  }, []);
+      const data: Game[] = await res.json();
+      setGames(data);
+    } catch (err) {
+      console.error("Error loading games:", err);
+      toast.error("Failed to load games");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadGames();
+}, []);
+
 
   const handleGameClick = (gameId: string) => {
     navigate(`/games/${gameId}`);
-  };
-
-  // Use context for favorites
-  const toggleFavorite = (id: string) => {
-    if (favorites.includes(id)) {
-      removeFavorite(id);
-    } else {
-      addFavorite(id);
-    }
   };
 
   const saveToRecentSearches = (query: string) => {
@@ -94,17 +90,16 @@ export function BrowsePage() {
   // Filter games based on search and accessibility categories
   const filteredGames = useMemo(() => {
     return games.filter(game => {
-      const title = game.title ?? '';
+      const title = game.title ?? "";
       const tags = Array.isArray(game.accessibilityTags) ? game.accessibilityTags : [];
       const genres = Array.isArray(game.genre) ? game.genre : [];
 
       const q = searchQuery.toLowerCase();
-
       const matchesSearch =
-        q === '' ||
+        q === "" ||
         title.toLowerCase().includes(q) ||
-        genres.some(g => (g ?? '').toLowerCase().includes(q)) ||
-        tags.some(tag => (tag?.name ?? '').toLowerCase().includes(q));
+        genres.some(g => (g ?? "").toLowerCase().includes(q)) ||
+        tags.some(tag => (tag?.name ?? "").toLowerCase().includes(q));
 
       const selectedCats = Object.entries(selectedCategories)
         .filter(([_, selected]) => selected)
@@ -120,7 +115,6 @@ export function BrowsePage() {
     });
   }, [games, searchQuery, selectedCategories]);
 
-  // Generate search suggestions (autocomplete)
   const suggestions = useMemo(() => {
     if (searchQuery.length < 2) return [];
     const query = searchQuery.toLowerCase();
@@ -131,24 +125,17 @@ export function BrowsePage() {
       const genres = Array.isArray(game.genre) ? game.genre : [];
       const tags = Array.isArray(game.accessibilityTags) ? game.accessibilityTags : [];
 
-      if (title.toLowerCase().includes(query) && !matches.includes(title)) {
-        matches.push(title);
-      }
-
+      if (title.toLowerCase().includes(query) && !matches.includes(title)) matches.push(title);
       genres.forEach(g => {
         const gLower = (g ?? "").toLowerCase();
-        if (gLower.includes(query) && !matches.includes(g)) {
-          matches.push(g);
-        }
+        if (gLower.includes(query) && !matches.includes(g)) matches.push(g);
       });
-
       tags.forEach(tag => {
         const tagName = tag?.name ?? "";
-        if (tagName.toLowerCase().includes(query) && !matches.includes(tagName)) {
-          matches.push(tagName);
-        }
+        if (tagName.toLowerCase().includes(query) && !matches.includes(tagName)) matches.push(tagName);
       });
     });
+
     return matches.slice(0, 5);
   }, [games, searchQuery]);
 
@@ -200,14 +187,16 @@ export function BrowsePage() {
             {/* Results */}
             <div>
               <p className="text-muted-foreground mb-4 lg:mb-6" aria-live="polite" aria-atomic="true">
-                Showing {filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'}
+                Showing {filteredGames.length} {filteredGames.length === 1 ? "game" : "games"}
               </p>
+
               {filteredGames.length === 0 ? (
                 <div className="text-center py-12 space-y-4">
                   <p>No games found matching your criteria</p>
-                  <Button onClick={() => { setSearchQuery(''); setSelectedCategories({ visual:false, hearing:false, dexterity:false, cognitive:false }); }}>
-                    Clear Filters
-                  </Button>
+                  <Button onClick={() => { 
+                    setSearchQuery(""); 
+                    setSelectedCategories({ visual:false, hearing:false, dexterity:false, cognitive:false }); 
+                  }}>Clear Filters</Button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
@@ -215,8 +204,8 @@ export function BrowsePage() {
                     <GameCard
                       key={game.id}
                       game={game}
-                      isFavorite={favorites.includes(game.id)}
-                      onToggleFavorite={() => toggleFavorite(game.id)}
+                      isFavorite={favorites.includes(game.id.toString())}
+                      onToggleFavorite={() => toggle(game.id.toString())} // ✅ Calls backend
                       onClick={() => handleGameClick(game.id)}
                     />
                   ))}
