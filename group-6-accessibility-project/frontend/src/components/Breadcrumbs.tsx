@@ -116,10 +116,19 @@ export function Breadcrumbs({ selectedGameName, selectedPublisherName, className
         break;
       }
 
-      case pathname === '/publisher': {
+      case pathname === '/makeaccountpublisher': {
+        breadcrumbs.push({
+          label: 'Publisher Account Setup',
+          path: '/makeaccountpublisher',
+          isCurrentPage: true
+        });
+        break;
+      }
+
+      case pathname === '/publisherdashboard': {
         breadcrumbs.push({
           label: 'Publisher Dashboard',
-          path: '/publisher',
+          path: '/publisherdashboard',
           isCurrentPage: true
         });
         break;

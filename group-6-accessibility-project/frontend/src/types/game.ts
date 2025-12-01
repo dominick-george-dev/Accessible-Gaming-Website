@@ -51,3 +51,38 @@ export interface User {
     highContrast: boolean; // High contrast mode for color blind/visually impaired
   };
 }
+export interface TopViewedGame {
+  gameId: number;
+  _count: {
+    gameId: number;
+  };
+}
+
+export interface TopRatedGame {
+  gameId: number;
+  avgRating: number;
+}
+
+export interface AccessibilityFeatureDistribution {
+  accessibilityTagsId: number;
+  _count: {
+    accessibilityTagsId: number;
+  };
+}
+
+export interface AnalyticsGameEntry {
+  gameId: number;
+  title: string;
+  totalViews: number;
+  totalReviews: number;
+  avgRating: number;
+}
+
+export interface PublisherAnalyticsResponse {
+  totalGames: number;
+  avgTotalRating: number;
+  topViewedGames: TopViewedGame[];
+  topRatedGames: TopRatedGame[];
+  accessibilityFeatureDistribution: AccessibilityFeatureDistribution[];
+  games: AnalyticsGameEntry[];
+}

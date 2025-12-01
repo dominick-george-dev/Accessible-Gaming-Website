@@ -5,9 +5,12 @@ import { BrowsePage } from './pages/BrowserPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
+import { PublisherAnalyticsTab } from './components/PublisherAnalyticsTab'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
 import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
+import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
+import { PublisherDashboard } from './pages/PublisherDashboard'
 
 const FavoritesPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
@@ -33,27 +36,38 @@ const ProfilePage = () => (
 
 function App() {
   const { setLoginState } = useAuth();
-  const navigate = useNavigate();  const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => {
-    console.log('User logged in:', userData);
-    // Set login state and user data - this will now handle redirect
-    setLoginState(true, { 
-      username: userData.username, 
-      email: userData.email, 
-      isAdmin: userData.isAdmin || false, 
-      isPublisher: userData.isPublisher || false 
-    });
+  const navigate = useNavigate();  
+  
+  const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
+  console.log('User logged in:', userData);
+  const processedUserData = {
+    id: userData.id,
+    username: userData.username,
+    email: userData.email,
+    role: userData.role || 'USER',
+    isAdmin: userData.role === 'ADMIN',
+    isPublisher: userData.role === 'PUBLISHER' 
   };
+  
+  console.log('Processed user data:', processedUserData); 
+  setLoginState(true, processedUserData);
+};
 
-  const handleSignup = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => {
-    console.log('User signed up:', userData);
-    // Set login state and user data - this will now handle redirect
-    setLoginState(true, { 
-      username: userData.username, 
-      email: userData.email, 
-      isAdmin: userData.isAdmin || false, 
-      isPublisher: userData.isPublisher || false 
-    });
+const handleSignup = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
+  console.log('User signed up:', userData);
+
+  const processedUserData = { 
+    id: userData.id,
+    username: userData.username,
+    email: userData.email,
+    role: userData.role || 'USER',
+    isAdmin: userData.role === 'ADMIN',
+    isPublisher: userData.role === 'PUBLISHER'  
   };
+  
+  console.log('Processed user data:', processedUserData); // Debug log
+  setLoginState(true, processedUserData);
+};
 
   // Navigation functions that preserve redirect path
   const handleNavigateToSignup = () => {
@@ -65,6 +79,7 @@ function App() {
   };
 
   return (
+    <>
     <Routes>
       {/* Routes with Layout wrapper */}
       <Route path="/" element={
@@ -102,6 +117,16 @@ function App() {
           <ProfilePage />
         </Layout>
       } />
+      <Route path="/publisherdashboard" element={
+        <Layout>
+          <PublisherDashboard />
+        </Layout>
+      } />
+        <Route path="/makeaccountpublisher" element={
+          <Layout>
+            <MakeAccountPublisherPage />
+          </Layout>
+          } />
         {/* Authentication pages without Layout (they have their own layout) */}
       <Route 
         path="/login" 
@@ -121,7 +146,12 @@ function App() {
           />
         } 
       />
+      <Route 
+        path="/publisherAnalyticsTab" 
+        element={<PublisherAnalyticsTab />} 
+      />
     </Routes>
+    </>
   )
 }
 

@@ -22,11 +22,11 @@ model Game {
   publisherId           Int?
   trailer               String?
   transcript            String?
-  favourites            Favourites[]
+  Favourites            Favourites[]
   Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
-  View                  View[]
+  views                 View[]
 }
 
 model AccessibilityTags {
@@ -113,7 +113,7 @@ model UserAccessibilitySettings {
 
 model Publisher {
   id             Int     @id @default(autoincrement())
-  userId         Int
+  userId         Int      @unique
   displayName    String?
   profilePicture String?
   Game           Game[]
@@ -124,7 +124,7 @@ model View {
   id       Int      @id @default(autoincrement())
   gameId   Int
   viewedAt DateTime @default(now())
-  Game     Game     @relation(fields: [gameId], references: [id])
+  game     Game     @relation(fields: [gameId], references: [id])
 }
 
 enum roles {

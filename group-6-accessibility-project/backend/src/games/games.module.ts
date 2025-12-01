@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { GamesService } from './games.service';
 import { GamesController } from './games.controller';
 import { DatabaseModule } from '../database/database.module';
-import { AccessibilityTagsService } from 'src/accessibility-tags/accessibility-tags.service';
-import { DatabaseService } from 'src/database/database.service';
+import { AccessibilityTagsService } from '../accessibility-tags/accessibility-tags.service';
+import { DatabaseService } from '../database/database.service';
 
 @Module({
     imports: [DatabaseModule],
