@@ -8,6 +8,7 @@ import { SignupPage } from './pages/SignupPage'
 import { PublisherAnalyticsTab } from './components/PublisherAnalyticsTab'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
+import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
 import { PublisherDashboard } from './pages/PublisherDashboard'
 import { Toaster } from "./components/ui/sonner";
@@ -19,19 +20,6 @@ const FavoritesPage = () => (
       <p className="text-muted-foreground">
         You haven't added any games to your favorites yet. Start browsing to find games you love!
       </p>
-    </div>
-  </div>
-);
-
-const AccessibilityPage = () => (
-  <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-    <div className="max-w-5xl">
-      <h2 className="text-2xl font-bold mb-6">Accessibility Statement</h2>
-      <p className="text-muted-foreground mb-4">
-        AccessPlay is committed to ensuring digital accessibility for people with disabilities. 
-        We are continually improving the user experience for everyone.
-      </p>
-      {/* Add more accessibility information */}
     </div>
   </div>
 );
@@ -122,10 +110,10 @@ const handleSignup = (userData: { username: string; email: string; isAdmin?: boo
         </Layout>
       } />
       <Route path="/accessibility" element={
-        <Layout>
-          <AccessibilityPage />
-        </Layout>
-      } />
+                <Layout>
+        <AccessibilityStatementPage />
+                        </Layout>
+      }/>
       <Route path="/profile" element={
         <Layout>
           <ProfilePage />
