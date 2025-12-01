@@ -227,42 +227,6 @@ export default function ProfilePageStandalone() {
 
   return (
     <main className="max-w-4xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8">
-      {/* Header with Magnifier Toggle */}
-      <Header magnifierEnabled={magnifierEnabled} onToggleMagnifier={handleToggleMagnifier} />
-      {/* User Info */}
-      <Card className="p-4 lg:p-8">
-        <div className="flex items-center gap-4 lg:gap-6">
-          <Avatar className="w-16 h-16 lg:w-24 lg:h-24">
-            <AvatarFallback className="bg-primary text-primary-foreground text-xl lg:text-2xl">
-              {user?.name ? user.name.split(' ').map(n => n[0]).join('') : ''}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h1 className="mb-1 lg:mb-2">{user.name}</h1>
-            <p className="text-muted-foreground">{user.email}</p>
-            {user.isAdmin && (
-              <Badge variant="secondary" className="mt-2">Administrator</Badge>
-            )}
-            {user.isPublisher && (
-              <Badge variant="secondary" className="mt-2">Publisher</Badge>
-            )}
-          </div>
-        </div>
-      </Card>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 lg:gap-6">
-        <Card className="p-4 lg:p-6 text-center">
-          <div className="text-muted-foreground mb-1 lg:mb-2">Favorites</div>
-          <div className="text-3xl lg:text-4xl">{user?.favorites?.length ?? 0}</div>
-        </Card>
-        <Card className="p-4 lg:p-6 text-center">
-          <div className="text-muted-foreground mb-1 lg:mb-2">Reviews</div>
-          <div className="text-3xl lg:text-4xl">0</div>
-        </Card>
-      </div>
-
-      <Separator />
 
       {/* Accessibility Preferences */}
       <section aria-labelledby="preferences-heading">
