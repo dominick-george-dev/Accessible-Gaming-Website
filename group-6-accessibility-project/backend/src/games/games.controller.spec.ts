@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { Reflector } from '@nestjs/core';
 import { GamesController } from './games.controller';
 import { GamesService } from './games.service';
 
@@ -27,9 +31,51 @@ describe('GamesController', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        // ✅ Add required modules for guards
+        ThrottlerModule.forRoot([{
+          ttl: 60,
+          limit: 10,
+        }]),
+        PassportModule,
+        JwtModule.register({
+          secret: 'test-secret',
+          signOptions: { expiresIn: '60s' },
+        }),
+      ],
       controllers: [GamesController],
-      providers: [{ provide: GamesService, useValue: mockGamesService }],
-    }).compile();
+      providers: [
+        { provide: GamesService, useValue: mockGamesService },
+        // ✅ Mock the auth guards and dependencies
+        {
+          provide: 'JwtStrategy',
+          useValue: {
+            validate: jest.fn().mockResolvedValue({ userId: 1, role: 'ADMIN' }),
+          },
+        },
+        {
+          provide: 'RolesGuard',
+          useValue: {
+            canActivate: jest.fn().mockReturnValue(true),
+          },
+        },
+        Reflector,
+      ],
+    })
+    // ✅ Override guards for testing
+    .overrideGuard('ThrottlerGuard')
+    .useValue({
+      canActivate: jest.fn().mockReturnValue(true),
+    })
+    .overrideGuard('JwtAuthGuard')
+    .useValue({
+      canActivate: jest.fn().mockReturnValue(true),
+    })
+    .overrideGuard('RolesGuard')
+    .useValue({
+      canActivate: jest.fn().mockReturnValue(true),
+    })
+    .compile();
 
     controller = module.get<GamesController>(GamesController);
   });
@@ -41,7 +87,6 @@ describe('GamesController', () => {
   it('should return game details and call service with numeric id', async () => {
     const result = await controller.getGameDetails({ id: 1 } as any);
     expect(mockGamesService.findById).toHaveBeenCalledWith(1);
-    // Adjusted expected shape to match current controller/service output
     expect(result).toEqual({
       id: 1,
       title: 'Mock Game',
@@ -62,7 +107,6 @@ describe('GamesController', () => {
       mockGamesService.findSimilarGames.mockResolvedValue(expected);
 
       const res = await controller.getSimilarGames({ id: 1 } as any);
-      // controller now wraps similar results in { data: [...] }
       expect(res).toEqual({ data: expected });
       expect(mockGamesService.findSimilarGames).toHaveBeenCalledWith('1', { limit: 8 });
     });
@@ -88,7 +132,6 @@ describe('GamesController', () => {
       mockGamesService.findSimilarGames.mockResolvedValue(expected);
 
       const res = await controller.getSimilarGames({ id: '42' } as any);
-      // controller wraps results in { data: [...] }
       expect(res).toEqual({ data: expected });
       expect(mockGamesService.findSimilarGames).toHaveBeenCalledWith('42', { limit: 8 });
     });
