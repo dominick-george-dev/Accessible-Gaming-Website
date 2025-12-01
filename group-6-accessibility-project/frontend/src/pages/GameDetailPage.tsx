@@ -10,8 +10,10 @@ import { Card } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
 import { ImgCarousel } from "../components/ui/imgCarousel";
 import { AccessibleVideoPlayer } from "../components/AccessibleVideoPlayer";
-
-import { ArrowLeft, Star, Heart, Check, Eye, Ear, Hand, Brain } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import type { Game, Review } from "../types/game";
+import { useParams, useNavigate } from "react-router-dom";
 import { addUndoAction } from "../utils/undoManager";
 
 import type { Game, Review } from "../types/game";
@@ -27,70 +29,356 @@ const getCategoryStyle = (category: string) => {
 };
 
 export function GameDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const favoritesContext = useContext(FavoritesContext);
-  if (!favoritesContext) throw new Error("FavoritesContext must be used inside FavoritesProvider");
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const [game, setGame] = useState<Game | null>(null);
+const [accessibilityTags, setAccessibilityTags] = useState<Array<{
+    id: string;
+    tag?: string;
+    name?: string;
+    category: string;
+    verified: boolean;
+}>>([]);
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [isHelpful, setIsHelpful] = useState<Record<number, boolean>>({});
+    const [loading, setLoading] = useState(true);
+    const [similarGames, setSimilarGames] = useState<Game[]>([]);
+    const [loadingSimilar, setLoadingSimilar] = useState(false);
+    const [similarError, setSimilarError] = useState<string | null>(null);
+    const [userRating, setUserRating] = useState(0);
+    const [reviewText, setReviewText] = useState("");
+    const [selectedAccessibilityTags, setSelectedAccessibilityTags] = useState<string[]>([]);
+    const hasLoggedView = useRef(false);
+    const headingRef = useRef<HTMLHeadingElement | null>(null);
 
-  const { favorites, toggle } = favoritesContext;
+    const isLoggedIn = JSON.parse(localStorage.getItem("isLoggedIn") || "false");
+    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+    useEffect(() => {
+        if (!id) return; // wait until id is available
+        //Ensures only ran once for accuracy
+        if (!hasLoggedView.current) {
+            hasLoggedView.current = true;
+        createViewLog(id);
+        }
+        const loadData = async () => {
+            setLoading(true);
+            try {
+            await Promise.all([
+                fetchGameDetails(id),
+                fetchAccessibilityTags(id),
+                fetchReviews(id),
+                fetchSimilarGames(id)
+            ]);
+            } catch (error) {
+            console.error("Error loading game data:", error);
+            } finally {
+            setLoading(false);
+            }
+        };
 
-  const [game, setGame] = useState<Game | null>(null);
-  const [accessibilityTags, setAccessibilityTags] = useState<{ id: string; tag: string; category: string; verified: boolean }[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
+        loadData();
+    }, [id]);
 
-  const isFavorite = game ? favorites.includes(game.id.toString()) : false;
+    //Focus main heading when game chnages so screen reader announce it to user
+    useEffect(() => {
+        if (game) {
+            //small timeout to ensure heading is in DOM
+            setTimeout(() => headingRef.current?.focus(), 50);
+        }
+    }, [game]);
 
-  useEffect(() => {
-    if (!id) return;
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        await Promise.all([fetchGameDetails(id), fetchAccessibilityTags(id), fetchReviews(id)]);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
+    console.log('reviews:', reviews);
+
+    const fetchGameDetails = async (gameId: string) => {
+        try {
+        const response = await fetch(`http://localhost:3000/games/gameDetails/${gameId}`);
+        if (!response.ok) throw new Error("Failed to fetch game details");
+        const data = await response.json();
+
+        setGame(data);
+        } catch (error) {
+        console.error("Error fetching game details:", error);
+        toast.error("Failed to load game details");
+        }
     };
-    loadData();
-  }, [id, favorites]);
 
-  const fetchGameDetails = async (gameId: string) => {
-    try {
-      const res = await fetch(`http://localhost:3000/games/gameDetails/${gameId}`);
-      if (!res.ok) throw new Error("Failed to fetch game details");
-      const data = await res.json();
-      setGame(data);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to load game details");
-    }
-  };
+    const createViewLog = async (gameId: string) => {
+        try{
+            const response = await fetch(`http://localhost:3000/games/view/${gameId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                viewedAt: new Date(),
+                }),
+            })
+            if(!response.ok) throw new Error('Failed to create view')
 
-  const fetchAccessibilityTags = async (gameId: string) => {
-    try {
-      const res = await fetch(`http://localhost:3000/accessibility-tags/game/${gameId}`);
-      if (!res.ok) throw new Error("Failed to fetch accessibility tags");
-      const data = await res.json();
-      setAccessibilityTags(data);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to load accessibility tags");
+        } catch (error){
+            console.log("Error creating view", error)
+        }
     }
-  };
 
-  const fetchReviews = async (gameId: string) => {
-    try {
-      const res = await fetch(`http://localhost:3000/reviews/game/${gameId}`);
-      if (!res.ok) throw new Error("Failed to fetch reviews");
-      const data = await res.json();
-      setReviews(data);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to load reviews");
-    }
-  };
+    const fetchAccessibilityTags = async (gameId: string) => {
+        try {
+            // Try a conventional backend endpoint for accessibility tags for a game
+            const response = await fetch(`http://localhost:3000/accessibility-tags/game/${gameId}`);
+            if (!response.ok) {
+                // If the route does not exist, treat as no tags rather than crashing
+                if (response.status === 404) {
+                    setAccessibilityTags([]);
+                    return;
+                }
+                throw new Error("Failed to fetch accessibility tags");
+            }
+            const data = await response.json();
+            setAccessibilityTags(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Error fetching accessibility tags:", error);
+            // Ensure state is a consistent empty array on failure
+            setAccessibilityTags([]);
+        }
+    };
+
+    /**
+    * Fetch similar games. Try dedicated endpoint first,
+    * otherwise fall back to client-side filtering/sorting.
+    */
+    const fetchSimilarGames = async (gameId: string) => {
+        setLoadingSimilar(true);
+        setSimilarError(null);
+        try {
+            const token = localStorage.getItem("authToken");
+            const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+            // Call the backend similar endpoint — backend may return { data: [...] } or a plain array
+            const res = await fetch(`http://localhost:3000/games/similar/${gameId}`, { headers });
+            if (!res.ok) {
+                if (res.status === 404) {
+                    setSimilarGames([]);
+                    setSimilarError(null);
+                    return;
+                }
+                throw new Error(`Failed to fetch similar games: ${res.status}`);
+            }
+
+            const payload = await res.json();
+            // Support both shapes: plain array or { data: [...] }
+            const games = Array.isArray(payload)
+                ? payload
+                : Array.isArray(payload?.data)
+                ? payload.data
+                : [];
+            setSimilarGames(games);
+        } catch (err) {
+            console.error("Error fetching similar games:", err);
+            setSimilarError("Unable to load similar games. Please try again later.");
+            setSimilarGames([]);
+        } finally {
+            setLoadingSimilar(false);
+        }
+    };
+
+    const fetchReviews = async (gameId: string) => {
+        // Fetch reviews for the game
+        try {
+            const response = await fetch(`http://localhost:3000/reviews/game/${gameId}`);
+            if (!response.ok) throw new Error("Failed to fetch reviews");
+            const data = await response.json();
+            setReviews(data);
+        } catch (error) {
+            // Handle error
+            console.error("Error fetching reviews:", error);
+            toast.error("Failed to load reviews");
+        }
+    };    
+    const handleHelpfulSubmit = async (id: number) => {
+        const reviewToUpdate = reviews.find((review) => review.id === id);
+        if (!reviewToUpdate) {
+            toast.error("Review not found");
+            return;
+        }
+
+        const isCurrentlyHelpful = isHelpful[id] || false;
+        const newHelpfulCount = isCurrentlyHelpful
+            ? reviewToUpdate.helpful - 1
+            : reviewToUpdate.helpful + 1;
+
+        // Store previous state for undo
+        const previousHelpfulCount = reviewToUpdate.helpful;
+        const previousHelpfulState = isCurrentlyHelpful;
+
+        // Optimistic UI update
+        setReviews((prevReviews) =>
+            prevReviews.map((review) =>
+            review.id === id ? { ...review, helpful: newHelpfulCount } : review
+            )
+        );
+
+        try {
+            const response = await fetch(`http://localhost:3000/reviews/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ helpful: newHelpfulCount }),
+            });
+
+            if (!response.ok) throw new Error("Failed to update review");
+
+            // Update helpful state for only this review
+            setIsHelpful((prev) => ({
+            ...prev,
+            [id]: !isCurrentlyHelpful,
+            }));
+
+            // Add undo action
+            addUndoAction(
+                `${!isCurrentlyHelpful ? 'Mark' : 'Unmark'} review as helpful`,
+                () => {
+                    // Undo the helpful vote
+                    setReviews((prevReviews) =>
+                        prevReviews.map((review) =>
+                            review.id === id ? { ...review, helpful: previousHelpfulCount } : review
+                        )
+                    );
+                    setIsHelpful((prev) => ({
+                        ...prev,
+                        [id]: previousHelpfulState,
+                    }));
+                    // Also call the API to undo the change
+                    fetch(`http://localhost:3000/reviews/${id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ helpful: previousHelpfulCount }),
+                    }).catch(() => {
+                        toast.error("Failed to undo helpful vote");
+                    });
+                }
+            );
+
+            toast.success(
+            !isCurrentlyHelpful
+                ? "Marked review as helpful!"
+                : "Removed helpful vote."
+            );
+        } catch (error) {
+            toast.error("Failed to update review");
+            console.error("Error updating review:", error);
+        }
+    };
+    const handleSubmitReview = async () => {
+        if (!isLoggedIn) {
+            toast.error("Please sign in to submit a review");
+            return;
+        }
+
+        if (userRating === 0) {
+            toast.error("Please select a rating");
+            return;
+        }
+
+        if (!reviewText.trim()) {
+            toast.error("Please write a review");
+            return;
+        }
+
+        // If user has already made a review for this game, prevent multiple reviews
+        if(reviews.find((r) => r.userId === userData?.id)){
+            toast.error("You have already submitted a review for this game");
+            return;
+        }
+
+        // Debug log to help diagnose backend errors
+        const reviewPayload = {
+            gameId: game?.id,
+            userId: userData?.id,
+            userName: userData?.username || "Anonymous",
+            rating: userRating,
+            comment: reviewText,
+            accessibilityFeedback: selectedAccessibilityTags,
+        };
+        console.log("Submitting review payload:", reviewPayload);
+
+        try {
+            const res = await fetch(`http://localhost:3000/reviews`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(reviewPayload),
+            });
+            if (!res.ok) {
+                const errorText = await res.text();
+                toast.error("Failed to submit review: " + errorText);
+                throw new Error("Failed to submit review: " + errorText);
+            }
+            const newReview = await res.json();
+
+            // Store previous state for undo
+            const previousReviews = reviews;
+            const previousRating = userRating;
+            const previousText = reviewText;
+            const previousTags = selectedAccessibilityTags;
+            
+            setReviews((prev) => [...prev, newReview]);
+            
+            // Add undo action for review submission
+            addUndoAction(
+                'Submit review',
+                () => {
+                    // Undo review submission
+                    setReviews(previousReviews);
+                    setUserRating(previousRating);
+                    setReviewText(previousText);
+                    setSelectedAccessibilityTags(previousTags);
+                    
+                    // Call API to delete the review
+                    fetch(`http://localhost:3000/reviews/${newReview.id}`, {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                    }).catch(() => {
+                        toast.error("Failed to undo review submission");
+                    });
+                }
+            );
+            
+            toast.success("Review submitted!");
+
+            setUserRating(0);
+            setReviewText("");
+            setSelectedAccessibilityTags([]);
+        } catch (error) {
+            toast.error("Error submitting review. Please try again later.");
+            console.error(error);
+        }
+    };    const toggleAccessibilityTag = (tagName: string) => {
+        const previousTags = [...selectedAccessibilityTags];
+        const wasIncluded = previousTags.includes(tagName);
+        
+        setSelectedAccessibilityTags((prev) =>
+        prev.includes(tagName)
+            ? prev.filter((t) => t !== tagName)
+            : [...prev, tagName]
+        );
+        
+        // Add undo action
+        addUndoAction(
+            `${wasIncluded ? 'Remove' : 'Add'} accessibility tag: ${tagName}`,
+            () => {
+                setSelectedAccessibilityTags(previousTags);
+            }
+        );
+    };const onToggleFavorite = () => {
+        const previousFavoriteState = isFavorite;
+        setIsFavorite((prev) => !prev);
+        
+        // Add undo action
+        addUndoAction(
+            `${!previousFavoriteState ? 'Add to' : 'Remove from'} favorites`,
+            () => {
+                setIsFavorite(previousFavoriteState);
+            }
+        );
+        
+        toast(previousFavoriteState ? "Removed from favorites" : "Added to favorites");
+    };
 
   const onBack = () => navigate(-1);
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -132,14 +420,15 @@ export function GameDetailPage() {
 
           <div className="space-y-4 lg:space-y-6">
             <div>
-              <div className="flex items-start justify-between gap-3 mb-2 lg:mb-3">
+                <div className="flex items-start justify-between gap-3 mb-2 lg:mb-3">
                 <h1 className="flex-1">{game.title}</h1>
                 <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={onToggleFavorite}
-                  aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-                  aria-pressed={isFavorite}
+                    variant="outline"
+                    size="icon"
+                    onClick={onToggleFavorite}
+                    aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                    aria-pressed={isFavorite}
+                    className="flex-shrink-0"
                 >
                   <Heart className={`w-5 h-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
                 </Button>
@@ -147,9 +436,9 @@ export function GameDetailPage() {
 
               <div className="flex items-center gap-3 lg:gap-4 flex-wrap mb-3 lg:mb-4">
                 <div className="flex items-center gap-2">
-                  <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
-                  <span>{game.rating}</span>
-                  <span className="text-muted-foreground">({reviews.length})</span>
+                    <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" aria-hidden="true" />
+                    <span>{Number(game.rating).toFixed(1)}</span>
+                    <span className="text-muted-foreground">({reviews.length})</span>
                 </div>
                 <Separator orientation="vertical" className="h-6 hidden sm:block" />
                 <div className="flex gap-2 flex-wrap">
@@ -173,6 +462,82 @@ export function GameDetailPage() {
 
         <AccessibleVideoPlayer gameName={game.title} youtubeUrl={game.trailer} transcript={game.transcript} />
 
+        <Separator />
+            {/* Similar Games Section */}
+            <section aria-labelledby="similar-games-heading" className="mt-2">
+            <h2 id="similar-games-heading" className="mb-3 lg:mb-4">You May Also Like</h2>
+
+            {loadingSimilar ? (
+                <p className="text-muted-foreground">Loading similar games...</p>
+            ) : similarError ? (
+                <p role="alert" className="text-destructive">{similarError}</p>
+            ) : similarGames.length === 0 ? (
+                <div className="space-y-2">
+                    <p className="text-muted-foreground">No similar games found.</p>
+                    <p className="text-muted-foreground">Try browsing popular accessible games below.</p>
+                </div>
+            ) : (
+                // outer provides horizontal scroll when needed; inner flex centers cards
+                <div className="overflow-x-auto">
+                    <div
+                        className="flex gap-4 justify-center items-start px-4 py-1"
+                        role="list"
+                        aria-label="Similar games"
+                    >
+                        {similarGames.map((s) => (
+                            <Card
+                                key={s.id}
+                                className="min-w-[200px] max-w-[220px] p-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary flex-shrink-0"
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Open ${s.title} details.`}
+                                aria-describedby={`similar-${s.id}-tags`}
+                                onClick={() => navigate(`/games/${s.id}`)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        navigate(`/games/${s.id}`);
+                                    }
+                                }}
+                            >
+                                <div className="aspect-[4/3] mb-2 bg-muted rounded overflow-hidden">
+                                    <img
+                                        src={s.images?.[0] || ''}
+                                        alt={`Cover art for ${s.title}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="line-clamp-2">{s.title}</h3>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {s.genre.slice(0,2).map((g) => (
+                                            <Badge key={g} variant="outline" className="text-xs">
+                                                {g}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                    {/* Accessibility tags displayed clearly on each card */}
+                                    <div id={`similar-${s.id}-tags`} className="flex flex-wrap gap-1 mt-2" aria-hidden={false}>
+                                        {(s.accessibilityTags || []).slice(0,3).map((t: any, i: number) => (
+                                            <Badge
+                                                key={(t && (t.id ?? i)) ?? i}
+                                                variant="secondary"
+                                                className="text-xs"
+                                            >
+                                                {typeof t === "string" ? t : (t.name ?? t.tag ?? "")}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </section>
+        <Separator />
+
+        {/* Accessibility Features */}
         <section aria-labelledby="accessibility-heading">
           <h2 id="accessibility-heading" className="mb-3 lg:mb-4">Accessibility Features</h2>
           <div className="grid gap-3 lg:gap-4">
@@ -185,15 +550,21 @@ export function GameDetailPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <CategoryIcon className="w-5 h-5" />
                     <h3 className="capitalize">{category}</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {categoryTags.map(tag => {
-                      const { color, icon: Icon } = getCategoryStyle(tag.category);
-                      return (
-                        <Badge key={tag.id} variant="outline" className={`gap-1.5 ${color}`}>
-                          <Icon className="w-3 h-3" />
-                          {tag.verified && <Check className="w-3 h-3" aria-label="Verified" />}
-                          {tag.tag}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                    {/* Render tags for this category */}
+                    {categoryTags.map((tag) => {
+                        const style = getCategoryStyle(tag.category);
+                        const Icon = style.icon;
+                        return (
+                        <Badge
+                            key={tag.id}
+                            variant="outline"
+                            className={`gap-1.5 ${style.color}`}
+                        >
+                            <Icon className="w-3 h-3" aria-hidden="true" />
+                            {tag.verified && <Check className="w-3 h-3" aria-label="Verified" />}
+                            {tag.name ?? tag.tag}
                         </Badge>
                       );
                     })}
@@ -203,7 +574,199 @@ export function GameDetailPage() {
             })}
           </div>
         </section>
-      </div>
-    </div>
-  );
+
+        <Separator />
+
+        {/* Write Review */}
+        <section aria-labelledby="write-review-heading">
+            <h2 id="write-review-heading" className="mb-3 lg:mb-4">
+            Write a Review
+            </h2>
+            {!isLoggedIn && (
+            <Card className="p-4 mb-4 bg-muted">
+                <p className="text-muted-foreground">
+                Please sign in to write a review for this game.
+                </p>
+            </Card>
+            )}
+            <Card className="p-4 lg:p-6 space-y-4">
+            <div>
+                <label className="block mb-2">Your Rating</label>
+                <div className="flex gap-2" role="radiogroup" aria-label="Select rating">                {[1, 2, 3, 4, 5].map((rating) => (
+                    <button
+                    key={rating}
+                    onClick={() => {
+                        const previousRating = userRating;
+                        setUserRating(rating);
+                        
+                        // Add undo action for rating change
+                        if (previousRating !== rating) {
+                            addUndoAction(
+                                `Change rating to ${rating} star${rating > 1 ? 's' : ''}`,
+                                () => {
+                                    setUserRating(previousRating);
+                                }
+                            );
+                        }
+                    }}
+                    className="focus:outline-none focus:ring-2 focus:ring-primary rounded"
+                    aria-label={`${rating} star${rating > 1 ? 's' : ''}`}
+                    role="radio"
+                    aria-checked={userRating === rating}
+                    >
+                    <Star
+                        className={`w-8 h-8 ${
+                        rating <= userRating
+                            ? 'fill-yellow-500 text-yellow-500'
+                            : 'text-muted-foreground'
+                        }`}
+                    />
+                    </button>
+                ))}
+                </div>
+            </div>
+
+            <div>
+                <label htmlFor="review-text" className="block mb-2">
+                Your Review
+                </label>
+                <Textarea
+                id="review-text"
+                placeholder="Share your experience with this game's accessibility features..."
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                rows={4}
+                aria-describedby="review-hint"
+                />
+                <p id="review-hint" className="text-muted-foreground mt-2">
+                Help others by mentioning specific accessibility features
+                </p>
+            </div>
+
+            {/* Accessibility Tags Selection */}
+            <div>
+                <label className="block mb-3">
+                Accessibility Features You Experienced (Optional)
+                </label>
+                <div className="space-y-4">
+                {['Visual', 'Hearing', 'Dexterity', 'Cognitive'].map((category) => {
+                    const categoryTags = accessibilityTags.filter(
+                    (tag) => tag.category === category
+                    );
+                    if (categoryTags.length === 0) return null;
+
+                    const categoryStyle = getCategoryStyle(category);
+                    const CategoryIcon = categoryStyle.icon;
+
+                    return (
+                    <div key={category}>
+                        <div className="flex items-center gap-2 mb-2">
+                        <CategoryIcon className="w-4 h-4" aria-hidden="true" />
+                        <h4 className="capitalize">{category}</h4>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {categoryTags.map((tag) => (
+                            <div key={tag.id} className="flex items-center space-x-2">
+                            <Checkbox
+                                id={`tag-${tag.id}`}
+                                // prefer name, fallback to tag
+                                checked={selectedAccessibilityTags.includes(tag.name ?? tag.tag ?? '')}
+                                onCheckedChange={() => toggleAccessibilityTag(tag.name ?? tag.tag ?? '')}
+                            />
+                            <label
+                                htmlFor={`tag-${tag.id}`}
+                                className="cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                {tag.tag}
+                            </label>
+                            </div>
+                        ))}
+                        </div>
+                        <br/>
+                        <Separator/>
+                    </div>
+                    );
+                })}
+                </div>
+            </div>
+
+            <Button 
+                onClick={handleSubmitReview} 
+                className="w-full"
+                disabled={!isLoggedIn}
+            >
+                Submit Review
+            </Button>
+            </Card>
+        </section>
+
+        <Separator />
+
+        {/* Reviews */}
+        <section aria-labelledby="reviews-heading">
+            <h2 id="reviews-heading" className="mb-3 lg:mb-4">
+            User Reviews
+            </h2>
+            <div className="space-y-3 lg:space-y-4">
+            {
+            reviews.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                No reviews yet. Be the first to review!
+                </p>
+            ) : (
+                reviews.map((review) => (
+                <Card key={review.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p>{review.userName}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex" aria-label={`${review.rating} out of 5 stars`}>
+                            {[...Array(5)].map((_, i) => (
+                            <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                i < review.rating
+                                    ? 'fill-yellow-500 text-yellow-500'
+                                    : 'text-muted-foreground'
+                                }`}
+                                aria-hidden="true"
+                            />
+                            ))}
+                        </div>
+                        <span className="text-muted-foreground">
+                            
+                            {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
+                        </div>
+                    </div>
+                    </div>
+
+                    <p>{review.comment}</p>
+
+                    {review.accessibilityFeedback.length > 0 && (
+                    <div>
+                        <p className="text-muted-foreground mb-2">
+                        Accessibility features mentioned:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                        {review.accessibilityFeedback.map((accessibilityFeature, i) => (
+                            <Badge key={i} variant="secondary">
+                                {accessibilityFeature}
+                            </Badge>
+                        ))}
+                        </div>
+                    </div>
+                    )}
+
+                    <Button variant="ghost" size="sm" className={`"gap-2" ${isHelpful[review.id] ? 'text-green-500 border-green-500 bg-green-50' : ''}`} onClick={() => handleHelpfulSubmit(review.id)}>
+                    <ThumbsUp className="w-4 h-4" />
+                        Helpful ({review.helpful})
+                    </Button>
+                </Card>
+                ))
+            )}
+            </div>        </section>
+        </div>
+        </div>
+    );
 }

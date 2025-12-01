@@ -26,7 +26,7 @@ model Game {
   Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
-  View                  View[]
+  views                 View[]
 }
 
 model AccessibilityTags {
@@ -95,6 +95,22 @@ model UserAccessibilitySettings {
   User                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model Publisher {
+  id             Int     @id @default(autoincrement())
+  userId         Int      @unique
+  displayName    String?
+  profilePicture String?
+  Game           Game[]
+  User           User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "userId")
+}
+
+model View {
+  id       Int      @id @default(autoincrement())
+  gameId   Int
+  viewedAt DateTime @default(now())
+  game     Game     @relation(fields: [gameId], references: [id])
+}
+
 model AccessibilityIssues {
   id        Int      @id @default(autoincrement())
   userId    Int
@@ -109,22 +125,6 @@ model Favourites {
   gameId Int
   Game   Game @relation(fields: [gameId], references: [id])
   User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Publisher {
-  id             Int     @id @default(autoincrement())
-  userId         Int
-  displayName    String?
-  profilePicture String?
-  Game           Game[]
-  User           User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "userId")
-}
-
-model View {
-  id       Int      @id @default(autoincrement())
-  gameId   Int
-  viewedAt DateTime @default(now())
-  Game     Game     @relation(fields: [gameId], references: [id])
 }
 
 enum roles {

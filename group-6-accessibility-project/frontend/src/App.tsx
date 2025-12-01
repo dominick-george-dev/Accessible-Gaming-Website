@@ -2,27 +2,16 @@ import './App.css'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import { GameDetailPage } from './pages/GameDetailPage'
 import { BrowsePage } from './pages/BrowserPage'
+import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
+import { PublisherAnalyticsTab } from './components/PublisherAnalyticsTab'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
 import { MyFavoritesPage } from './pages/MyFavoritesPage'
-
-// Create placeholder pages for the navigation items
-const HomePage = () => (
-  <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-    <div className="max-w-5xl">
-      <h2 className="text-2xl font-bold mb-6">Welcome to AccessPlay</h2>
-      <p className="text-muted-foreground mb-4">
-        Discover accessible games designed for everyone. Browse our collection of games 
-        with detailed accessibility information to find the perfect game for you.
-      </p>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Add featured games or content here */}
-      </div>
-    </div>
-  </div>
-);
+import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
+import { PublisherDashboard } from './pages/PublisherDashboard'
+import { Toaster } from "./components/ui/sonner";
 
 // REMOVE the local FavoritesPage definition!
 
@@ -52,26 +41,38 @@ const ProfilePage = () => (
 
 function App() {
   const { setLoginState } = useAuth();
-  const navigate = useNavigate();
-  const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => {
-    console.log('User logged in:', userData);
-    setLoginState(true, { 
-      username: userData.username, 
-      email: userData.email, 
-      isAdmin: userData.isAdmin || false, 
-      isPublisher: userData.isPublisher || false 
-    });
+  const navigate = useNavigate();  
+  
+  const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
+  console.log('User logged in:', userData);
+  const processedUserData = {
+    id: userData.id,
+    username: userData.username,
+    email: userData.email,
+    role: userData.role || 'USER',
+    isAdmin: userData.role === 'ADMIN',
+    isPublisher: userData.role === 'PUBLISHER' 
   };
+  
+  console.log('Processed user data:', processedUserData); 
+  setLoginState(true, processedUserData);
+};
 
-  const handleSignup = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => {
-    console.log('User signed up:', userData);
-    setLoginState(true, { 
-      username: userData.username, 
-      email: userData.email, 
-      isAdmin: userData.isAdmin || false, 
-      isPublisher: userData.isPublisher || false 
-    });
+const handleSignup = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
+  console.log('User signed up:', userData);
+
+  const processedUserData = { 
+    id: userData.id,
+    username: userData.username,
+    email: userData.email,
+    role: userData.role || 'USER',
+    isAdmin: userData.role === 'ADMIN',
+    isPublisher: userData.role === 'PUBLISHER'  
   };
+  
+  console.log('Processed user data:', processedUserData); // Debug log
+  setLoginState(true, processedUserData);
+};
 
   // Navigation functions that preserve redirect path
   const handleNavigateToSignup = () => {
@@ -83,6 +84,8 @@ function App() {
   };
 
   return (
+    <>
+    <Toaster />
     <Routes>
       {/* Routes with Layout wrapper */}
       <Route path="/" element={
@@ -120,7 +123,17 @@ function App() {
           <ProfilePage />
         </Layout>
       } />
-      {/* Authentication pages without Layout */}
+      <Route path="/publisherdashboard" element={
+        <Layout>
+          <PublisherDashboard />
+        </Layout>
+      } />
+        <Route path="/makeaccountpublisher" element={
+          <Layout>
+            <MakeAccountPublisherPage />
+          </Layout>
+          } />
+        {/* Authentication pages without Layout (they have their own layout) */}
       <Route 
         path="/login" 
         element={
@@ -139,7 +152,12 @@ function App() {
           />
         } 
       />
+      <Route 
+        path="/publisherAnalyticsTab" 
+        element={<PublisherAnalyticsTab />} 
+      />
     </Routes>
+    </>
   )
 }
 
