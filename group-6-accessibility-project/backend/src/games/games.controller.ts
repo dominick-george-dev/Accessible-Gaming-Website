@@ -128,4 +128,9 @@ export class GamesController {
     async verify(@Param('id') id: string) {
         return this.gamesService.verify(+id);
     }
+
+    @Patch(':id/revoke-verification')
+    async revokeVerification(@Param('id') id: string) {
+        return this.gamesService.revokeVerification(+id);
+    }
 }

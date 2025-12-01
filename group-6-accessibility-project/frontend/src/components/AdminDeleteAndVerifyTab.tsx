@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
+import { Trash2, CheckCircle, AlertCircle, Loader2, X, XCircle } from 'lucide-react';
 
 interface Game {
     id: number;
@@ -33,13 +33,18 @@ const AdminDeleteAndVerifyTab: React.FC = () => {
     const [games, setGames] = useState<Game[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [actionLoading, setActionLoading] = useState<{ [key: number]: 'verifying' | 'deleting' | null }>({});
+    const [actionLoading, setActionLoading] = useState<{ [key: number]: 'verifying' | 'revoking' | 'deleting' | null }>({});
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [filter, setFilter] = useState<'all' | 'verified' | 'unverified'>('all');
     const [toasts, setToasts] = useState<Toast[]>([]);
 
     const ITEMS_PER_PAGE = 20;
+
+    // ✅ Helper function to format rating to one decimal place
+    const formatRating = (rating: number): string => {
+        return Number(rating).toFixed(1);
+    };
 
     // Toast functions
     const addToast = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
@@ -121,6 +126,46 @@ const AdminDeleteAndVerifyTab: React.FC = () => {
             setError(err instanceof Error ? err.message : 'Failed to verify game');
             addToast('Failed to verify game. Please try again.', 'error');
             console.error('Error verifying game:', err);
+        } finally {
+            setActionLoading(prev => ({ ...prev, [gameId]: null }));
+        }
+    };
+
+    // ✅ New function to revoke verification
+    const handleRevokeVerification = async (gameId: number) => {
+        const gameName = games.find(g => g.id === gameId)?.title || 'this game';
+        const confirmed = window.confirm(`Are you sure you want to revoke verification for "${gameName}"? It will be marked as pending.`);
+        if (!confirmed) return;
+
+        setActionLoading(prev => ({ ...prev, [gameId]: 'revoking' }));
+
+        try {
+            const response = await fetch(`http://localhost:3000/games/${gameId}/revoke-verification`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to revoke verification');
+            }
+
+            setGames(prevGames =>
+                prevGames.map(game =>
+                    game.id === gameId
+                        ? { ...game, hasBeenVerified: false }
+                        : game
+                )
+            );
+
+            addToast(`Verification revoked for "${gameName}"`, 'warning');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to revoke verification');
+            addToast('Failed to revoke verification. Please try again.', 'error');
+            console.error('Error revoking verification:', err);
         } finally {
             setActionLoading(prev => ({ ...prev, [gameId]: null }));
         }
@@ -229,7 +274,7 @@ const AdminDeleteAndVerifyTab: React.FC = () => {
                 <div>
                     <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Game Management</h1>
                     <p className="text-gray-500 dark:text-gray-400">
-                        Verify or delete games on the platform
+                        Verify, revoke verification, or delete games on the platform
                     </p>
                 </div>
 
@@ -334,15 +379,17 @@ const AdminDeleteAndVerifyTab: React.FC = () => {
                                         <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-500 dark:text-gray-400">
                                             {Array.isArray(game.genre) ? game.genre.join(', ') : game.genre}
                                         </span>
+                                        {/* ✅ Updated rating display with formatting */}
                                         <span className="text-yellow-600 font-medium">
-                                            ★ {game.rating}/10
+                                            ★ {formatRating(game.rating)}/10
                                         </span>
                                     </div>
                                 </div>
 
-                                {/* Actions */}
+                                {/* ✅ Updated Actions with revoke verification */}
                                 <div className="flex gap-2 p-4 pt-0">
-                                    {!game.hasBeenVerified && (
+                                    {!game.hasBeenVerified ? (
+                                        // Show verify button for unverified games
                                         <button
                                             onClick={() => handleVerify(game.id)}
                                             disabled={actionLoading[game.id] === 'verifying'}
@@ -358,6 +405,26 @@ const AdminDeleteAndVerifyTab: React.FC = () => {
                                                 <>
                                                     <CheckCircle className="w-4 h-4" />
                                                     Verify
+                                                </>
+                                            )}
+                                        </button>
+                                    ) : (
+                                        // Show revoke button for verified games
+                                        <button
+                                            onClick={() => handleRevokeVerification(game.id)}
+                                            disabled={actionLoading[game.id] === 'revoking'}
+                                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white rounded-md transition-colors font-medium"
+                                            aria-label={`Revoke verification for ${game.title}`}
+                                        >
+                                            {actionLoading[game.id] === 'revoking' ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    Revoking...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <XCircle className="w-4 h-4" />
+                                                    Revoke
                                                 </>
                                             )}
                                         </button>
