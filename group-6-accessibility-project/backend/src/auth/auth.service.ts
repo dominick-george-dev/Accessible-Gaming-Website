@@ -65,11 +65,11 @@ export class AuthService {
       });
 
       // Generate JWT token
-      const payload = {
-        sub: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role
+      const payload = { 
+        sub: user.id, 
+        username: user.username, 
+        email: user.email, 
+        role: user.role,
       };
       const token = this.jwtService.sign(payload);
 
@@ -103,9 +103,9 @@ export class AuthService {
         username: true,
         email: true,
         password: true,
+        role: true, //Added for role based security
         createdAt: true,
-        role: true,
-      },
+        },
     });
 
     if (!user) {
@@ -119,9 +119,9 @@ export class AuthService {
     }
 
     // Generate JWT token
-    const payload = {
-      sub: user.id,
-      username: user.username,
+    const payload = { 
+      sub: user.id, 
+      username: user.username, 
       email: user.email,
       role: user.role
     };
@@ -148,6 +148,7 @@ export class AuthService {
         id: true,
         email: true,
         username: true,
+        role: true,
         createdAt: true,
         // Don't select password
       },

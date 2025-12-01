@@ -5,6 +5,7 @@ import { BrowsePage } from './pages/BrowserPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
+import { PublisherAnalyticsTab } from './components/PublisherAnalyticsTab'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
 import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
@@ -90,6 +91,7 @@ const handleSignup = (userData: { username: string; email: string; isAdmin?: boo
   };
 
   return (
+    <>
     <Routes>
       {/* Routes with Layout wrapper */}
       <Route path="/" element={
@@ -156,7 +158,12 @@ const handleSignup = (userData: { username: string; email: string; isAdmin?: boo
           />
         } 
       />
+      <Route 
+        path="/publisherAnalyticsTab" 
+        element={<PublisherAnalyticsTab />} 
+      />
     </Routes>
+    </>
   )
 }
 

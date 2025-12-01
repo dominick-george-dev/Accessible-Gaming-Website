@@ -22,11 +22,11 @@ model Game {
   publisherId           Int?
   trailer               String?
   transcript            String?
-  Favoritie             Favoritie[]
+  Favourites            Favourites[]
   Publisher             Publisher?              @relation(fields: [publisherId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "publisherId")
   gameAccessibilityTags GameAccessibilityTags[]
   reviews               Review[]
-  View                  View[]
+  views                 View[]
 }
 
 model AccessibilityTags {
@@ -70,7 +70,8 @@ model User {
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
   role                      roles                      @default(USER)
-  Favoritie                 Favoritie[]
+  AccessibilityIssues       AccessibilityIssues[]
+  Favourites                Favourites[]
   Publisher                 Publisher[]
   Review                    Review[]
   UserAccessibilitySettings UserAccessibilitySettings?
@@ -96,7 +97,7 @@ model UserAccessibilitySettings {
 
 model Publisher {
   id             Int     @id @default(autoincrement())
-  userId         Int
+  userId         Int      @unique
   displayName    String?
   profilePicture String?
   Game           Game[]
@@ -107,15 +108,23 @@ model View {
   id       Int      @id @default(autoincrement())
   gameId   Int
   viewedAt DateTime @default(now())
-  Game     Game     @relation(fields: [gameId], references: [id])
+  game     Game     @relation(fields: [gameId], references: [id])
 }
 
-model Favoritie {
-  id     Int   @id @default(autoincrement())
-  userID Int?
-  gameID Int?
-  Game   Game? @relation(fields: [gameID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gameID")
-  User   User? @relation(fields: [userID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "userID")
+model AccessibilityIssues {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  message   String   @default("No Message Added")
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Favourites {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  gameId Int
+  Game   Game @relation(fields: [gameId], references: [id])
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum roles {

@@ -13,6 +13,7 @@ import { Checkbox } from '../components/ui/checkbox';
 import { Building, Plus, Edit, Trash2, Tag, Check, X, Eye, Ear, Hand, Brain, BarChart3, LogOut, AlertCircle, Upload, ImageIcon } from 'lucide-react';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { TrendingUp, Users, Calendar } from 'lucide-react';
+import { PublisherAnalyticsTab } from '../components/PublisherAnalyticsTab';
 
 interface Game {
     id: number;
@@ -73,10 +74,11 @@ const getCategoryColor = (category: string) => {
 };
 
 // New Analytics Component (add this after PublisherDashboard function)
-function AnalyticsDashboard({ games }: { games: Game[] }) {
+function AnalyticsDashboard() {
     return (
         <div className="space-y-6">
-            {/* Analytics Overview Cards */}
+            <PublisherAnalyticsTab />
+            {/* Analytics Overview Cards
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="p-6">
                     <div className="flex items-center gap-4">
@@ -131,7 +133,7 @@ function AnalyticsDashboard({ games }: { games: Game[] }) {
                 </Card>
             </div>
 
-            {/* Coming Soon Section */}
+            Coming Soon Section
             <Card className="p-12 text-center">
                 <TrendingUp className="h-16 w-16 mx-auto text-gray-400 mb-4" />
                 <h3 className="text-2xl font-semibold mb-2">Analytics Dashboard</h3>
@@ -159,7 +161,7 @@ function AnalyticsDashboard({ games }: { games: Game[] }) {
                 </div>
             </Card>
 
-            {/* Placeholder Charts Section */}
+            {/* Placeholder Charts Section
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="p-6">
                     <h4 className="text-lg font-semibold mb-4">Views Over Time</h4>
@@ -174,7 +176,7 @@ function AnalyticsDashboard({ games }: { games: Game[] }) {
                         <p className="text-muted-foreground">Chart coming soon</p>
                     </div>
                 </Card>
-            </div>
+            {/* </div> */}
         </div>
     );
 }
@@ -406,7 +408,7 @@ export function PublisherDashboard() {
 
                 {/* Analytics Tab */}
                 <TabsContent value="analytics" className="space-y-6">
-                    <AnalyticsDashboard games={games} />
+                    <AnalyticsDashboard/>
                 </TabsContent>
 
                 {/* Games Management Tab */}

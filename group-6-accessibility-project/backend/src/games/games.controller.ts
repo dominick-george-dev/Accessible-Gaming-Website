@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query, UsePipes, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UsePipes, ValidationPipe, HttpException, HttpStatus , ParseIntPipe} from '@nestjs/common';
 import { GamesService } from './games.service';
 import { GetGamesQueryDto } from './dto/get-games-query.dto';
 import { GameIdParamDto } from './dto/game-id-param.dto';
@@ -16,6 +16,7 @@ interface CreateGameDto {
     publisherId: number;
     accessibilityTagIds: number[];
 }
+import { CreateViewDto } from './dto/create-view.dto';
 
 @Controller('games')
 export class GamesController {
@@ -64,6 +65,11 @@ export class GamesController {
             // Don't leak internal errors
             throw new HttpException('Failed to retrieve games', HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Post('/view/:id')
+    createView(@Param("id", ParseIntPipe) id: number,@Body() createViewDto: CreateViewDto){
+        return this.gamesService.createView(id, createViewDto);
     }
 
     @Get('/similar/:id')

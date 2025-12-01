@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { Prisma } from '@prisma/client';
+import { CreateViewDto } from './dto/create-view.dto';
 import { AccessibilityTagsService } from '../accessibility-tags/accessibility-tags.service';
 
 @Injectable()
@@ -343,5 +345,16 @@ export class GamesService {
         console.error('Error deleting game:', error);
         throw new Error(`Failed to delete game: ${error.message}`);
     }
+    
 }
+async createView(id: number, dto: CreateViewDto) {
+        return this.databaseService.view.create({
+            data:{
+                viewedAt: dto.viewedAt,
+                game: {
+                    connect: {id: id}
+                },
+            }
+        });
+    }
 }
