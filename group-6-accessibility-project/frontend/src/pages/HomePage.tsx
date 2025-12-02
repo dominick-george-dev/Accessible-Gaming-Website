@@ -4,18 +4,67 @@ import type { Game } from "../types/game";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, ChevronLeft, ChevronRight, ArrowRight, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+
+// Hook to get user from localStorage
+function useUser() {
+  const [user, setUser] = useState<{ id: number; username: string; email: string; isAdmin: boolean; isPublisher: boolean } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const userData = localStorage.getItem("userData");
+    if (isLoggedIn && userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch {
+        setUser(null);
+      }
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+  }, []);
+
+  return { user, loading };
+}
 
 export function HomePage() {
   const navigate = useNavigate();
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const { user } = useUser();
+  
+  const [favorites, setFavorites] = useState<number[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
   const [topShownCount, setTopShownCount] = useState<number>(3);
 
   const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:3000";
+
+  // Fetch user's favorites
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchFavorites = async () => {
+      setLoadingFavorites(true);
+      try {
+        const response = await fetch(`${API_BASE}/favorites/${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const gameIds = data.map((fav: any) => fav.gameId);
+          setFavorites(gameIds);
+        }
+      } catch (error) {
+        console.error('Error fetching favorites:', error);
+      } finally {
+        setLoadingFavorites(false);
+      }
+    };
+
+    fetchFavorites();
+  }, [user, API_BASE]);
  
   const handleShowMoreTop = () => {
-    // show another row of 3 games (increment by 3, capped to available top-rated)
     setTopShownCount((prev) => Math.min(prev + 3, topRatedAll.length));
   };
 
@@ -35,8 +84,54 @@ export function HomePage() {
     return `${API_BASE}${u.startsWith("/") ? "" : "/"}${u}`;
   };
 
-  const handleToggleFavorite = (id: string) => {
-    setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  // Updated favorite toggle with backend sync
+  const handleToggleFavorite = async (gameId: string) => {
+    if (!user) {
+      toast.error('Please login to add favorites');
+      return;
+    }
+
+    const numericGameId = Number(gameId);
+    const previousFavoriteState = favorites.includes(numericGameId);
+
+    // Optimistic update
+    setFavorites(prev => 
+      prev.includes(numericGameId) 
+        ? prev.filter(id => id !== numericGameId)
+        : [...prev, numericGameId]
+    );
+
+    try {
+      const response = await fetch(`${API_BASE}/favorites/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, gameId: numericGameId }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update state based on backend response
+        if (result.added) {
+          setFavorites(prev => prev.includes(numericGameId) ? prev : [...prev, numericGameId]);
+          toast.success('Added to favorites!');
+        } else {
+          setFavorites(prev => prev.filter(id => id !== numericGameId));
+          toast.success('Removed from favorites');
+        }
+      } else {
+        throw new Error('Failed to update favorite');
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setFavorites(prev => 
+        previousFavoriteState 
+          ? [...prev, numericGameId]
+          : prev.filter(id => id !== numericGameId)
+      );
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorite');
+    }
   };
 
   const handleGameClick = (gameId: string) => {
@@ -75,7 +170,6 @@ export function HomePage() {
     const container = carouselRef.current;
     const child = container.children[index] as HTMLElement | undefined;
     if (!child) return;
-    // ensure the slide is centered in the viewport of the carousel
     const left = child.offsetLeft - (container.clientWidth - child.clientWidth) / 2;
     container.scrollTo({ left, behavior: "smooth" });
     setActiveIndex(index);
@@ -88,7 +182,6 @@ export function HomePage() {
     scrollToIndex(Math.min(Math.max(0, featured.length - 1), activeIndex + 1));
   };
 
-  // update activeIndex on manual scroll
   useEffect(() => {
     const node = carouselRef.current;
     if (!node) return;
@@ -118,13 +211,11 @@ export function HomePage() {
     };
   }, [featured.length]);
 
-  // keyboard navigation for carousel
   const onCarouselKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowLeft") prev();
     if (e.key === "ArrowRight") next();
   };
 
-  // rating helper to support various shapes
   const getRating = (g: any): number => {
     const r = g?.rating ?? g?.avgRating ?? g?.score ?? g?.rating?.average ?? 0;
     const n = Number(r);
@@ -134,12 +225,14 @@ export function HomePage() {
   const topRatedAll = games.slice().sort((a, b) => getRating(b as any) - getRating(a as any));
   const displayedTopRated = topRatedAll.slice(0, topShownCount);
 
-  // Modern slide card style helper
+  // Updated SlideCard with correct favorite state check
   const SlideCard = ({ game, id }: { game: any; id: string }) => {
     const img = resolveImageUrl(game);
+    const numericId = Number(id);
+    const isFavorite = favorites.includes(numericId);
+    
     return (
       <div
-        // each slide fills the carousel viewport
         className="min-w-full flex-shrink-0 snap-center px-4"
         style={{ scrollSnapAlign: "center" }}
       >
@@ -168,10 +261,11 @@ export function HomePage() {
 
               <button
                 onClick={(e) => { e.stopPropagation(); handleToggleFavorite(id); }}
-                aria-label={favorites.includes(id) ? "Remove from favorites" : "Add to favorites"}
+                aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
                 className="p-2 rounded-md hover:bg-gray-100"
+                disabled={!user}
               >
-                <Heart className={`w-5 h-5 ${favorites.includes(id) ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
+                <Heart className={`w-5 h-5 ${isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
               </button>
             </div>
             <p className="text-xs text-muted-foreground mt-3 line-clamp-2">{(game as any).shortDescription ?? (game as any).summary ?? ""}</p>
@@ -192,7 +286,6 @@ export function HomePage() {
 
           {/* Carousel container */}
           <div className="relative">
-            {/* Arrows */}
             <button
               aria-label="Previous featured"
               onClick={prev}
@@ -236,7 +329,6 @@ export function HomePage() {
               <ChevronRight className="w-5 h-5" />
             </button>
 
-            {/* indicators */}
             <div className="flex items-center justify-center gap-2 mt-3">
               {featured.map((_, i) => (
                 <button
@@ -300,7 +392,8 @@ export function HomePage() {
               {displayedTopRated.map((game) => {
                 const rawId = (game as any).id ?? (game as any)._id ?? (game as any).slug ?? (game as any).title ?? (game as any).name;
                 const id = typeof rawId === "string" ? rawId : String(rawId);
-                const isFavorite = favorites.includes(id);
+                const numericId = Number(id);
+                const isFavorite = favorites.includes(numericId);
                 const imgSrc = resolveImageUrl(game as any);
                 const rating = getRating(game as any);
 
@@ -309,13 +402,14 @@ export function HomePage() {
                     <CardHeader className="flex flex-row items-center justify-between">
                       <CardTitle className="truncate text-lg font-semibold">{("name" in game ? (game as any).name : (game as any).title) || "Untitled"}</CardTitle>
 
-                      <Button variant={isFavorite ? "default" : "outline"} size="icon" onClick={(e) => { e.stopPropagation(); handleToggleFavorite(id); }} aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}>
-                        <Heart className={`w-5 h-5 transition-colors ${
-                          favorites.includes(id)
-                            ? "fill-red-500 text-red-500"
-                            : "text-muted-foreground"
-                          }`} 
-                        />
+                      <Button 
+                        variant={isFavorite ? "default" : "outline"} 
+                        size="icon" 
+                        onClick={(e) => { e.stopPropagation(); handleToggleFavorite(id); }} 
+                        aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                        disabled={!user}
+                      >
+                        <Heart className={`w-5 h-5 transition-colors ${isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
                       </Button>
                     </CardHeader>
 
