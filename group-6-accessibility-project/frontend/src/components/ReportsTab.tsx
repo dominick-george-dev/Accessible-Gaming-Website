@@ -26,7 +26,7 @@ export default function AccessibilityIssuesList() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState<{ [key: number]: 'deleting' | null }>({});
+  const [, setActionLoading] = useState<{ [key: number]: 'deleting' | null }>({});
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const apiBase = 'http://localhost:3000';

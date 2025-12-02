@@ -1,5 +1,5 @@
 import { Controller, Post, Body, UseGuards, Get, Delete, Param, ParseIntPipe } from '@nestjs/common';
-import { AccessibilityIssuesService } from './accessibility_issues.service';
+import { AccessibilityIssuesService } from './accessibility-issues.service';
 import { AuthGuard } from '@nestjs/passport/dist/auth.guard';
 
 @Controller('/accessibility-issues')
