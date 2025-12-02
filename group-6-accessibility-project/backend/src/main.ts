@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import * as express from 'express';
 import { Request, Response, NextFunction } from 'express';
 import a11yChatRoute from './chat-bot/a11yChat';
 
@@ -44,12 +43,11 @@ async function bootstrap() {
     res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
     next();
   });
+  // Get the underlying Express instance and mount the chat route
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.use('/api', a11yChatRoute);
 
-  // Mount the a11yChatRoute under /api
-  app.use(express.json());
-  app.use('/api', a11yChatRoute);
-
-  const port = Number(process.env.PORT ?? 3001);
+  const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);
   console.log(`API is running on: http://localhost:${port}`);
 }

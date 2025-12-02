@@ -24,9 +24,9 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     const savedState = localStorage.getItem('isDesktopSidebarOpen');
     return savedState !== null ? JSON.parse(savedState) : true;
   });
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [magnifierEnabled, setMagnifierEnabled] = useState(false);
+  const [voiceControlsEnabled, setVoiceControlsEnabled] = useState(false);
   const [user, setUser] = useState<{
     id: string;
     name: string;
@@ -209,7 +209,6 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
       }
     );
   };
-
   const handleToggleMagnifier = () => {
     const previousState = magnifierEnabled;
     setMagnifierEnabled(!magnifierEnabled);
@@ -224,7 +223,9 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     );
     
     toast(`Screen magnifier ${!previousState ? 'enabled' : 'disabled'}`);
-  };const handleToggleVoiceControls = () => {
+  };
+
+  const handleToggleVoiceControls = () => {
     const previousState = voiceControlsEnabled;
     setVoiceControlsEnabled(!voiceControlsEnabled);
     
@@ -235,10 +236,20 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         setVoiceControlsEnabled(previousState);
         toast(`Voice controls ${previousState ? 'enabled' : 'disabled'}`);
       }
-    );
-    
-    toast(`Voice controls ${!previousState ? 'enabled' : 'disabled'}`);
-  };return (    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      {/* Desktop Sidebar - Conditionally shown */}
+    );      toast(`Voice controls ${!previousState ? 'enabled' : 'disabled'}`);
+  };
+
+  const handleUndo = () => {
+    if (undoManager && typeof undoManager.executeUndo === 'function') {
+      undoManager.executeUndo();
+    } else {
+      console.warn('Undo functionality not available');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      
+      {/* Desktop Sidebar - Conditionally shown */}
       {isDesktopSidebarOpen && (
         <div className="hidden lg:block">
           <Sidebar isLoggedIn={isLoggedIn} />

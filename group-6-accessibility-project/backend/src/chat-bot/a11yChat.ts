@@ -4,6 +4,9 @@ import fetch from 'node-fetch';
 
 const router: Router = express.Router();
 
+// Add JSON parsing middleware specifically for this router
+router.use(express.json());
+
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
@@ -39,12 +42,20 @@ router.get("/a11y-chat", (req, res) => {
 
 router.post("/a11y-chat", async (req: Request, res: Response) => {
   try {
+    // Debug logging
+    console.log('Received request body:', JSON.stringify(req.body, null, 2));
+    console.log('Request body type:', typeof req.body);
+    
     // Defensive: ensure req.body is always an object
     const body = typeof req.body === 'object' && req.body !== null ? req.body : {};
     const { messages, context } = body as {
       messages: ChatMessage[];
       context?: ChatContext;
     };
+
+    console.log('Extracted messages:', messages);
+    console.log('Messages is array:', Array.isArray(messages));
+    console.log('Messages length:', messages?.length);
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "messages must be a non-empty array" });

@@ -13,9 +13,12 @@ export default function A11yChat() {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true); // now stateful
-
   const navigate = useNavigate();
-  const endpoint = useMemo(() => "/api/a11y-chat", []);
+  const endpoint = useMemo(() => {
+    // Use environment variable or fallback to localhost:3000
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+    return `${baseUrl}/api/a11y-chat`;
+  }, []);
 
   // Speech input integration
   const speech = useSpeechInput();
@@ -55,9 +58,16 @@ export default function A11yChat() {
     const next: Msg[] = [...messages, { role: "user", content }];
     setMessages(next);
     setText("");
-    setBusy(true);
-
-    try {
+    setBusy(true);    try {
+      console.log('Sending request to:', endpoint);
+      console.log('Request payload:', {
+        messages: next,
+        context: {
+          route: window.location.pathname,
+          featureFlags: { highContrast: true },
+        },
+      });
+      
       const r = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
