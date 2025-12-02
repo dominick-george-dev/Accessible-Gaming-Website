@@ -91,11 +91,10 @@ export default function ProfilePageStandalone() {
     setUser(prev => prev ? { ...prev, accessibilityPreferences: newPrefs } : null);
     await updatePreferences(newPrefs);
   };
-
   // Preference change handler
   const handlePreferenceChange = (
     category: keyof User['accessibilityPreferences'],
-    value: boolean | ColorblindFilter | ThemeMode
+    value: boolean | ColorblindFilter | ThemeMode | string | number
   ) => {
     if (!user) return;
     const current = user.accessibilityPreferences;
@@ -138,11 +137,18 @@ export default function ProfilePageStandalone() {
     { value: 'tritanopia', label: 'Tritanopia', description: 'Blue-blind (difficulty seeing blue)' },
     { value: 'achromatopsia', label: 'Achromatopsia', description: 'Complete color blindness' },
   ];
-
   const themeOptions: { value: ThemeMode; label: string; description: string }[] = [
     { value: 'light', label: 'Light Mode', description: 'Bright, clean interface' },
     { value: 'dark', label: 'Dark Mode', description: 'Reduced eye strain in low light' },
     { value: 'deep-space', label: 'Deep Space', description: 'Dark blue/purple gradient theme' },
+  ];
+
+  const fontFamilyOptions: { value: string; label: string; description: string }[] = [
+    { value: 'default', label: 'Default', description: 'System default font' },
+    { value: 'serif', label: 'Serif', description: 'Traditional serif font (Times New Roman)' },
+    { value: 'sans-serif', label: 'Sans Serif', description: 'Clean sans-serif font (Arial/Helvetica)' },
+    { value: 'monospace', label: 'Monospace', description: 'Fixed-width font (Courier)' },
+    { value: 'dyslexic', label: 'OpenDyslexic', description: 'Specialized font for dyslexia' },
   ];
 
   if (loading) {
@@ -260,6 +266,37 @@ export default function ProfilePageStandalone() {
               </Select>
               <p className="text-muted-foreground mt-2">
                 Choose your preferred color scheme
+              </p>
+            </div>
+          </div>          <Separator />
+
+          {/* Font Family Selection */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-4">
+              <Type className="w-6 h-6 text-primary flex-shrink-0" aria-hidden="true" />
+              <Label htmlFor="font-family-selector">Font Family</Label>
+            </div>
+            <div className="ml-10">
+              <Select
+                value={user?.accessibilityPreferences.fontFamily}
+                onValueChange={(value: string) => handlePreferenceChange('fontFamily', value)}
+              >
+                <SelectTrigger id="font-family-selector" aria-label="Select font family">
+                  <SelectValue placeholder="Select a font family" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fontFamilyOptions.map((font) => (
+                    <SelectItem key={font.value} value={font.value}>
+                      <div>
+                        <div>{font.label}</div>
+                        <div className="text-muted-foreground">{font.description}</div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground mt-2">
+                Choose your preferred font style for better readability
               </p>
             </div>
           </div>
@@ -405,17 +442,15 @@ export default function ProfilePageStandalone() {
             );
           })}
         </Card>
-      </section>
-
-      {/* Active Preferences Badge */}
+      </section>      {/* Active Preferences Badge */}
       {(Object.entries(user?.accessibilityPreferences || {}).some(([key, enabled]) => 
-        key !== 'textSize' && key !== 'colorblindFilter' && key !== 'theme' && enabled
-      ) || user?.accessibilityPreferences.textSize !== 16 || user?.accessibilityPreferences.colorblindFilter !== 'none' || user?.accessibilityPreferences.theme !== 'light') && (
+        key !== 'textSize' && key !== 'colorblindFilter' && key !== 'theme' && key !== 'fontFamily' && enabled
+      ) || user?.accessibilityPreferences.textSize !== 16 || user?.accessibilityPreferences.colorblindFilter !== 'none' || user?.accessibilityPreferences.theme !== 'light' || user?.accessibilityPreferences.fontFamily !== 'default') && (
         <Card className="p-6">
           <p className="mb-4">Your active preferences:</p>
           <div className="flex flex-wrap gap-3">
             {Object.entries(user?.accessibilityPreferences || {})
-              .filter(([key, enabled]) => key !== 'textSize' && key !== 'colorblindFilter' && key !== 'theme' && enabled)
+              .filter(([key, enabled]) => key !== 'textSize' && key !== 'colorblindFilter' && key !== 'theme' && key !== 'fontFamily' && enabled)
               .map(([pref]) => (
                 <Badge key={pref} variant="secondary" className="px-3 py-1">
                   {pref === 'highContrast' 
@@ -428,6 +463,11 @@ export default function ProfilePageStandalone() {
             {user?.accessibilityPreferences.theme !== 'light' && (
               <Badge variant="secondary" className="px-3 py-1">
                 {themeOptions.find(t => t.value === user?.accessibilityPreferences.theme)?.label}
+              </Badge>
+            )}
+            {user?.accessibilityPreferences.fontFamily !== 'default' && (
+              <Badge variant="secondary" className="px-3 py-1">
+                {fontFamilyOptions.find(f => f.value === user?.accessibilityPreferences.fontFamily)?.label}
               </Badge>
             )}
             {user?.accessibilityPreferences.textSize !== 16 && (

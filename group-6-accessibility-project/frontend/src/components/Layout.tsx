@@ -124,15 +124,50 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     // Navigate to login page
     navigate('/login');
   };
-
   const handleLogout = () => {
-    console.log('loggout of user', JSON.stringify(user));
+    console.log('logout of user', JSON.stringify(user));
     setIsLoggedIn(false);
     setUser(null);
+    
+    // Clear authentication data
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userData');
     localStorage.removeItem('user');
+    
+    // Reset accessibility features to default values
+    console.log('Resetting accessibility preferences to defaults...');
+    localStorage.setItem('accessibility_preferences', JSON.stringify({
+      fontSize: 'normal',
+      highContrast: false,
+      reducedMotion: false,
+      screenReader: false,
+      colorBlindMode: 'none',
+      keyboardNavigation: false
+    }));
+    localStorage.setItem('font_size', 'normal');
+    localStorage.setItem('high_contrast', 'false');
+    localStorage.setItem('reduced_motion', 'false');
+    localStorage.setItem('screen_reader_mode', 'false');
+    localStorage.setItem('color_blind_mode', 'none');
+    localStorage.setItem('keyboard_navigation', 'false');
+    console.log('Accessibility localStorage values reset to defaults');
+    
+    // Reset any CSS classes or styles applied to document
+    console.log('Removing accessibility CSS classes and styles...');
+    document.documentElement.classList.remove('high-contrast', 'large-text', 'reduced-motion');
+    document.documentElement.style.fontSize = '';
+    console.log('DOM styles reset to defaults');
+    
+    // Reset dyslexia font
+    applyDyslexiaFont(false);
+    
+    console.log('User logged out - accessibility preferences reset to defaults');
+    
+    // Navigate to home and force reload to apply changes
     navigate('/');
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   const handleToggleSidebar = () => {
