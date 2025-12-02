@@ -88,7 +88,7 @@ model User {
   role                      roles                      @default(USER)
   UserAccessibilityIssues   AccessibilityIssues[]
   Favourites                Favourites[]
-  Publisher                 Publisher[]
+  Publisher                 Publisher?
   Review                    Review[]
   UserAccessibilitySettings UserAccessibilitySettings?
 }
@@ -113,7 +113,7 @@ model UserAccessibilitySettings {
 
 model Publisher {
   id             Int     @id @default(autoincrement())
-  userId         Int      @unique
+  userId         Int     @unique
   displayName    String?
   profilePicture String?
   Game           Game[]
