@@ -52,6 +52,7 @@ interface HeaderProps {
   onUndo?: () => void;
   user?: {
     name: string;
+    username?: string;
     role: string;
     isAdmin: boolean;
     isPublisher: boolean;
@@ -489,14 +490,14 @@ export function Header({
                     className="hidden md:flex items-center gap-2 relative z-30"
                   >
                     <User className="w-4 h-4" />
-                    <span>{user?.name || 'User'}</span>
+                    <span>{user?.name || user?.username || 'User'}</span>
                     <ChevronDown className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuLabel>
                     <div className="font-normal">
-                      <p className="font-medium">{user?.name || 'User'}</p>
+                      <p className="font-medium">{user?.name || user?.username || 'User'}</p>
                       <p className="text-sm text-muted-foreground capitalize">
                         {user?.role || (user?.isAdmin ? 'Admin' : user?.isPublisher ? 'Publisher' : 'User')}
                       </p>
