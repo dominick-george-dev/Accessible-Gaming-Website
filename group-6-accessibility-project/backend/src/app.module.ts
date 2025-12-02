@@ -6,6 +6,7 @@ import { AccessibilityTagsModule } from './accessibility-tags/accessibility-tags
 import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { AccessibilityIssuesModule } from './accessibility-issues/accessibility-issues.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppService } from './app.service';

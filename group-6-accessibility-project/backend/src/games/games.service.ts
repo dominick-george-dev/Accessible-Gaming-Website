@@ -3,6 +3,7 @@ import { DatabaseService } from '../database/database.service';
 import { Prisma } from '@prisma/client';
 import { CreateViewDto } from './dto/create-view.dto';
 import { AccessibilityTagsService } from '../accessibility-tags/accessibility-tags.service';
+import { hasLift } from 'rxjs/internal/util/lift';
 
 @Injectable()
 export class GamesService {
@@ -34,6 +35,7 @@ export class GamesService {
                     releaseDate: true,
                     developer: true,
                     rating: true,
+                    hasBeenVerified: true,
                     createdAt: true,
                     updatedAt: true,
                     gameAccessibilityTags: {
@@ -91,6 +93,7 @@ export class GamesService {
                         releaseDate: true,
                         developer: true,
                         rating: true,
+                        hasBeenVerified: true,
                         createdAt: true,
                         updatedAt: true,
                         gameAccessibilityTags: {
@@ -237,7 +240,7 @@ export class GamesService {
                 trailer: gameData.trailer || null,
                 transcript: gameData.transcript || null,
                 publisherId: gameData.publisherId,
-                hasBeenVerified: false, 
+                hasBeenVerified: false,
             }
         });
 
@@ -324,37 +327,132 @@ export class GamesService {
     }
 
     async remove(id: number) {
-    try {
-        // 1. Delete reviews first (they reference the game)
-        await this.databaseService.review.deleteMany({
-            where: { gameId: id }
-        });
-        // 2. Delete game accessibility tags (junction table)
-        await this.databaseService.gameAccessibilityTags.deleteMany({
-            where: { gameId: id }
-        });
-        // 3. Finally delete the game itself
-        const deletedGame = await this.databaseService.game.delete({
-            where: { id }
-        });
+        try {
+            return this.databaseService.$transaction(async (tx) => {
+                await tx.view.deleteMany({
+                    where: { gameId: id }
+                });
 
-        console.log(`Game ${id} and all related records deleted successfully`);
-        return deletedGame;
+                await tx.review.deleteMany({
+                    where: { gameId: id }
+                });
 
-    } catch (error) {
-        console.error('Error deleting game:', error);
-        throw new Error(`Failed to delete game: ${error.message}`);
+                await tx.gameAccessibilityTags.deleteMany({
+                    where: { gameId: id }
+                });
+
+                await tx.favourites.deleteMany({
+                    where: { gameId: id }
+                });
+
+                const deletedGame = await tx.game.delete({
+                    where: { id }
+                });
+
+                console.log(`Game ${id} and all related records deleted successfully`);
+                return deletedGame;
+            });
+        } catch (error) {
+            console.error('Error deleting game:', error);
+            throw new Error(`Failed to delete game: ${error.message}`);
+        }
     }
-    
-}
-async createView(id: number, dto: CreateViewDto) {
+
+    async verify(id: number) {
+        try {
+            if (!Number.isInteger(id) || id < 1) {
+                throw new BadRequestException('Invalid game ID');
+            }
+
+            // Check if game exists
+            const existingGame = await this.databaseService.game.findUnique({
+                where: { id },
+                select: { id: true, title: true, hasBeenVerified: true }
+            });
+
+            if (!existingGame) {
+                throw new NotFoundException(`Game with ID ${id} not found`);
+            }
+
+            // Update the verification status
+            const verifiedGame = await this.databaseService.game.update({
+                where: { id },
+                data: { hasBeenVerified: true }
+            });
+
+            console.log(`Game ${id} (${existingGame.title}) verified successfully`);
+            return verifiedGame;
+
+        } catch (error) {
+            console.error('Error verifying game:', error);
+            if (error instanceof BadRequestException || error instanceof NotFoundException) {
+                throw error;
+            }
+            throw new Error(`Failed to verify game: ${error.message}`);
+        }
+    }
+
+    async createView(id: number, dto: CreateViewDto) {
         return this.databaseService.view.create({
-            data:{
+            data: {
                 viewedAt: dto.viewedAt,
                 game: {
-                    connect: {id: id}
+                    connect: { id: id }
                 },
             }
         });
+    }
+    // Add this to your games.service.ts
+    async revokeVerification(id: number) {
+        try {
+            // Validate the game ID
+            if (!Number.isInteger(id) || id < 1) {
+                throw new BadRequestException('Invalid game ID');
+            }
+
+            // Check if game exists
+            const existingGame = await this.databaseService.game.findUnique({
+                where: { id },
+                select: { id: true, title: true, hasBeenVerified: true }
+            });
+
+            if (!existingGame) {
+                throw new NotFoundException(`Game with ID ${id} not found`);
+            }
+
+            // Update the verification status to false
+            const updatedGame = await this.databaseService.game.update({
+                where: { id },
+                data: { hasBeenVerified: false }
+            });
+
+            console.log(`Game ${id} (${existingGame.title}) verification revoked`);
+            return updatedGame;
+
+        } catch (error) {
+            console.error('Error revoking game verification:', error);
+            if (error instanceof BadRequestException || error instanceof NotFoundException) {
+                throw error;
+            }
+            throw new Error(`Failed to revoke verification: ${error.message}`);
+        }
+    }
+
+    async findGameWithPublisher(id: number) {
+        try {
+            return await this.databaseService.game.findUnique({
+                where: { id },
+                include: {
+                    Publisher: {
+                        select: {
+                            userId: true
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error finding game with publisher:', error);
+            throw new Error(`Failed to find game: ${error.message}`);
+        }
     }
 }

@@ -22,7 +22,7 @@ export function MakeAccountPublisherPage() {
       
       // If user is already a publisher, redirect to dashboard
       if (userData.role === 'PUBLISHER') {
-        window.location.href = '/publisher-dashboard';
+        window.location.href = '/publisherdashboard';
         return; // Exit early to prevent further execution
       }
       
@@ -75,7 +75,7 @@ export function MakeAccountPublisherPage() {
         
         // Redirect to publisher dashboard after 3 seconds
         setTimeout(() => {
-          window.location.href = '/publisher-dashboard';
+          window.location.href = '/publisherdashboard';
         }, 3000);
       } else {
         setError(data.message || 'Failed to create publisher account');
@@ -159,7 +159,7 @@ export function MakeAccountPublisherPage() {
             </p>
 
             <Button 
-              onClick={() => window.location.href = '/publisher-dashboard'}
+              onClick={() => window.location.href = '/publisherdashboard'}
               className="w-full"
             >
               Go to Publisher Dashboard

@@ -21,7 +21,6 @@ export function BrowsePage() {
   const navigate = useNavigate();
   const { favorites, toggle: toggleFavorite } = useFavorites();
 
-  // ✅ All hooks at the top
   const [games, setGames] = useState<Game[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -33,7 +32,7 @@ export function BrowsePage() {
   });
   const [loading, setLoading] = useState(true);
 
-  // Load games with caching
+  // Load games
   useEffect(() => {
     const cached = sessionStorage.getItem("allGames");
     if (cached) {
@@ -43,6 +42,7 @@ export function BrowsePage() {
     }
 
     let cancelled = false;
+
     const loadGames = async () => {
       setLoading(true);
       try {
@@ -65,18 +65,16 @@ export function BrowsePage() {
     };
 
     loadGames();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  // ✅ Handle category change with type casting to satisfy TS
+  // Category filter handler
   const handleCategoryChange = (category: string, checked: boolean) => {
-    setSelectedCategories(prev => ({
-      ...prev,
-      [category as keyof Categories]: checked,
-    }));
-  };
+  setSelectedCategories(prev => ({
+    ...prev,
+    [category as keyof Categories]: checked,
+  }));
+};
 
   const activeFilterCount = Object.values(selectedCategories).filter(Boolean).length;
 

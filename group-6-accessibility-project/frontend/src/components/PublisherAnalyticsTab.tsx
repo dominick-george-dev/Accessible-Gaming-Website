@@ -5,13 +5,11 @@ import { PieChartCard } from "./charts/PieChartCard";
 import { LineChartCard } from "./charts/LineChartCard";
 import { Card } from "./ui/card";
 import { Separator } from "./ui/separator";
-import { useParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { BarChart3, Eye, Star, TrendingUp } from "lucide-react";
 
 export function PublisherAnalyticsTab() {
   const [analytics, setAnalytics] = useState<any | null>(null);
-  const { id } = useParams<{id: string}>();
   const [loading, setLoading] = useState(false);
   const [selectedGame, setSelectedGame] = useState<any | null>(null);
   const [open, setOpen] = useState(false);
