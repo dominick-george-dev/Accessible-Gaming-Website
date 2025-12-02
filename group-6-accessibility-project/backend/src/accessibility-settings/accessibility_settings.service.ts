@@ -4,10 +4,12 @@ import { DatabaseService } from '../database/database.service';
 @Injectable()
 export class AccessibilitySettingsService {
   constructor(private readonly prisma: DatabaseService) {}
-
   // Map frontend fields to Prisma fields
   private mapToPrisma(userId: string, settings: any) {
-    return {
+    console.log('🔄 Mapping frontend fields to Prisma fields...');
+    console.log('📥 Input settings:', settings);
+    
+    const mapped = {
       userId: Number(userId),
       textSize: String(settings.textSize ?? 16),
       fontFamily: settings.fontFamily ?? 'default',
@@ -21,6 +23,14 @@ export class AccessibilitySettingsService {
       screenMagnifier: settings.screenMagnifier ?? false,
       updatedAt: new Date(),
     };
+    
+    console.log('📤 Mapped result:');
+    console.log('  theme →', settings.theme, '→ colourMode:', mapped.colourMode);
+    console.log('  colorblindFilter →', settings.colorblindFilter, '→ colorBlindMode:', mapped.colorBlindMode);
+    console.log('  textSize →', settings.textSize, '→ textSize:', mapped.textSize);
+    console.log('  highContrast →', settings.highContrast, '→ highContrast:', mapped.highContrast);
+    
+    return mapped;
   }
 
   // Map Prisma fields to frontend fields
@@ -63,15 +73,28 @@ export class AccessibilitySettingsService {
       });
     }
     return this.mapFromPrisma(settings);
-  }
-
-  async updateSettings(userId: string, settings: any) {
+  }  async updateSettings(userId: string, settings: any) {
+    console.log('Service: updateSettings called with:', { userId, settings });
+    
     const data = this.mapToPrisma(userId, settings);
-    const updated = await this.prisma.userAccessibilitySettings.upsert({
-      where: { userId: Number(userId) },
-      update: data,
-      create: data,
-    });
-    return this.mapFromPrisma(updated);
+    console.log('Service: Mapped data for Prisma:', data);
+    
+    try {
+      const updated = await this.prisma.userAccessibilitySettings.upsert({
+        where: { userId: Number(userId) },
+        update: data,
+        create: data,
+      });
+      
+      console.log('Service: Database operation successful, raw result:', updated);
+      
+      const mappedResult = this.mapFromPrisma(updated);
+      console.log('Service: Mapped result for frontend:', mappedResult);
+      
+      return mappedResult;
+    } catch (error) {
+      console.error('Service: Database operation failed:', error);
+      throw error;
+    }
   }
 }

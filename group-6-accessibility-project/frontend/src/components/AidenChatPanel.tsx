@@ -18,20 +18,18 @@ export function AidenChatPanel({ open, onOpenChange, onWakeWord }: { open: boole
         width: CHAT_PANEL_WIDTH,
         transform: open ? 'translateX(0)' : `translateX(${CHAT_PANEL_WIDTH}px)`,
       }}
-    >
-      <div
-        className="h-full bg-white shadow-2xl border-l border-gray-200 flex flex-col w-full pointer-events-auto relative"
+    >      <div
+        className="h-full bg-card shadow-2xl border-l border-border flex flex-col w-full pointer-events-auto relative"
         tabIndex={-1}
       >
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Aiden – Accessibility Chat</h2>
+        <div className="flex items-center justify-between p-4 border-b border-border bg-card">
+          <h2 className="text-lg font-semibold text-card-foreground">Aiden – Accessibility Chat</h2>
         </div>
         <div className="p-2 h-full overflow-y-auto">
           <A11yChat onWakeWord={onWakeWord} />
-        </div>
-        <button
+        </div>        <button
           aria-label="Close chat panel"
-          className="absolute left-4 bottom-4 text-gray-500 hover:text-gray-900 text-2xl font-bold px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white/90 shadow-lg border border-gray-200"
+          className="absolute left-4 bottom-4 text-muted-foreground hover:text-foreground text-2xl font-bold px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-ring bg-card/90 shadow-lg border border-border"
           onClick={() => onOpenChange(false)}
           style={{ lineHeight: 1, fontSize: 28 }}
         >

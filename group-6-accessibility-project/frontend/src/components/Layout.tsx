@@ -17,16 +17,13 @@ interface LayoutProps {
   selectedPublisherName?: string;
 }
 
-export function Layout({ children, selectedGameName, selectedPublisherName }: LayoutProps) {
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(() => {
-    // Load sidebar state from localStorage, default to true
-    const savedState = localStorage.getItem('isDesktopSidebarOpen');
-    return savedState !== null ? JSON.parse(savedState) : true;
-  });
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+export function Layout({ children, selectedGameName, selectedPublisherName }: LayoutProps) {  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    // Load sidebar collapsed state from localStorage, default to false
+    const savedState = localStorage.getItem('isSidebarCollapsed');
+    return savedState !== null ? JSON.parse(savedState) : false;
+  });  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [magnifierEnabled, setMagnifierEnabled] = useState(false);
-  const [voiceControlsEnabled, setVoiceControlsEnabled] = useState(false);
   const [user, setUser] = useState<{
     id: string;
     name: string;
@@ -36,23 +33,13 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
   } | null>(null);
 
   const [isAidenOpen, setIsAidenOpen] = useState(false);
-
   // Ensure only one of sidebar or chat is open at a time
   function handleOpenAiden(open: boolean) {
     if (open) {
       setIsAidenOpen(true);
-      setIsDesktopSidebarOpen(false);
       setIsMobileSidebarOpen(false);
     } else {
       setIsAidenOpen(false);
-    }
-  }
-  function handleOpenSidebar(open: boolean) {
-    if (open) {
-      setIsDesktopSidebarOpen(true);
-      setIsAidenOpen(false);
-    } else {
-      setIsDesktopSidebarOpen(false);
     }
   }
 
@@ -190,26 +177,24 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     setTimeout(() => {
       window.location.reload();
     }, 100);
-  };
-
-  const handleToggleSidebar = () => {
-    const newState = !isDesktopSidebarOpen;
-    const previousState = isDesktopSidebarOpen;
+  };  const handleToggleSidebar = () => {
+    const previousCollapsedState = isSidebarCollapsed;
     
-    setIsDesktopSidebarOpen(newState);
-    localStorage.setItem('isDesktopSidebarOpen', JSON.stringify(newState));
+    // Toggle between expanded and collapsed only
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+    localStorage.setItem('isSidebarCollapsed', JSON.stringify(!isSidebarCollapsed));
     
-    // Add undo action for sidebar toggle
     addUndoAction(
-      `${newState ? 'Show' : 'Hide'} sidebar`,
+      `${!isSidebarCollapsed ? 'Collapse' : 'Expand'} sidebar`,
       () => {
-        setIsDesktopSidebarOpen(previousState);
-        localStorage.setItem('isDesktopSidebarOpen', JSON.stringify(previousState));
-        toast(`Sidebar ${previousState ? 'shown' : 'hidden'}`);
+        setIsSidebarCollapsed(previousCollapsedState);
+        localStorage.setItem('isSidebarCollapsed', JSON.stringify(previousCollapsedState));
+        toast(`Sidebar ${previousCollapsedState ? 'collapsed' : 'expanded'}`);
       }
     );
-  };
-  const handleToggleMagnifier = () => {
+    
+    toast(`Sidebar ${!isSidebarCollapsed ? 'collapsed' : 'expanded'}`);
+  };  const handleToggleMagnifier = () => {
     const previousState = magnifierEnabled;
     setMagnifierEnabled(!magnifierEnabled);
     
@@ -224,21 +209,6 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     
     toast(`Screen magnifier ${!previousState ? 'enabled' : 'disabled'}`);
   };
-
-  const handleToggleVoiceControls = () => {
-    const previousState = voiceControlsEnabled;
-    setVoiceControlsEnabled(!voiceControlsEnabled);
-    
-    // Add undo action for voice controls
-    addUndoAction(
-      `${!previousState ? 'Enable' : 'Disable'} voice controls`,
-      () => {
-        setVoiceControlsEnabled(previousState);
-        toast(`Voice controls ${previousState ? 'enabled' : 'disabled'}`);
-      }
-    );      toast(`Voice controls ${!previousState ? 'enabled' : 'disabled'}`);
-  };
-
   const handleUndo = () => {
     if (undoManager && typeof undoManager.executeUndo === 'function') {
       undoManager.executeUndo();
@@ -247,14 +217,24 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     }
   };
 
+  // Navigation functions for chatbot
+  const handleNavigateToLogin = () => {
+    // Store the current path for redirect after login
+    saveRedirectPath(location.pathname);
+    navigate('/login');
+  };
+
+  const handleNavigateToSignup = () => {
+    // Store the current path for redirect after signup
+    saveRedirectPath(location.pathname);
+    navigate('/signup');
+  };
+
   return (
-    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      
-      {/* Desktop Sidebar - Conditionally shown */}
-      {isDesktopSidebarOpen && (
-        <div className="hidden lg:block">
-          <Sidebar isLoggedIn={isLoggedIn} />
-        </div>
-      )}
+    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      {/* Desktop Sidebar - Always shown on desktop */}
+      <div className="hidden lg:block">
+        <Sidebar isLoggedIn={isLoggedIn} isCollapsed={isSidebarCollapsed} />
+      </div>
 
       {/* Mobile Sidebar Drawer */}
       <MobileSidebar
@@ -264,20 +244,15 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}      
       />
-      
-      {/* Main Layout with content shrinking behavior */}
-      <div 
-        className={`w-full max-w-full overflow-x-hidden main-content-wrapper content-shrink-transition ${
-          isDesktopSidebarOpen ? 'shrunk-content' : ''
-        }`}
-      >        
-        {/* Top Header */}        
-        <Header
+        {/* Main Layout with content shrinking behavior */}
+      <div className="w-full max-w-full overflow-x-hidden">        
+        {/* Top Header */}        <Header
           selectedGameName={selectedGameName}
           selectedPublisherName={selectedPublisherName}
           onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
-          onToggleSidebar={() => handleOpenSidebar(!isDesktopSidebarOpen)}
-          isSidebarOpen={isDesktopSidebarOpen}
+          onToggleSidebar={handleToggleSidebar}
+          isSidebarOpen={true}
+          isSidebarCollapsed={isSidebarCollapsed}
           isLoggedIn={isLoggedIn}
           onLogin={handleLogin}
           onLogout={handleLogout}
@@ -289,18 +264,23 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
 
         {/* Dynamic Loading Bar */}
         <LoadingBar />        
-        {/* Breadcrumb Navigation */}
-        <Breadcrumbs 
-          selectedGameName={selectedGameName}
-          selectedPublisherName={selectedPublisherName}
-          isSidebarOpen={isDesktopSidebarOpen}
-        />
+        
+        {/* Breadcrumb Navigation with proper positioning */}
+        <div className={`fixed top-16 left-0 right-0 z-40 transition-all duration-300 ${
+          isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-52'
+        }`}>
+          <Breadcrumbs 
+            selectedGameName={selectedGameName}
+            selectedPublisherName={selectedPublisherName}
+            isSidebarOpen={!isSidebarCollapsed}
+          />
+        </div>
 
         {/* Main Content */}        
         <main 
           id="main-content" 
           className={`content-with-bottom-nav w-full max-w-full overflow-x-hidden transition-all duration-300 ${
-            isDesktopSidebarOpen ? 'lg:pl-52' : 'lg:pl-4'
+            isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-52'
           }`}
           style={{ paddingTop: 'calc(4rem + 3rem)' }} /* Header + Breadcrumbs + spacing */
           tabIndex={-1}
@@ -325,14 +305,15 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
           >
             <MessageCircle className="w-12 h-12 text-white drop-shadow-lg" />
           </button>
-        )}
-        {/* Chat Bot Panel (reuse AidenChatPanel if present) */}
+        )}        {/* Chat Bot Panel (reuse AidenChatPanel if present) */}
         <AidenChatPanel 
           open={isAidenOpen} 
           onOpenChange={handleOpenAiden} 
           onWakeWord={() => {
             handleOpenAiden(true);
           }}
+          onNavigateToLogin={handleNavigateToLogin}
+          onNavigateToSignup={handleNavigateToSignup}
         />
       </div>
     </div>
