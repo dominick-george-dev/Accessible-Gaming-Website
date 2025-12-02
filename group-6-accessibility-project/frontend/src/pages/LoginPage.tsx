@@ -67,11 +67,10 @@ export function LoginPage({ onLogin, onNavigateToSignup }: LoginPageProps) {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json();      
       if (response.ok) {
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        console.log('User saved to localStorage:', localStorage.getItem('user'));
         toast.success('Login successful! Welcome back.');
         // Fetch and apply accessibility settings after login
         try {

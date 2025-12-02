@@ -8,8 +8,14 @@ import { BrowsePage } from './pages/BrowserPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
+import { PublisherAnalyticsTab } from './components/PublisherAnalyticsTab'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
+import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
+import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
+import { PublisherDashboard } from './pages/PublisherDashboard'
+import { Toaster } from "./components/ui/sonner";
+import AdminDeleteAndVerifyTab from './components/AdminDeleteAndVerifyTab'
 
 const FavoritesPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
@@ -47,100 +53,37 @@ interface User {
 
 function App() {
   const { setLoginState } = useAuth();
-  const navigate = useNavigate();  
-  const [colorblindMode, setColorblindMode] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null); // Use User type
+  const navigate = useNavigate();
 
-  // Fetch colorblind mode for the current user
-  const fetchColorblindMode = async (userId: string | number) => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/accessibility-settings/${userId}`);
-      if (response.ok) {
-        const settings = await response.json();
-        setColorblindMode(settings.colorblindFilter || null);
-      } else {
-        setColorblindMode(null);
-      }
-    } catch (error) {
-      setColorblindMode(null);
-      console.error('Failed to fetch colorblind mode:', error);
-    }
+  const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
+    console.log('User logged in:', userData);
+    const processedUserData = {
+      id: userData.id,
+      username: userData.username,
+      email: userData.email,
+      role: userData.role || 'USER',
+      isAdmin: userData.role === 'ADMIN',
+      isPublisher: userData.role === 'PUBLISHER'
+    };
+
+    console.log('Processed user data:', processedUserData);
+    setLoginState(true, processedUserData);
   };
 
-  useEffect(() => {
-    // On mount, fetch colorblind mode if user is logged in
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser); // Set user for header
-      fetchColorblindMode(parsedUser.id);
-    } else {
-      setUser(null);
-      setColorblindMode(null);
-    }
-  }, []);
+  const handleSignup = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
+    console.log('User signed up:', userData);
 
-  useEffect(() => {
-    // Apply colorblind class to <html> (not <body>)
-    const html = document.documentElement;
-    if (colorblindMode) {
-      html.classList.forEach(cls => {
-        if (cls.startsWith('colorblind-')) html.classList.remove(cls);
-      });
-      html.classList.add(`colorblind-${colorblindMode}`);
-    } else {
-      html.classList.forEach(cls => {
-        if (cls.startsWith('colorblind-')) html.classList.remove(cls);
-      });
-    }
-  }, [colorblindMode]);
+    const processedUserData = {
+      id: userData.id,
+      username: userData.username,
+      email: userData.email,
+      role: userData.role || 'USER',
+      isAdmin: userData.role === 'ADMIN',
+      isPublisher: userData.role === 'PUBLISHER'
+    };
 
-  // Immediately update accessibility settings after login/signup
-  const handleLogin = (userData: User) => {
-    setLoginState(true, { 
-      username: userData.username, 
-      email: userData.email, 
-      isAdmin: userData.isAdmin || false, 
-      isPublisher: userData.isPublisher || false 
-    });
-    setUser(userData); // Set user for header
-    if (userData.id) {
-      fetchColorblindMode(userData.id);
-    } else {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        fetchColorblindMode(parsedUser.id);
-      }
-    }
-  };
-
-  const handleSignup = (userData: User) => {
-    setLoginState(true, { 
-      username: userData.username, 
-      email: userData.email, 
-      isAdmin: userData.isAdmin || false, 
-      isPublisher: userData.isPublisher || false 
-    });
-    setUser(userData); // Set user for header
-    if (userData.id) {
-      fetchColorblindMode(userData.id);
-    } else {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        fetchColorblindMode(parsedUser.id);
-      }
-    }
-  };
-
-  // Reset accessibility settings and user on logout
-  const handleLogout = () => {
-    setLoginState(false);
-    setUser(null);
-    setColorblindMode(null);
-    // Optionally clear localStorage if you want to fully reset
-    // localStorage.removeItem('user');
+    console.log('Processed user data:', processedUserData); // Debug log
+    setLoginState(true, processedUserData);
   };
 
   // Navigation functions that preserve redirect path
@@ -154,53 +97,84 @@ function App() {
 
   return (
     <>
-      <Layout user={user} onLogout={handleLogout}>
-        <div id="colorblind-root" className={colorblindMode ? `colorblind-${colorblindMode}` : ''}>
-          <Routes>
-            {/* Routes with Layout wrapper */}
-            <Route path="/" element={
-              <HomePage />
-            } />
-            <Route path="/home" element={
-              <HomePage />
-            } />
-            <Route path="/browserpage" element={
-              <BrowsePage />
-            } />
-            <Route path="/games/:id" element={
-              <GameDetailPage />
-            } />
-            <Route path="/favorites" element={
-              <FavoritesPage />
-            } />
-            <Route path="/accessibility" element={
-              <AccessibilityPage />
-            } />
-            <Route path="/profile" element={
-              <ProfilePage />
-            } />
-            {/* Authentication pages without Layout (they have their own layout) */}
-            <Route 
-              path="/login" 
-              element={
-                <LoginPage 
-                  onLogin={handleLogin}
-                  onNavigateToSignup={handleNavigateToSignup}
-                />
-              } 
+    <Toaster />
+    <Routes>
+      {/* Routes with Layout wrapper */}
+      <Route path="/" element={
+        <Layout>
+          <HomePage />
+        </Layout>
+      } />
+      <Route path="/home" element={
+        <Layout>
+          <HomePage />
+        </Layout>
+      } />
+      <Route path="/browserpage" element={
+        <Layout>
+          <BrowsePage />
+        </Layout>
+      } />
+      <Route path="/games/:id" element={
+        <Layout>
+          <GameDetailPage />
+        </Layout>
+      } />
+      <Route path="/favorites" element={
+        <Layout>
+          <FavoritesPage />
+        </Layout>
+      } />
+      <Route path="/accessibility" element={
+                <Layout>
+        <AccessibilityStatementPage />
+                        </Layout>
+      }/>
+      <Route path="/profile" element={
+        <Layout>
+          <ProfilePage />
+        </Layout>
+      } />
+      <Route path="/publisherdashboard" element={
+        <Layout>
+          <PublisherDashboard />
+        </Layout>
+      } />
+        <Route path="/makeaccountpublisher" element={
+          <Layout>
+            <MakeAccountPublisherPage />
+          </Layout>
+        } />
+        {/* ✅ Add the admin route with proper access control */}
+        <Route path="/admin" element={
+          <Layout>
+            <AdminDeleteAndVerifyTab />
+          </Layout>
+        } />
+        {/* Authentication pages without Layout (they have their own layout) */}
+        <Route
+          path="/login"
+          element={
+            <LoginPage
+              onLogin={handleLogin}
+              onNavigateToSignup={handleNavigateToSignup}
             />
-            <Route 
-              path="/signup" 
-              element={
-                <SignupPage 
-                  onSignup={handleSignup}
-                  onNavigateToLogin={handleNavigateToLogin}
-                />
-              } 
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <SignupPage
+              onSignup={handleSignup}
+              onNavigateToLogin={handleNavigateToLogin}
             />
-          </Routes>
-        </div>
-      </Layout>
+          }
+        />
+        <Route
+          path="/publisherAnalyticsTab"
+          element={<PublisherAnalyticsTab />}
+        />
+      </Routes>
     </>
   )
 }

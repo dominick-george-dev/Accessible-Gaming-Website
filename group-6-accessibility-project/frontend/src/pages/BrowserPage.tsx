@@ -25,7 +25,7 @@ export function BrowsePage() {
     dexterity: false,
     cognitive: false,
   });
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     const storedSearches = localStorage.getItem('accessplay_recent_searches');
@@ -67,16 +67,7 @@ export function BrowsePage() {
     localStorage.setItem('accessplay_recent_searches', JSON.stringify(updated));
   };
 
-  const removeRecentSearch = (query: string) => {
-    const updated = recentSearches.filter(s => s !== query);
-    setRecentSearches(updated);
-    localStorage.setItem('accessplay_recent_searches', JSON.stringify(updated));
-  };
 
-  const clearRecentSearches = () => {
-    setRecentSearches([]);
-    localStorage.removeItem('accessplay_recent_searches');
-  };
 
   const handleCategoryChange = (category: string, checked: boolean) => {
     setSelectedCategories(prev => ({ ...prev, [category]: checked }));

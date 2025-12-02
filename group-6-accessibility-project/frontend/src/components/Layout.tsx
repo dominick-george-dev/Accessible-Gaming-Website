@@ -132,11 +132,6 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userData');
     localStorage.removeItem('user');
-    // Reset accessibility settings to default
-    applyTheme('light', false);
-    applyTextSize(16);
-    applyDyslexiaFont(false);
-    applyColorblindFilter('none');
     navigate('/');
   };
 
