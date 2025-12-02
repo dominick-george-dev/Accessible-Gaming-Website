@@ -203,6 +203,7 @@ main, .main-content, .content-area, .page-content, .app-content {
   min-height: 100vh;
   overflow-y: auto;
   padding: 2rem;
+  padding-top: 100px; /* Increased space to clear fixed header */
   width: calc(100% - var(--sidebar-width, 250px));
   display: flex;
   flex-direction: column;
@@ -315,7 +316,6 @@ body:has(.navbar) main,
   margin-left: 250px !important;
   padding-left: 2rem !important;
   padding-right: 2rem !important;
-  padding-top: 2rem !important;
   padding-bottom: 2rem !important;
   width: calc(100% - 250px) !important;
   max-width: none !important;
@@ -657,6 +657,78 @@ nav, .navbar, .sidebar, .navigation,
   filter: none !important;
   position: sticky !important;
   z-index: 1000;
+}
+
+/* Reset auth page padding to normal */
+.login-page main,
+.signup-page main {
+  padding-top: 2rem !important;
+}
+
+/* ============================================
+   COLLAPSED SIDEBAR LAYOUT
+   ============================================ */
+
+/* When sidebar is collapsed, expand main content to full width */
+body:has(.sidebar.collapsed) main,
+body:has(.left-sidebar.collapsed) main,
+.sidebar-collapsed main,
+.collapsed-sidebar main {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Also handle when sidebar has hidden class or data attributes */
+body:has(.sidebar.hidden) main,
+body:has(.sidebar[data-collapsed="true"]) main,
+body:has(.sidebar[aria-expanded="false"]) main {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Fallback for direct class on body or root element */
+.sidebar-hidden main,
+.no-sidebar main {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Reset auth page padding to normal */
+.login-page main,
+.signup-page main {
+  padding-top: 2rem !important;
+}
+
+/* ============================================
+   HEADER CLEARANCE FIX
+   ============================================ */
+
+/* Ensure content within main doesn't get hidden behind header */
+main > div:first-child,
+.main-content > div:first-child,
+.content-area > div:first-child,
+.page-content > div:first-child,
+.app-content > div:first-child {
+  margin-top: 2rem; /* Additional spacing for first child element */
+}
+
+/* Specific fix for homepage content container */
+main .px-4.py-4,
+main .px-4.py-4.lg\\:pr-16.lg\\:py-6 {
+  padding-top: 1rem !important;
+}
+
+/* Specific fix for content containers that are getting hidden behind header */
+.px-4.py-4.lg\\:pr-16.lg\\:py-6.w-full.max-w-full.overflow-x-hidden {
+  margin-top: 80px !important;
+}
+
+/* Alternative targeting for the main content wrapper */
+main > .px-4.py-4 {
+  margin-top: 80px !important;
 }
 
 

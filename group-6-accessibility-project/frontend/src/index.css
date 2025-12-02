@@ -310,3 +310,45 @@ nav, .navbar, .sidebar, .navigation,
   position: sticky !important;
   z-index: 1000;
 }
+
+/* ============================================
+   AUTHENTICATION PAGES LAYOUT FIXES
+   ============================================ */
+
+/* Reset layout for authentication pages (login/signup) */
+.login-page,
+.signup-page {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+  box-sizing: border-box !important;
+}
+
+/* Specific targeting for auth page content */
+.login-page > *,
+.signup-page > * {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Override any sidebar layout for auth pages */
+.login-page main,
+.signup-page main {
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+}

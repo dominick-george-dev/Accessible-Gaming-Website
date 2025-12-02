@@ -143,23 +143,26 @@ function AppContent() {
             <AccessibilityTagsAdminTab />
           </Layout>
         } />
-        {/* Authentication pages without Layout (they have their own layout) */}
-        <Route
+        {/* Authentication pages without Layout (they have their own layout) */}        <Route
           path="/login"
           element={
-            <LoginPage
-              onLogin={handleLogin}
-              onNavigateToSignup={handleNavigateToSignup}
-            />
+            <div className="login-page">
+              <LoginPage
+                onLogin={handleLogin}
+                onNavigateToSignup={handleNavigateToSignup}
+              />
+            </div>
           }
         />
         <Route
           path="/signup"
           element={
-            <SignupPage
-              onSignup={handleSignup}
-              onNavigateToLogin={handleNavigateToLogin}
-            />
+            <div className="signup-page">
+              <SignupPage
+                onSignup={handleSignup}
+                onNavigateToLogin={handleNavigateToLogin}
+              />
+            </div>
           }
         />
         <Route

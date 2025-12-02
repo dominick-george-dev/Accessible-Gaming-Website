@@ -117,9 +117,18 @@ export default function ProfilePageStandalone() {
       handleTextSizeChange(increment);
     }
   };
-
   // Toggle magnifier
   const handleToggleMagnifier = () => {
+    // Check if any colorblind filter is active
+    const isColorblindModeActive = user?.accessibilityPreferences.colorblindFilter && 
+                                  user.accessibilityPreferences.colorblindFilter !== 'none';
+    
+    if (isColorblindModeActive && !magnifierEnabled) {
+      // Show toast notification if trying to enable magnifier while colorblind mode is on
+      toast.error('Magnifier cannot be enabled while colorblind mode is on');
+      return;
+    }
+    
     toggleMagnifier();
   };
   // Preference options
@@ -175,7 +184,8 @@ export default function ProfilePageStandalone() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8">
+    <div className="browse-page-center px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
+    <div className="max-w-5xl w-full">
 
       {/* Accessibility Preferences */}
       <section aria-labelledby="preferences-heading">
@@ -266,37 +276,6 @@ export default function ProfilePageStandalone() {
               </Select>
               <p className="text-muted-foreground mt-2">
                 Choose your preferred color scheme
-              </p>
-            </div>
-          </div>          <Separator />
-
-          {/* Font Family Selection */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
-              <Type className="w-6 h-6 text-primary flex-shrink-0" aria-hidden="true" />
-              <Label htmlFor="font-family-selector">Font Family</Label>
-            </div>
-            <div className="ml-10">
-              <Select
-                value={user?.accessibilityPreferences.fontFamily}
-                onValueChange={(value: string) => handlePreferenceChange('fontFamily', value)}
-              >
-                <SelectTrigger id="font-family-selector" aria-label="Select font family">
-                  <SelectValue placeholder="Select a font family" />
-                </SelectTrigger>
-                <SelectContent>
-                  {fontFamilyOptions.map((font) => (
-                    <SelectItem key={font.value} value={font.value}>
-                      <div>
-                        <div>{font.label}</div>
-                        <div className="text-muted-foreground">{font.description}</div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-muted-foreground mt-2">
-                Choose your preferred font style for better readability
               </p>
             </div>
           </div>
@@ -511,9 +490,9 @@ export default function ProfilePageStandalone() {
               <span className="font-medium text-foreground">Breadcrumb Navigation:</span> Click on breadcrumbs at the top of pages to navigate quickly
             </div>
           </li>        </ul>
-      </Card>
-
-      {/* Accessibility Components */}
+      </Card>      {/* Accessibility Components */}
       <AccessibilityComponents />
-    </main>  );
+    </div>
+    </div>
+  );
 }
