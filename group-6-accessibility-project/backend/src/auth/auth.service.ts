@@ -45,31 +45,52 @@ export class AuthService {
     }
 
     // Hash the password
-    const hashedPassword = await this.hashPassword(password);
+    const hashedPassword = await this.hashPassword(password);    try {
+      // Use a transaction to create both user and accessibility settings
+      const result = await this.databaseService.$transaction(async (prisma) => {
+        // Create the user
+        const user = await prisma.user.create({
+          data: {
+            username,
+            email: normalizedEmail,
+            password: hashedPassword,
+          },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            role: true,
+            createdAt: true,
+          },
+        });
 
-    try {
-      // Create the user
-      const user = await this.databaseService.user.create({
-        data: {
-          username,
-          email: normalizedEmail,
-          password: hashedPassword,
-        },
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          role: true,
-          createdAt: true,
-        },
+        // Create default accessibility settings for the new user
+        await prisma.userAccessibilitySettings.create({
+          data: {
+            userId: user.id,
+            textSize: "16",
+            fontFamily: "default",
+            highContrast: false,
+            colorBlindMode: "none",
+            colourMode: "light-mode",
+            visualAccessibility: false,
+            hearingAccessibility: false,
+            motorDexterityAccessibility: false,
+            cognitiveAccessibility: false,
+            screenMagnifier: false,
+            updatedAt: new Date(),
+          },
+        });
+
+        return user;
       });
 
       // Generate JWT token
       const payload = { 
-        sub: user.id, 
-        username: user.username, 
-        email: user.email, 
-        role: user.role,
+        sub: result.id, 
+        username: result.username, 
+        email: result.email, 
+        role: result.role,
       };
       const token = this.jwtService.sign(payload);
 
@@ -77,11 +98,11 @@ export class AuthService {
         message: 'User created successfully',
         access_token: token,
         user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          createdAt: user.createdAt,
+          id: result.id,
+          username: result.username,
+          email: result.email,
+          role: result.role,
+          createdAt: result.createdAt,
         },
       };
     } catch (error) {

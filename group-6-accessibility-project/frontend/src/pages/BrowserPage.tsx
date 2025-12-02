@@ -194,8 +194,8 @@ export function BrowsePage() {
   if (loading || loadingFavorites) return <p className="text-center py-12">Loading games...</p>;
 
   return (
-    <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-      <div className="max-w-5xl">
+      <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
+        <div className="max-w-5xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Filters */}
           <div className="hidden lg:block lg:col-span-1">

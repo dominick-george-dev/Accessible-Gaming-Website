@@ -535,31 +535,32 @@ export function GameDetailPage() {
     </svg>
   );
 
-  // Apple Icon Component
-  const AppleIcon = () => (
-    <svg
-      viewBox="0 0 24 24"
-      className="w-5 h-5"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M17.6 13.8c0-3 2.5-4.5 2.6-4.5-1.4-2.1-3.6-2.3-4.4-2.4-1.9-.2-3.6 1.1-4.6 1.1-.9 0-2.4-1.1-4-1-2 0-3.9 1.2-5 3C.1 13.4 1.7 18 3.7 20.6c1 1.3 2.2 2.7 3.8 2.7 1.5 0 2.1-.9 4-1 1.8 0 2.4 1 4 1 1.7 0 2.7-1.3 3.7-2.6 1.2-1.5 1.7-3 1.7-3.1-.1 0-3.2-1.2-3.3-4.8zM14.7 5.4c.8-1 1.4-2.4 1.2-3.8-1.2 0-2.7.8-3.5 1.8-.7.9-1.4 2.3-1.2 3.6 1.3.1 2.6-.6 3.5-1.6z" />
-    </svg>
-  ); return (<div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-    <div className="max-w-5xl space-y-6 lg:space-y-8">
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={onBack}
-        onKeyDown={handleKeyDown}
-        aria-label="Go back to browse"
-        className="gap-2"
-        size="sm"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        <span className="hidden sm:inline">Back to Browse</span>
-        <span className="sm:hidden">Back</span>
-      </Button>
+    // Apple Icon Component
+    const AppleIcon = () => (
+        <svg 
+        viewBox="0 0 24 24" 
+        className="w-5 h-5" 
+        fill="currentColor"
+        aria-hidden="true"
+        >
+        <path d="M17.6 13.8c0-3 2.5-4.5 2.6-4.5-1.4-2.1-3.6-2.3-4.4-2.4-1.9-.2-3.6 1.1-4.6 1.1-.9 0-2.4-1.1-4-1-2 0-3.9 1.2-5 3C.1 13.4 1.7 18 3.7 20.6c1 1.3 2.2 2.7 3.8 2.7 1.5 0 2.1-.9 4-1 1.8 0 2.4 1 4 1 1.7 0 2.7-1.3 3.7-2.6 1.2-1.5 1.7-3 1.7-3.1-.1 0-3.2-1.2-3.3-4.8zM14.7 5.4c.8-1 1.4-2.4 1.2-3.8-1.2 0-2.7.8-3.5 1.8-.7.9-1.4 2.3-1.2 3.6 1.3.1 2.6-.6 3.5-1.6z" />
+        </svg>
+    );        return (          
+    <div className="browse-page-center px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
+    <div className="max-w-5xl w-full">
+        {/* Back Button */}
+        <Button
+            variant="ghost"
+            onClick={onBack}
+            onKeyDown={handleKeyDown}
+            aria-label="Go back to browse"
+            className="gap-2"
+            size="sm"
+        >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Back to Browse</span>
+            <span className="sm:hidden">Back</span>
+        </Button>
 
       {/* Top Section with Image and Info */}
       <div className="grid md:grid-cols-2 gap-6 lg:gap-8">

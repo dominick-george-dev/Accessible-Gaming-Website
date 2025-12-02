@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
+import { AccessibilitySettingsModule } from './accessibility-settings/accessibility_settings.module';
 import { GamesModule } from './games/games.module';
 import { DatabaseModule } from './database/database.module';
 import { AccessibilityTagsModule } from './accessibility-tags/accessibility-tags.module';
@@ -17,17 +18,7 @@ import { FavoritesModule } from './favorites/favorites.module';
 
 
 @Module({
-  imports: [
-  GamesModule,
-  DatabaseModule,
-  AccessibilityTagsModule,
-  ReviewsModule,
-  UsersModule,
-  AuthModule,
-  AnalyticsModule,
-  PublishersModule,
-  UploadModule,
-  FavoritesModule, 
+  imports: [GamesModule, DatabaseModule, AccessibilitySettingsModule,   FavoritesModule,AccessibilityTagsModule, AccessibilityIssuesModule, ReviewsModule, UsersModule, AuthModule, AnalyticsModule, PublishersModule, UploadModule, 
     ThrottlerModule.forRoot({
       throttlers: [
         {
