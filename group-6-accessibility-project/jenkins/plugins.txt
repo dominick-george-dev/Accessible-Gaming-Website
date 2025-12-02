@@ -1,9 +1,0 @@
-configuration-as-code
-git
-gitlab-plugin
-docker-workflow
-pipeline
-workflow-aggregator
-credentials
-ssh-credentials
-job-dsl

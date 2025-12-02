@@ -4,8 +4,14 @@ node_modules
 build
 coverage
 
+# terraform
+/jenkins/.terraform
+/jenkins/.terraform.lock.hcl
+
 # Keys
 /jenkins/project.key
+/jenkins/cloud.key
+/jenkins/c23069362-openrc.sh
 
 # Logs
 logs

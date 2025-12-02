@@ -1,0 +1,1 @@
+output "server" { value = "Jenkins Server : ssh -i cloud.key rocky@${openstack_networking_floatingip_v2.floating_ip.address}" }
