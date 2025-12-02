@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=OpenDyslexic:wght@400;700&display=swap');
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -332,8 +334,6 @@ html {
   background-color: #333333;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=OpenDyslexic:wght@400;700&display=swap');
-
 .dyslexia-font, .dyslexia-font * {
   font-family: 'OpenDyslexic', Arial, sans-serif !important;
   letter-spacing: 0.05em;
@@ -352,35 +352,40 @@ svg.colorblind-filters {
 }
 
 /* Protanopia Filter (Red-blind) */
-#colorblind-root.colorblind-protanopia {
+/* Protanopia Filter (Red-blind) */
+#colorblind-root.colorblind-protanopia,
+.colorblind-protanopia #root,
+.colorblind-protanopia main,
+.colorblind-protanopia .content-area,
+body.colorblind-protanopia #root {
   filter: url(#protanopia-filter);
 }
 
 /* Deuteranopia Filter (Green-blind) */
-#colorblind-root.colorblind-deuteranopia {
+#colorblind-root.colorblind-deuteranopia,
+.colorblind-deuteranopia #root,
+.colorblind-deuteranopia main,
+.colorblind-deuteranopia .content-area,
+body.colorblind-deuteranopia #root {
   filter: url(#deuteranopia-filter);
 }
 
 /* Tritanopia Filter (Blue-blind) */
-#colorblind-root.colorblind-tritanopia {
+#colorblind-root.colorblind-tritanopia,
+.colorblind-tritanopia #root,
+.colorblind-tritanopia main,
+.colorblind-tritanopia .content-area,
+body.colorblind-tritanopia #root {
   filter: url(#tritanopia-filter);
 }
 
 /* Achromatopsia Filter (Complete color blindness) */
-#colorblind-root.colorblind-achromatopsia {
+#colorblind-root.colorblind-achromatopsia,
+.colorblind-achromatopsia #root,
+.colorblind-achromatopsia main,
+.colorblind-achromatopsia .content-area,
+body.colorblind-achromatopsia #root {
   filter: grayscale(100%) contrast(1.2);
 }
 
-/* Ensure filters apply to entire page */
-html.colorblind-protanopia,
-html.colorblind-deuteranopia,
-html.colorblind-tritanopia,
-html.colorblind-achromatopsia {
-  /* Filter is applied to the root element */
-}
-
-/* Optional: Transition for smooth filter changes */
-html {
-  transition: filter 0.3s ease;
-}
 

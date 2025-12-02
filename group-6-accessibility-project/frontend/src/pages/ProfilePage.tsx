@@ -5,18 +5,14 @@ import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
 import { Separator } from '../components/ui/separator';
 import { Badge } from '../components/ui/badge';
-import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { LogOut, User as UserIcon, Settings, Eye, Ear, Hand, Brain, Minus, Plus, Type, Contrast, Palette, Search, Undo, Moon } from 'lucide-react';
+import { Settings, Eye, Ear, Hand, Brain, Minus, Plus, Type, Contrast, Palette, Search, Undo, Moon } from 'lucide-react';
 import { toast } from 'sonner';
-import { Magnifier } from '../components/ui/magnifier';
-import { Header } from '../components/Navigation';
 import { useNavigate } from 'react-router-dom';
+import { useAccessibility, type ColorblindFilter, type ThemeMode } from '../contexts/AccessibilityContext';
+import { AccessibilityComponents } from '../components/accessibility/AccessibilityComponents';
 
 // ===== TYPES =====
-
-type ColorblindFilter = 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia';
-type ThemeMode = 'light' | 'dark' | 'deep-space';
 
 interface User {
   id: string;
@@ -66,10 +62,16 @@ const MOCK_USER: User = {
 
 export default function ProfilePageStandalone() {
   const [user, setUser] = useState<User | null>(null);
-  const [magnifierEnabled, setMagnifierEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
+  const { 
+    preferences, 
+    magnifierEnabled, 
+    updatePreferences, 
+    toggleMagnifier, 
+    adjustTextSize,
+    isLoading: accessibilityLoading 
+  } = useAccessibility();
   // Fetch user and accessibility settings on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -79,63 +81,15 @@ export default function ProfilePageStandalone() {
       return;
     }
     const parsedUser = JSON.parse(storedUser);
-    fetch(`http://localhost:3000/api/accessibility-settings/${parsedUser.id}`)
-      .then(res => res.json())
-      .then(settings => {
-        const userWithPrefs = { ...parsedUser, accessibilityPreferences: settings || MOCK_USER.accessibilityPreferences };
-        setUser(userWithPrefs);
-        // Apply settings after fetching
-        applyTheme(userWithPrefs.accessibilityPreferences.theme, userWithPrefs.accessibilityPreferences.highContrast);
-        applyTextSize(userWithPrefs.accessibilityPreferences.textSize);
-        // Use fontFamily from backend to determine dyslexia font
-        applyDyslexiaFont(userWithPrefs.accessibilityPreferences.fontFamily === 'OpenDyslexic');
-        applyColorblindFilter(userWithPrefs.accessibilityPreferences.colorblindFilter);
-        setLoading(false);
-      })
-      .catch(() => {
-        setUser({ ...parsedUser, accessibilityPreferences: MOCK_USER.accessibilityPreferences });
-        setLoading(false);
-      });
-  }, []);
-
+    // The accessibility context will handle loading the settings
+    setUser({ ...parsedUser, accessibilityPreferences: preferences });
+    setLoading(false);
+  }, [preferences]);
   // Update preferences handler
-  const handleUpdatePreferences = async (preferences: User['accessibilityPreferences']) => {
+  const handleUpdatePreferences = async (newPrefs: User['accessibilityPreferences']) => {
     if (!user) return;
-    // Ensure all fields are present
-    const fullPreferences: User['accessibilityPreferences'] = {
-      visual: preferences.visual ?? false,
-      hearing: preferences.hearing ?? false,
-      dexterity: preferences.dexterity ?? false,
-      cognitive: preferences.cognitive ?? false,
-      textSize: preferences.textSize ?? 16,
-      highContrast: preferences.highContrast ?? false,
-      dyslexiaFont: preferences.dyslexiaFont ?? false,
-      colorblindFilter: preferences.colorblindFilter ?? 'none',
-      theme: preferences.theme ?? 'light',
-      fontFamily: preferences.dyslexiaFont ? 'OpenDyslexic' : 'default',
-    };
-    setUser(prev => prev ? { ...prev, accessibilityPreferences: fullPreferences } : null);
-
-    // Apply theme changes
-    applyTheme(fullPreferences.theme, fullPreferences.highContrast);
-    // Apply text size changes
-    applyTextSize(fullPreferences.textSize);
-    // Apply dyslexia font
-    applyDyslexiaFont(fullPreferences.dyslexiaFont);
-    // Apply colorblind filter
-    applyColorblindFilter(fullPreferences.colorblindFilter);
-
-    // Update backend
-    try {
-      await fetch(`http://localhost:3000/api/accessibility-settings/${user.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fullPreferences),
-      });
-      toast.success('Preferences updated');
-    } catch {
-      toast.error('Failed to update preferences');
-    }
+    setUser(prev => prev ? { ...prev, accessibilityPreferences: newPrefs } : null);
+    await updatePreferences(newPrefs);
   };
 
   // Preference change handler
@@ -154,16 +108,7 @@ export default function ProfilePageStandalone() {
 
   // Text size adjustment
   const handleTextSizeChange = (increment: number) => {
-    if (!user) return;
-    const currentSize = user.accessibilityPreferences.textSize;
-    const newSize = Math.max(10, Math.min(32, currentSize + increment));
-    const newPreferences: User['accessibilityPreferences'] = {
-      ...user.accessibilityPreferences,
-      textSize: newSize,
-    };
-    handleUpdatePreferences(newPreferences);
-    const action = increment > 0 ? 'increased' : 'decreased';
-    toast.success(`Text size ${action} to ${newSize}px`);
+    adjustTextSize(increment);
   };
 
   // Keyboard handler for text size buttons
@@ -176,12 +121,10 @@ export default function ProfilePageStandalone() {
 
   // Toggle magnifier
   const handleToggleMagnifier = () => {
-    setMagnifierEnabled(prev => !prev);
-    toast.success(magnifierEnabled ? 'Magnifier disabled' : 'Magnifier enabled');
+    toggleMagnifier();
   };
-
   // Preference options
-  const preferences = [
+  const accessibilityOptions = [
     { id: 'visual', icon: Eye, label: 'Visual Accessibility' },
     { id: 'hearing', icon: Ear, label: 'Hearing Accessibility' },
     { id: 'dexterity', icon: Hand, label: 'Motor/Dexterity Accessibility' },
@@ -434,9 +377,8 @@ export default function ProfilePageStandalone() {
           </div>
 
           <Separator />
-          
-          {/* Accessibility Category Toggles */}
-          {preferences.map((pref) => {
+            {/* Accessibility Category Toggles */}
+          {accessibilityOptions.map((pref) => {
             const Icon = pref.icon;
             const isEnabled = user?.accessibilityPreferences[pref.id as keyof User['accessibilityPreferences']];
             
@@ -528,99 +470,10 @@ export default function ProfilePageStandalone() {
             <div>
               <span className="font-medium text-foreground">Breadcrumb Navigation:</span> Click on breadcrumbs at the top of pages to navigate quickly
             </div>
-          </li>
-        </ul>
+          </li>        </ul>
       </Card>
 
-      {/* Magnifier Component */}
-      <Magnifier isActive={magnifierEnabled} magnification={2} />
-
-      {/* Colorblind Filter SVGs */}
-      <ColorblindFilterSVGs />
-    </main>
-  );
-}
-
-// ===== HELPER FUNCTIONS =====
-
-function applyTheme(theme: ThemeMode, highContrast: boolean) {
-  const html = document.documentElement;
-  
-  // Remove all theme classes
-  html.classList.remove('light', 'dark', 'deep-space', 'high-contrast');
-  
-  // Apply theme
-  if (theme === 'dark') {
-    html.classList.add('dark');
-  } else if (theme === 'deep-space') {
-    html.classList.add('deep-space');
-  }
-  
-  // Apply high contrast
-  if (highContrast) {
-    html.classList.add('high-contrast');
-  }
-}
-
-function applyTextSize(size: number) {
-  document.documentElement.style.setProperty('--font-size', `${size}px`);
-}
-
-function applyDyslexiaFont(enabled: boolean) {
-  if (enabled) {
-    document.body.classList.add('dyslexia-font');
-  } else {
-    document.body.classList.remove('dyslexia-font');
-  }
-}
-
-function applyColorblindFilter(filter: ColorblindFilter) {
-  const body = document.body;
-  
-  // Remove all filter classes
-  body.classList.remove(
-    'colorblind-protanopia',
-    'colorblind-deuteranopia',
-    'colorblind-tritanopia',
-    'colorblind-achromatopsia'
-  );
-  
-  // Apply new filter
-  if (filter !== 'none') {
-    body.classList.add(`colorblind-${filter}`);
-  }
-}
-
-// ===== COLORBLIND FILTER SVG COMPONENT =====
-
-function ColorblindFilterSVGs() {
-  return (
-    <svg className="colorblind-filters" aria-hidden="true">
-      <defs>
-        {/* Protanopia (Red-blind) */}
-        <filter id="protanopia-filter">
-          <feColorMatrix type="matrix" values="0.567, 0.433, 0,     0, 0
-                                                 0.558, 0.442, 0,     0, 0
-                                                 0,     0.242, 0.758, 0, 0
-                                                 0,     0,     0,     1, 0" />
-        </filter>
-        
-        {/* Deuteranopia (Green-blind) */}
-        <filter id="deuteranopia-filter">
-          <feColorMatrix type="matrix" values="0.625, 0.375, 0,   0, 0
-                                                 0.7,   0.3,   0,   0, 0
-                                                 0,     0.3,   0.7, 0, 0
-                                                 0,     0,     0,   1, 0" />
-        </filter>
-        
-        {/* Tritanopia (Blue-blind) */}
-        <filter id="tritanopia-filter">
-          <feColorMatrix type="matrix" values="0.95, 0.05,  0,     0, 0
-                                                 0,    0.433, 0.567, 0, 0
-                                                 0,    0.475, 0.525, 0, 0
-                                                 0,    0,     0,     1, 0" />
-        </filter>
-      </defs>
-    </svg>
-  );
+      {/* Accessibility Components */}
+      <AccessibilityComponents />
+    </main>  );
 }

@@ -1,6 +1,6 @@
 // import './App.css'
 import './styles/globals.css'
-import React, { useEffect, useState } from 'react';
+// import React, { useEffect, useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import { GameDetailPage } from './pages/GameDetailPage'
 import ProfilePage from './pages/ProfilePage'
@@ -16,6 +16,7 @@ import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
 import { PublisherDashboard } from './pages/PublisherDashboard'
 import { Toaster } from "./components/ui/sonner";
 import AdminDeleteAndVerifyTab from './components/AdminDeleteAndVerifyTab'
+import { AccessibilityProvider } from './contexts/AccessibilityContext';
 
 const FavoritesPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
@@ -28,30 +29,15 @@ const FavoritesPage = () => (
   </div>
 );
 
-const AccessibilityPage = () => (
-  <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-    <div className="max-w-5xl">
-      <h2 className="text-2xl font-bold mb-6">Accessibility Statement</h2>
-      <p className="text-muted-foreground mb-4">
-        AccessPlay is committed to ensuring digital accessibility for people with disabilities. 
-        We are continually improving the user experience for everyone.
-      </p>
-      {/* Add more accessibility information */}
-    </div>
-  </div>
-);
-
-// Define a User type for better type safety
-interface User {
-  id: string | number;
-  username: string;
-  email: string;
-  isAdmin?: boolean;
-  isPublisher?: boolean;
-  role?: string;
+function App() {
+  return (
+    <AccessibilityProvider>
+      <AppContent />
+    </AccessibilityProvider>
+  );
 }
 
-function App() {
+function AppContent() {
   const { setLoginState } = useAuth();
   const navigate = useNavigate();
 
@@ -93,90 +79,87 @@ function App() {
 
   const handleNavigateToLogin = () => {
     navigate('/login');
-  };
-
-  return (
-    <>
-    <Toaster />
-    <Routes>
-      {/* Routes with Layout wrapper */}
-      <Route path="/" element={
-        <Layout>
-          <HomePage />
-        </Layout>
-      } />
-      <Route path="/home" element={
-        <Layout>
-          <HomePage />
-        </Layout>
-      } />
-      <Route path="/browserpage" element={
-        <Layout>
-          <BrowsePage />
-        </Layout>
-      } />
-      <Route path="/games/:id" element={
-        <Layout>
-          <GameDetailPage />
-        </Layout>
-      } />
-      <Route path="/favorites" element={
-        <Layout>
-          <FavoritesPage />
-        </Layout>
-      } />
-      <Route path="/accessibility" element={
-                <Layout>
-        <AccessibilityStatementPage />
-                        </Layout>
-      }/>
-      <Route path="/profile" element={
-        <Layout>
-          <ProfilePage />
-        </Layout>
-      } />
-      <Route path="/publisherdashboard" element={
-        <Layout>
-          <PublisherDashboard />
-        </Layout>
-      } />
-        <Route path="/makeaccountpublisher" element={
-          <Layout>
-            <MakeAccountPublisherPage />
-          </Layout>
-        } />
-        {/* ✅ Add the admin route with proper access control */}
-        <Route path="/admin" element={
-          <Layout>
-            <AdminDeleteAndVerifyTab />
-          </Layout>
-        } />
-        {/* Authentication pages without Layout (they have their own layout) */}
-        <Route
-          path="/login"
-          element={
-            <LoginPage
-              onLogin={handleLogin}
-              onNavigateToSignup={handleNavigateToSignup}
-            />
-          }
-        />
-        <Route
-          path="/signup"
-          element={
-            <SignupPage
-              onSignup={handleSignup}
-              onNavigateToLogin={handleNavigateToLogin}
-            />
-          }
-        />
-        <Route
-          path="/publisherAnalyticsTab"
-          element={<PublisherAnalyticsTab />}
-        />
-      </Routes>
-    </>
-  )
+  };  return (
+    <div>
+      <Toaster />
+      <Routes>
+          {/* Routes with Layout wrapper */}
+          <Route path="/" element={
+            <Layout>
+              <HomePage />
+            </Layout>
+          } />
+          <Route path="/home" element={
+            <Layout>
+              <HomePage />
+            </Layout>
+          } />
+          <Route path="/browserpage" element={
+            <Layout>
+              <BrowsePage />
+            </Layout>
+          } />
+          <Route path="/games/:id" element={
+            <Layout>
+              <GameDetailPage />
+            </Layout>
+          } />
+          <Route path="/favorites" element={
+            <Layout>
+              <FavoritesPage />
+            </Layout>
+          } />
+          <Route path="/accessibility" element={
+            <Layout>
+              <AccessibilityStatementPage />
+            </Layout>
+          }/>
+          <Route path="/profile" element={
+            <Layout>
+              <ProfilePage />
+            </Layout>
+          } />
+          <Route path="/publisherdashboard" element={
+            <Layout>
+              <PublisherDashboard />
+            </Layout>
+          } />
+          <Route path="/makeaccountpublisher" element={
+            <Layout>
+              <MakeAccountPublisherPage />
+            </Layout>
+          } />
+          {/* ✅ Add the admin route with proper access control */}
+          <Route path="/admin" element={
+            <Layout>
+              <AdminDeleteAndVerifyTab />
+            </Layout>
+          } />
+          {/* Authentication pages without Layout (they have their own layout) */}
+          <Route
+            path="/login"
+            element={
+              <LoginPage
+                onLogin={handleLogin}
+                onNavigateToSignup={handleNavigateToSignup}
+              />
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <SignupPage
+                onSignup={handleSignup}
+                onNavigateToLogin={handleNavigateToLogin}
+              />
+            }
+          />
+          <Route
+            path="/publisherAnalyticsTab"
+            element={<PublisherAnalyticsTab />}
+          />        </Routes>
+      </div>
+    );
 }
 
 export default App
