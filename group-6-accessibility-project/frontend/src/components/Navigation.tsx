@@ -1,11 +1,11 @@
-import { 
-  Home, 
-  Search, 
-  Heart, 
-  User, 
-  AlertCircle, 
-  Shield, 
-  BarChart3, 
+import {
+  Home,
+  Search,
+  Heart,
+  User,
+  AlertCircle,
+  Shield,
+  BarChart3,
   Code,
   Menu,
   Undo, // <-- keep Undo only
@@ -15,15 +15,16 @@ import {
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from './ui/dropdown-menu';
 import { useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
 
 interface SidebarProps {
   isLoggedIn: boolean;
@@ -70,12 +71,36 @@ export function Sidebar({ isLoggedIn }: SidebarProps) {
     { id: 'profile', icon: User, label: 'Profile', path: '/profile' },
   ];
 
-  // Add admin/publisher items only if logged in
-  const navItems = isLoggedIn ? [
-    ...baseNavItems,
-    { id: 'admin', icon: Shield, label: 'Admin Dashboard', path: '/admin' },
-    { id: 'publisher', icon: BarChart3, label: 'Publisher Dashboard', path: '/publisher' },
-  ] : baseNavItems;
+  // Get user info to determine what to show
+  const getUserInfo = () => {
+    if (!isLoggedIn) return { role: null, isAdmin: false, isPublisher: false };
+
+    const user = JSON.parse(localStorage.getItem('userData') || '{}');
+    return {
+      role: user.role,
+      isAdmin: user.role === 'ADMIN',
+      isPublisher: user.role === 'PUBLISHER'
+    };
+  };
+
+  const userInfo = getUserInfo();
+
+  // Create navigation items based on user role
+  let navItems = [...baseNavItems];
+
+  if (isLoggedIn) {
+    // Add admin dashboard for admins
+    if (userInfo.isAdmin) {
+      navItems.push({ id: 'admin', icon: Shield, label: 'Admin Dashboard', path: '/admin' });
+    }
+
+    // Add publisher dashboard for publishers, or make publisher account for regular users
+    if (userInfo.isPublisher) {
+      navItems.push({ id: 'publisher', icon: BarChart3, label: 'Publisher Dashboard', path: '/publisherdashboard' });
+    } else if (userInfo.role === 'USER') {
+      navItems.push({ id: 'make-publisher', icon: BarChart3, label: 'Become Publisher', path: '/makeaccountpublisher' });
+    }
+  }
 
   const getCurrentPage = () => {
     const pathname = location.pathname;
@@ -151,12 +176,12 @@ export function Sidebar({ isLoggedIn }: SidebarProps) {
   );
 }
 
-export function MobileSidebar({ 
-  isLoggedIn, 
-  isAdmin, 
-  isPublisher, 
-  isOpen, 
-  onClose 
+export function MobileSidebar({
+  isLoggedIn,
+  isAdmin,
+  isPublisher,
+  isOpen,
+  onClose
 }: MobileSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -331,7 +356,7 @@ export function Header({
   // Get the page title based on current location
   const getPageTitle = () => {
     const pathname = location.pathname;
-    
+
     switch (pathname) {
       case '/':
       case '/home': return 'Discover Accessible Games';
@@ -344,7 +369,7 @@ export function Header({
       case '/publisher': return 'Publisher Dashboard';
       case '/login': return 'Sign In';
       case '/signup': return 'Sign Up';
-      default: 
+      default:
         if (pathname.startsWith('/games/')) {
           return selectedGameName || 'Game Details';
         }
@@ -359,9 +384,8 @@ export function Header({
     <header className="fixed top-0 left-0 right-0 z-50 w-full h-16 navbar-header">
       {/* Background that extends full viewport width */}
       <div className="w-full h-full bg-card border-b navbar-header-bg">
-        <div className={`w-full h-full px-4 lg:px-6 flex items-center justify-between gap-3 relative z-20 max-w-full overflow-hidden transition-all duration-300 ${
-          isSidebarOpen ? 'lg:pl-52' : 'lg:pl-6'
-        }`}>
+        <div className={`w-full h-full px-4 lg:px-6 flex items-center justify-between gap-3 relative z-20 max-w-full overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'lg:pl-52' : 'lg:pl-6'
+          }`}>
           {/* Menu Button & Logo - Always visible */}
           <div className="flex items-center gap-3 flex-shrink-0">
             <Button
@@ -381,7 +405,7 @@ export function Header({
             >
               <Menu className="w-5 h-5" />
             </Button>
-            
+
             {/* Clickable AccessPlay Logo/Title */}
             <Button
               variant="ghost"
@@ -460,8 +484,8 @@ export function Header({
             {isLoggedIn ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="hidden md:flex items-center gap-2 relative z-30"
                   >
                     <User className="w-4 h-4" />
@@ -486,7 +510,7 @@ export function Header({
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button 
+              <Button
                 onClick={onLogin}
                 className="hidden md:flex relative z-30"
               >
@@ -542,15 +566,14 @@ export function BottomNav() {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
-          
+
           return (
             <button
               key={item.id}
               onClick={() => navigate(item.path)}
               onKeyDown={(e) => handleKeyDown(e, item.path)}
-              className={`flex flex-col items-center justify-center gap-1 p-2 flex-1 transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded ${
-                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-              }`}
+              className={`flex flex-col items-center justify-center gap-1 p-2 flex-1 transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                }`}
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
             >

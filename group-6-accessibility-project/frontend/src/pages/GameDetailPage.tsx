@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { ImgCarousel } from "../components/ui/imgCarousel";
 import { AccessibleVideoPlayer } from "../components/AccessibleVideoPlayer";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Game, Review } from "../types/game";
 import { useParams, useNavigate } from "react-router-dom";
@@ -58,27 +58,35 @@ export function GameDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [game, setGame] = useState<Game | null>(null);
-    const [accessibilityTags, setAccessibilityTags] = useState<Array<{
-        id: string;
-        tag: string;
-        category: string;
-        verified: boolean;
-    }>>([]);
+const [accessibilityTags, setAccessibilityTags] = useState<Array<{
+    id: string;
+    tag?: string;
+    name?: string;
+    category: string;
+    verified: boolean;
+}>>([]);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isHelpful, setIsHelpful] = useState<Record<number, boolean>>({});
     const [loading, setLoading] = useState(true);
+    const [similarGames, setSimilarGames] = useState<Game[]>([]);
+    const [loadingSimilar, setLoadingSimilar] = useState(false);
+    const [similarError, setSimilarError] = useState<string | null>(null);
     const [userRating, setUserRating] = useState(0);
     const [reviewText, setReviewText] = useState("");
-    const [selectedAccessibilityTags, setSelectedAccessibilityTags] = useState<
-        string[]
-    >([]);
+    const [selectedAccessibilityTags, setSelectedAccessibilityTags] = useState<string[]>([]);
+    const hasLoggedView = useRef(false);
+    const headingRef = useRef<HTMLHeadingElement | null>(null);
 
-    const isLoggedIn = true; // You can hook this up to your auth system later
-
+    const isLoggedIn = JSON.parse(localStorage.getItem("isLoggedIn") || "false");
+    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
     useEffect(() => {
         if (!id) return; // wait until id is available
-
+        //Ensures only ran once for accuracy
+        if (!hasLoggedView.current) {
+            hasLoggedView.current = true;
+        createViewLog(id);
+        }
         const loadData = async () => {
             setLoading(true);
             try {
@@ -86,6 +94,7 @@ export function GameDetailPage() {
                 fetchGameDetails(id),
                 fetchAccessibilityTags(id),
                 fetchReviews(id),
+                fetchSimilarGames(id)
             ]);
             } catch (error) {
             console.error("Error loading game data:", error);
@@ -96,6 +105,14 @@ export function GameDetailPage() {
 
         loadData();
     }, [id]);
+
+    //Focus main heading when game chnages so screen reader announce it to user
+    useEffect(() => {
+        if (game) {
+            //small timeout to ensure heading is in DOM
+            setTimeout(() => headingRef.current?.focus(), 50);
+        }
+    }, [game]);
 
     console.log('reviews:', reviews);
 
@@ -112,15 +129,79 @@ export function GameDetailPage() {
         }
     };
 
+    const createViewLog = async (gameId: string) => {
+        try{
+            const response = await fetch(`http://localhost:3000/games/view/${gameId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                viewedAt: new Date(),
+                }),
+            })
+            if(!response.ok) throw new Error('Failed to create view')
+
+        } catch (error){
+            console.log("Error creating view", error)
+        }
+    }
+
     const fetchAccessibilityTags = async (gameId: string) => {
         try {
+            // Try a conventional backend endpoint for accessibility tags for a game
             const response = await fetch(`http://localhost:3000/accessibility-tags/game/${gameId}`);
-            if (!response.ok) throw new Error("Failed to fetch accessibility tags");
+            if (!response.ok) {
+                // If the route does not exist, treat as no tags rather than crashing
+                if (response.status === 404) {
+                    setAccessibilityTags([]);
+                    return;
+                }
+                throw new Error("Failed to fetch accessibility tags");
+            }
             const data = await response.json();
-                setAccessibilityTags(data);
+            setAccessibilityTags(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Error fetching accessibility tags:", error);
-            toast.error("Failed to load accessibility tags");
+            // Ensure state is a consistent empty array on failure
+            setAccessibilityTags([]);
+        }
+    };
+
+    /**
+    * Fetch similar games. Try dedicated endpoint first,
+    * otherwise fall back to client-side filtering/sorting.
+    */
+    const fetchSimilarGames = async (gameId: string) => {
+        setLoadingSimilar(true);
+        setSimilarError(null);
+        try {
+            const token = localStorage.getItem("authToken");
+            const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+            // Call the backend similar endpoint — backend may return { data: [...] } or a plain array
+            const res = await fetch(`http://localhost:3000/games/similar/${gameId}`, { headers });
+            if (!res.ok) {
+                if (res.status === 404) {
+                    setSimilarGames([]);
+                    setSimilarError(null);
+                    return;
+                }
+                throw new Error(`Failed to fetch similar games: ${res.status}`);
+            }
+
+            const payload = await res.json();
+            // Support both shapes: plain array or { data: [...] }
+            const games = Array.isArray(payload)
+                ? payload
+                : Array.isArray(payload?.data)
+                ? payload.data
+                : [];
+            setSimilarGames(games);
+        } catch (err) {
+            console.error("Error fetching similar games:", err);
+            setSimilarError("Unable to load similar games. Please try again later.");
+            setSimilarGames([]);
+        } finally {
+            setLoadingSimilar(false);
         }
     };
 
@@ -136,7 +217,8 @@ export function GameDetailPage() {
             console.error("Error fetching reviews:", error);
             toast.error("Failed to load reviews");
         }
-    };    const handleHelpfulSubmit = async (id: number) => {
+    };    
+    const handleHelpfulSubmit = async (id: number) => {
         const reviewToUpdate = reviews.find((review) => review.id === id);
         if (!reviewToUpdate) {
             toast.error("Review not found");
@@ -211,41 +293,50 @@ export function GameDetailPage() {
     };
     const handleSubmitReview = async () => {
         if (!isLoggedIn) {
-        toast.error("Please sign in to submit a review");
-        return;
+            toast.error("Please sign in to submit a review");
+            return;
         }
 
         if (userRating === 0) {
-        toast.error("Please select a rating");
-        return;
+            toast.error("Please select a rating");
+            return;
         }
 
         if (!reviewText.trim()) {
-        toast.error("Please write a review");
-        return;
+            toast.error("Please write a review");
+            return;
         }
 
         // If user has already made a review for this game, prevent multiple reviews
-        if(reviews.find((r) => r.userId === 1)){
+        if(reviews.find((r) => r.userId === userData?.id)){
             toast.error("You have already submitted a review for this game");
             return;
-        }; // Replace "1" with actual user ID from auth
+        }
+
+        // Debug log to help diagnose backend errors
+        const reviewPayload = {
+            gameId: game?.id,
+            userId: userData?.id,
+            userName: userData?.username || "Anonymous",
+            rating: userRating,
+            comment: reviewText,
+            accessibilityFeedback: selectedAccessibilityTags,
+        };
+        console.log("Submitting review payload:", reviewPayload);
 
         try {
             const res = await fetch(`http://localhost:3000/reviews`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                gameId: game?.id,
-                userId: 1, // To be implemented with auth system
-                userName: "Anonymous", // Replace with actual user name from auth
-                rating: userRating,
-                comment: reviewText,
-                accessibilityFeedback: selectedAccessibilityTags,
-                }),
-            });            if (!res.ok) throw new Error("Failed to submit review");
+                body: JSON.stringify(reviewPayload),
+            });
+            if (!res.ok) {
+                const errorText = await res.text();
+                toast.error("Failed to submit review: " + errorText);
+                throw new Error("Failed to submit review: " + errorText);
+            }
             const newReview = await res.json();
-            
+
             // Store previous state for undo
             const previousReviews = reviews;
             const previousRating = userRating;
@@ -280,7 +371,7 @@ export function GameDetailPage() {
             setReviewText("");
             setSelectedAccessibilityTags([]);
         } catch (error) {
-            toast.error("Error submitting review");
+            toast.error("Error submitting review. Please try again later.");
             console.error(error);
         }
     };    const toggleAccessibilityTag = (tagName: string) => {
@@ -389,10 +480,11 @@ export function GameDetailPage() {
             <div className="space-y-4 lg:space-y-6">
             <div>
                 <div className="flex items-start justify-between gap-3 mb-2 lg:mb-3">
-                <h1 className="flex-1">{game.title}</h1>                <Button
+                <h1 className="flex-1">{game.title}</h1>
+                <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => onToggleFavorite()}
+                    onClick={onToggleFavorite}
                     aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                     aria-pressed={isFavorite}
                     className="flex-shrink-0"
@@ -405,7 +497,7 @@ export function GameDetailPage() {
                 <div className="flex items-center gap-3 lg:gap-4 flex-wrap mb-3 lg:mb-4">
                 <div className="flex items-center gap-2">
                     <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" aria-hidden="true" />
-                    <span>{game.rating}</span>
+                    <span>{Number(game.rating).toFixed(1)}</span>
                     <span className="text-muted-foreground">({reviews.length})</span>
                 </div>
                 <Separator orientation="vertical" className="h-6 hidden sm:block" />
@@ -481,7 +573,80 @@ export function GameDetailPage() {
             transcript={game.transcript}
         />
 
-        
+        <Separator />
+            {/* Similar Games Section */}
+            <section aria-labelledby="similar-games-heading" className="mt-2">
+            <h2 id="similar-games-heading" className="mb-3 lg:mb-4">You May Also Like</h2>
+
+            {loadingSimilar ? (
+                <p className="text-muted-foreground">Loading similar games...</p>
+            ) : similarError ? (
+                <p role="alert" className="text-destructive">{similarError}</p>
+            ) : similarGames.length === 0 ? (
+                <div className="space-y-2">
+                    <p className="text-muted-foreground">No similar games found.</p>
+                    <p className="text-muted-foreground">Try browsing popular accessible games below.</p>
+                </div>
+            ) : (
+                // outer provides horizontal scroll when needed; inner flex centers cards
+                <div className="overflow-x-auto">
+                    <div
+                        className="flex gap-4 justify-center items-start px-4 py-1"
+                        role="list"
+                        aria-label="Similar games"
+                    >
+                        {similarGames.map((s) => (
+                            <Card
+                                key={s.id}
+                                className="min-w-[200px] max-w-[220px] p-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary flex-shrink-0"
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Open ${s.title} details.`}
+                                aria-describedby={`similar-${s.id}-tags`}
+                                onClick={() => navigate(`/games/${s.id}`)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        navigate(`/games/${s.id}`);
+                                    }
+                                }}
+                            >
+                                <div className="aspect-[4/3] mb-2 bg-muted rounded overflow-hidden">
+                                    <img
+                                        src={s.images?.[0] || ''}
+                                        alt={`Cover art for ${s.title}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="line-clamp-2">{s.title}</h3>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {s.genre.slice(0,2).map((g) => (
+                                            <Badge key={g} variant="outline" className="text-xs">
+                                                {g}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                    {/* Accessibility tags displayed clearly on each card */}
+                                    <div id={`similar-${s.id}-tags`} className="flex flex-wrap gap-1 mt-2" aria-hidden={false}>
+                                        {(s.accessibilityTags || []).slice(0,3).map((t: any, i: number) => (
+                                            <Badge
+                                                key={(t && (t.id ?? i)) ?? i}
+                                                variant="secondary"
+                                                className="text-xs"
+                                            >
+                                                {typeof t === "string" ? t : (t.name ?? t.tag ?? "")}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </section>
+        <Separator />
 
         {/* Accessibility Features */}
         <section aria-labelledby="accessibility-heading">
@@ -518,7 +683,7 @@ export function GameDetailPage() {
                         >
                             <Icon className="w-3 h-3" aria-hidden="true" />
                             {tag.verified && <Check className="w-3 h-3" aria-label="Verified" />}
-                            {tag.tag}
+                            {tag.name ?? tag.tag}
                         </Badge>
                         );
                     })}
@@ -623,9 +788,9 @@ export function GameDetailPage() {
                             <div key={tag.id} className="flex items-center space-x-2">
                             <Checkbox
                                 id={`tag-${tag.id}`}
-                                checked={selectedAccessibilityTags.includes(tag.tag)}
-                                onCheckedChange={() => toggleAccessibilityTag(tag.tag)}
-                                aria-label={`Select ${tag.tag}`}
+                                // prefer name, fallback to tag
+                                checked={selectedAccessibilityTags.includes(tag.name ?? tag.tag ?? '')}
+                                onCheckedChange={() => toggleAccessibilityTag(tag.name ?? tag.tag ?? '')}
                             />
                             <label
                                 htmlFor={`tag-${tag.id}`}

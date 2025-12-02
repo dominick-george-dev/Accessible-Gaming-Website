@@ -1,4 +1,4 @@
-import { Home, Search, Heart, User, AlertCircle, Shield, X } from 'lucide-react';
+import { Home, Search, Heart, User, AlertCircle, Shield } from 'lucide-react';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';

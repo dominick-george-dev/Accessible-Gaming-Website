@@ -5,12 +5,17 @@ import { DatabaseService } from '../database/database.service';
 
 @Injectable()
 export class AccessibilityTagsService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
   // Create a new accessibility tag
   async create(createAccessibilityTagDto: Prisma.AccessibilityTagsCreateInput) {
+    const { id, ...tagData } = createAccessibilityTagDto as any;
+
     return this.databaseService.accessibilityTags.create({
-      data: createAccessibilityTagDto,
+      data: {
+        tag: tagData.tag,
+        category: tagData.category,
+      },
     });
   }
 
@@ -18,22 +23,20 @@ export class AccessibilityTagsService {
   async findAll() {
     return this.databaseService.accessibilityTags.findMany();
   }
-  
+
   // Get all accessibility tags for a specific game
   async findAllByGameId(gameId: number) {
-  // Get all tag IDs related to this game
-  const tagLinks = await this.databaseService.gameAccessibilityTags.findMany({
-    where: { gameId },
-    select: { accessibilityTagsId: true },
-  });
+    // Fetch join rows and include the related accessibility tag objects directly
+    const tagLinks = await this.databaseService.gameAccessibilityTags.findMany({
+      where: { gameId },
+      include: { accessibilityTags: true },
+    });
 
-  const tagIds = tagLinks.map(tag => tag.accessibilityTagsId);
+    if (!tagLinks || tagLinks.length === 0) return [];
 
-  // Fetch all tags with those IDs
-  return this.databaseService.accessibilityTags.findMany({
-    where: { id: { in: tagIds } },
-  });
-}
+    // Map to the included tag objects and filter any nulls
+    return tagLinks.map((l) => l.accessibilityTags).filter(Boolean);
+  }
 
   // Get a specific accessibility tag by ID
   async findOne(id: number) {
@@ -44,16 +47,27 @@ export class AccessibilityTagsService {
 
   // Update an accessibility tag by ID
   async update(id: number, updateAccessibilityTagDto: Prisma.AccessibilityTagsUpdateInput) {
+    const { id: _, ...updateData } = updateAccessibilityTagDto as any;
+
     return this.databaseService.accessibilityTags.update({
       where: { id },
-      data: updateAccessibilityTagDto,
+      data: {
+        tag: updateData.tag,
+        category: updateData.category,
+      },
     });
   }
 
   // Delete an accessibility tag by ID
   async remove(id: number) {
-    return this.databaseService.accessibilityTags.delete({
-      where: { id },
+    return this.databaseService.$transaction(async (tx) => {
+      await tx.gameAccessibilityTags.deleteMany({
+        where: { accessibilityTagsId: id },
+      });
+
+      return tx.accessibilityTags.delete({
+        where: { id },
+      });
     });
   }
 }
