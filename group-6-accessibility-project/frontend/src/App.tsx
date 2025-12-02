@@ -5,9 +5,9 @@ import { BrowsePage } from './pages/BrowserPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
-import { PublisherAnalyticsTab } from './components/PublisherAnalyticsTab'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
+import { MyFavoritesPage } from './pages/MyFavoritesPage'
 import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
 import { PublisherDashboard } from './pages/PublisherDashboard'
@@ -108,7 +108,7 @@ function App() {
         } />
         <Route path="/favorites" element={
           <Layout>
-            <FavoritesPage />
+            <MyFavoritesPage />
           </Layout>
         } />
         <Route path="/accessibility" element={
@@ -160,10 +160,6 @@ function App() {
               onNavigateToLogin={handleNavigateToLogin}
             />
           }
-        />
-        <Route
-          path="/publisherAnalyticsTab"
-          element={<PublisherAnalyticsTab />}
         />
       </Routes>
     </>
