@@ -7,6 +7,10 @@ describe('GamesService', () => {
   let dbMock: any;
   let time = new Date();
 
+  beforeAll(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -26,6 +30,10 @@ describe('GamesService', () => {
                 accessibilityTags: [],
               }),
               findMany: jest.fn(),
+              count: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+              delete: jest.fn(),
             },
             accessibilityTags: {
               findMany: jest.fn(),
@@ -37,6 +45,20 @@ describe('GamesService', () => {
 
     service = module.get<GamesService>(GamesService);
     dbMock = module.get(DatabaseService);
+    // Add default mocks for gameAccessibilityTags and view for all tests
+    dbMock.gameAccessibilityTags = {
+      createMany: jest.fn(),
+      deleteMany: jest.fn(),
+    };
+    dbMock.view = {
+      create: jest.fn(),
+    };
+    dbMock.review = {
+      deleteMany: jest.fn(),
+    };
+    dbMock.favourites = {
+      deleteMany: jest.fn(),
+    };
   });
 
   it('should return 1 game', async () => {
@@ -148,5 +170,146 @@ describe('GamesService', () => {
     for (const g of res) {
       expect(g.accessibilityTags).toEqual([]);
     }
+  });
+
+  describe('findAll', () => {
+    it('returns paginated games', async () => {
+      dbMock.game.findMany.mockResolvedValueOnce([
+        { id: 1, title: 'A', description: '', images: [], trailer: null, transcript: null, genre: [], releaseDate: '', developer: '', rating: 0, hasBeenVerified: false, createdAt: time, updatedAt: time, gameAccessibilityTags: [] },
+      ]);
+      dbMock.game.count.mockResolvedValueOnce(1);
+      const res = await service.findAll(1, 10);
+      expect(res.data.length).toBe(1);
+      expect(res.pagination.total).toBe(1);
+    });
+    it('throws on db error', async () => {
+      dbMock.game.findMany.mockRejectedValueOnce(new Error('fail'));
+      dbMock.game.count = jest.fn(); // Prevents undefined error if count is called
+      await expect(service.findAll(1, 10)).rejects.toThrow('Failed to retrieve games');
+    });
+  });
+
+  describe('create', () => {
+    it('creates a game and adds tags', async () => {
+      dbMock.game.create.mockResolvedValueOnce({ id: 2 });
+      dbMock.gameAccessibilityTags = { createMany: jest.fn().mockResolvedValue({}) };
+      dbMock.game.findUnique.mockResolvedValueOnce({ id: 2, gameAccessibilityTags: [] });
+      const dto = { title: 'T', description: '', developer: '', genre: [], rating: 0, releaseDate: time, images: [], publisherId: 1, accessibilityTagIds: [1, 2] };
+      const res = await service.create(dto);
+      expect(dbMock.game.create).toHaveBeenCalled();
+      expect(dbMock.gameAccessibilityTags.createMany).toHaveBeenCalled();
+      expect(res && res.id).toBe(2);
+    });
+  });
+
+  describe('findOne', () => {
+    it('returns a game', async () => {
+      dbMock.game.findUnique.mockResolvedValueOnce({ id: 3 });
+      const res = await service.findOne(3);
+      expect(res && res.id).toBe(3);
+    });
+  });
+
+  describe('update', () => {
+    it('updates a game and tags', async () => {
+      dbMock.game.update.mockResolvedValueOnce({});
+      dbMock.gameAccessibilityTags = {
+        deleteMany: jest.fn().mockResolvedValue({}),
+        createMany: jest.fn().mockResolvedValue({}),
+      };
+      dbMock.game.findUnique.mockResolvedValueOnce({ id: 4, gameAccessibilityTags: [] });
+      const dto = { title: 'U', accessibilityTagIds: [1] };
+      const res = await service.update(4, dto);
+      expect(dbMock.game.update).toHaveBeenCalled();
+      expect(dbMock.gameAccessibilityTags.deleteMany).toHaveBeenCalled();
+      expect(dbMock.gameAccessibilityTags.createMany).toHaveBeenCalled();
+      expect(res && res.id).toBe(4);
+    });
+    it('updates a game with no tags', async () => {
+      dbMock.game.update.mockResolvedValueOnce({});
+      dbMock.gameAccessibilityTags = { deleteMany: jest.fn().mockResolvedValue({}) };
+      dbMock.game.findUnique.mockResolvedValueOnce({ id: 5, gameAccessibilityTags: [] });
+      const dto = { title: 'U2' };
+      const res = await service.update(5, dto);
+      expect(res && res.id).toBe(5);
+    });
+  });
+
+  describe('remove', () => {
+    it('removes a game and related records', async () => {
+      dbMock.$transaction = jest.fn(fn => fn({
+        view: { deleteMany: jest.fn().mockResolvedValue({}) },
+        review: { deleteMany: jest.fn().mockResolvedValue({}) },
+        gameAccessibilityTags: { deleteMany: jest.fn().mockResolvedValue({}) },
+        favourites: { deleteMany: jest.fn().mockResolvedValue({}) },
+        game: { delete: jest.fn().mockResolvedValue({ id: 6 }) },
+      }));
+      const res = await service.remove(6);
+      expect(res && res.id).toBe(6);
+    });
+    it('throws on db error', async () => {
+      dbMock.$transaction = jest.fn().mockRejectedValue(new Error('fail'));
+      await expect(service.remove(7)).rejects.toThrow('fail');
+    });
+  });
+
+  describe('verify', () => {
+    it('verifies a game', async () => {
+      dbMock.game.findUnique.mockResolvedValueOnce({ id: 8, title: 'V', hasBeenVerified: false });
+      dbMock.game.update.mockResolvedValueOnce({ id: 8, hasBeenVerified: true });
+      const res = await service.verify(8);
+      expect(res && res.hasBeenVerified).toBe(true);
+    });
+    it('throws if id is invalid', async () => {
+      await expect(service.verify(NaN)).rejects.toThrow('Invalid game ID');
+    });
+    it('throws if not found', async () => {
+      dbMock.game.findUnique.mockResolvedValueOnce(null);
+      await expect(service.verify(9)).rejects.toThrow('Game with ID 9 not found');
+    });
+    it('throws on db error', async () => {
+      dbMock.game.findUnique.mockImplementationOnce(() => { throw new Error('fail'); });
+      await expect(service.verify(10)).rejects.toThrow('Failed to verify game: fail');
+    });
+  });
+
+  describe('createView', () => {
+    it('creates a view', async () => {
+      dbMock.view = { create: jest.fn().mockResolvedValue({ id: 11 }) };
+      const res = await service.createView(11, { viewedAt: time });
+      expect(res && res.id).toBe(11);
+    });
+  });
+
+  describe('revokeVerification', () => {
+    it('revokes verification', async () => {
+      dbMock.game.findUnique.mockResolvedValueOnce({ id: 12, title: 'R', hasBeenVerified: true });
+      dbMock.game.update.mockResolvedValueOnce({ id: 12, hasBeenVerified: false });
+      const res = await service.revokeVerification(12);
+      expect(res && res.hasBeenVerified).toBe(false);
+    });
+    it('throws if id is invalid', async () => {
+      await expect(service.revokeVerification(NaN)).rejects.toThrow('Invalid game ID');
+    });
+    it('throws if not found', async () => {
+      dbMock.game.findUnique.mockResolvedValueOnce(null);
+      await expect(service.revokeVerification(13)).rejects.toThrow('Game with ID 13 not found');
+    });
+    it('throws on db error', async () => {
+      dbMock.game.findUnique.mockImplementationOnce(() => { throw new Error('fail'); });
+      await expect(service.revokeVerification(14)).rejects.toThrow('Failed to revoke verification: fail');
+    });
+  });
+
+  describe('findGameWithPublisher', () => {
+    it('returns game with publisher', async () => {
+      dbMock.game.findUnique.mockResolvedValueOnce({ id: 15, Publisher: { userId: 1 } });
+      const res = await service.findGameWithPublisher(15);
+      expect(res && res.Publisher && res.Publisher.userId).toBe(1);
+    });
+    it('throws on db error', async () => {
+      dbMock.game.findUnique.mockImplementationOnce(() => { throw new Error('fail'); });
+      await expect(service.findGameWithPublisher(16)).rejects.toThrow('Failed to find game: fail');
+    });
   });
 });
