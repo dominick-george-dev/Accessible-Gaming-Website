@@ -82,49 +82,49 @@ function App() {
 
   return (
     <>
-    <Toaster />
-    <Routes>
-      {/* Routes with Layout wrapper */}
-      <Route path="/" element={
-        <Layout>
-          <HomePage />
-        </Layout>
-      } />
-      <Route path="/home" element={
-        <Layout>
-          <HomePage />
-        </Layout>
-      } />
-      <Route path="/browserpage" element={
-        <Layout>
-          <BrowsePage />
-        </Layout>
-      } />
-      <Route path="/games/:id" element={
-        <Layout>
-          <GameDetailPage />
-        </Layout>
-      } />
-      <Route path="/favorites" element={
-        <Layout>
-          <FavoritesPage />
-        </Layout>
-      } />
-      <Route path="/accessibility" element={
-                <Layout>
-        <AccessibilityStatementPage />
-                        </Layout>
-      }/>
-      <Route path="/profile" element={
-        <Layout>
-          <ProfilePage />
-        </Layout>
-      } />
-      <Route path="/publisherdashboard" element={
-        <Layout>
-          <PublisherDashboard />
-        </Layout>
-      } />
+      <Toaster />
+      <Routes>
+        {/* Routes with Layout wrapper */}
+        <Route path="/" element={
+          <Layout>
+            <HomePage />
+          </Layout>
+        } />
+        <Route path="/home" element={
+          <Layout>
+            <HomePage />
+          </Layout>
+        } />
+        <Route path="/browserpage" element={
+          <Layout>
+            <BrowsePage />
+          </Layout>
+        } />
+        <Route path="/games/:id" element={
+          <Layout>
+            <GameDetailPage />
+          </Layout>
+        } />
+        <Route path="/favorites" element={
+          <Layout>
+            <FavoritesPage />
+          </Layout>
+        } />
+        <Route path="/accessibility" element={
+          <Layout>
+            <AccessibilityStatementPage />
+          </Layout>
+        } />
+        <Route path="/profile" element={
+          <Layout>
+            <ProfilePage />
+          </Layout>
+        } />
+        <Route path="/publisherdashboard" element={
+          <Layout>
+            <PublisherDashboard />
+          </Layout>
+        } />
         <Route path="/makeaccountpublisher" element={
           <Layout>
             <MakeAccountPublisherPage />
