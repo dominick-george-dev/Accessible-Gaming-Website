@@ -31,7 +31,7 @@ import { FavoritesModule } from './favorites/favorites.module';
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          limit: 10,
+          limit: 1000,
           ttl: 60000,
         },
       ],

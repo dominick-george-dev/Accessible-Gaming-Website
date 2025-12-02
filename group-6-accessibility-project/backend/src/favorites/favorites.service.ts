@@ -1,20 +1,26 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { DatabaseService } from '../database/database.service';
 
 @Injectable()
 export class FavoritesService {
+  constructor(private readonly databaseService: DatabaseService) {}
+
   async toggleFavorite(userId: number, gameId: number) {
     try {
-      const existing = await prisma.favourites.findFirst({ where: { userId, gameId } });
+      const existing = await this.databaseService.favourites.findFirst({ 
+        where: { userId, gameId } 
+      });
 
       if (existing) {
-        await prisma.favourites.delete({ where: { id: existing.id } });
+        await this.databaseService.favourites.delete({ 
+          where: { id: existing.id } 
+        });
         return { removed: true, gameId };
       }
 
-      await prisma.favourites.create({ data: { userId, gameId } });
+      await this.databaseService.favourites.create({ 
+        data: { userId, gameId } 
+      });
       return { added: true, gameId };
     } catch (error) {
       console.error('Error toggling favorite:', error);
@@ -24,7 +30,9 @@ export class FavoritesService {
 
   async getFavorites(userId: number) {
     try {
-      return await prisma.favourites.findMany({ where: { userId } });
+      return await this.databaseService.favourites.findMany({ 
+        where: { userId }
+      });
     } catch (error) {
       console.error('Error fetching favorites:', error);
       throw new InternalServerErrorException('Failed to fetch favorites');

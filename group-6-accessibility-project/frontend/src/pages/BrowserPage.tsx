@@ -8,7 +8,6 @@ import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
-import { useFavorites } from "../context/FavoritesContext";
 
 type Categories = {
   visual: boolean;
@@ -17,11 +16,35 @@ type Categories = {
   cognitive: boolean;
 };
 
+// Hook to get user from localStorage
+function useUser() {
+  const [user, setUser] = useState<{ id: number; username: string; email: string; isAdmin: boolean; isPublisher: boolean } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const userData = localStorage.getItem("userData");
+    if (isLoggedIn && userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch {
+        setUser(null);
+      }
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+  }, []);
+
+  return { user, loading };
+}
+
 export function BrowsePage() {
   const navigate = useNavigate();
-  const { favorites, toggle: toggleFavorite } = useFavorites();
+  const { user } = useUser();
 
   const [games, setGames] = useState<Game[]>([]);
+  const [favorites, setFavorites] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Categories>({
@@ -31,6 +54,30 @@ export function BrowsePage() {
     cognitive: false,
   });
   const [loading, setLoading] = useState(true);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
+
+  // Fetch user's favorites
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchFavorites = async () => {
+      setLoadingFavorites(true);
+      try {
+        const response = await fetch(`http://localhost:3000/favorites/${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const gameIds = data.map((fav: any) => fav.gameId);
+          setFavorites(gameIds);
+        }
+      } catch (error) {
+        console.error('Error fetching favorites:', error);
+      } finally {
+        setLoadingFavorites(false);
+      }
+    };
+
+    fetchFavorites();
+  }, [user]);
 
   // Load games
   useEffect(() => {
@@ -68,13 +115,43 @@ export function BrowsePage() {
     return () => { cancelled = true; };
   }, []);
 
+  // Toggle favorite
+  const handleToggleFavorite = async (gameId: number) => {
+    if (!user) {
+      toast.error('Please login to add favorites');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3000/favorites/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, gameId }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.added) {
+          setFavorites(prev => [...prev, gameId]);
+          toast.success('Added to favorites!');
+        } else {
+          setFavorites(prev => prev.filter(id => id !== gameId));
+          toast.success('Removed from favorites');
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorite');
+    }
+  };
+
   // Category filter handler
   const handleCategoryChange = (category: string, checked: boolean) => {
-  setSelectedCategories(prev => ({
-    ...prev,
-    [category as keyof Categories]: checked,
-  }));
-};
+    setSelectedCategories(prev => ({
+      ...prev,
+      [category as keyof Categories]: checked,
+    }));
+  };
 
   const activeFilterCount = Object.values(selectedCategories).filter(Boolean).length;
 
@@ -114,7 +191,7 @@ export function BrowsePage() {
       .slice(0, 5);
   }, [games, searchQuery]);
 
-  if (loading) return <p className="text-center py-12">Loading games...</p>;
+  if (loading || loadingFavorites) return <p className="text-center py-12">Loading games...</p>;
 
   return (
     <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
@@ -184,7 +261,7 @@ export function BrowsePage() {
                     key={Number(game.id)}
                     game={game}
                     isFavorite={favorites.includes(Number(game.id))}
-                    onToggleFavorite={() => toggleFavorite(Number(game.id))}
+                    onToggleFavorite={() => handleToggleFavorite(Number(game.id))}
                     onClick={() => navigate(`/games/${game.id}`)}
                   />
                 ))

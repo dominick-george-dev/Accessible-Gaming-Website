@@ -7,7 +7,6 @@ import { Card } from "../components/ui/card";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "../components/ui/input";
-import { useFavorites } from "../context/FavoritesContext";
 
 // Hook to get user from localStorage
 function useUser() {
@@ -34,13 +33,40 @@ function useUser() {
 
 export function MyFavoritesPage() {
   const navigate = useNavigate();
-  const { favorites, toggle } = useFavorites();
   const [games, setGames] = useState<Game[]>([]);
+  const [favoriteGameIds, setFavoriteGameIds] = useState<number[]>([]); // Store actual favorites
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loadingGames, setLoadingGames] = useState(false);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
 
   const { user, loading: loadingUser } = useUser();
+
+  // Fetch user's favorites from backend
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchFavorites = async () => {
+      setLoadingFavorites(true);
+      try {
+        const response = await fetch(`http://localhost:3000/favorites/${user.id}`);
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        
+        const favorites = await response.json();
+        // Extract gameIds from the favorites array
+        const gameIds = favorites.map((fav: any) => fav.gameId);
+        setFavoriteGameIds(gameIds);
+      } catch (error) {
+        console.error('Error fetching favorites:', error);
+        toast.error('Failed to load favorites');
+        setFavoriteGameIds([]);
+      } finally {
+        setLoadingFavorites(false);
+      }
+    };
+
+    fetchFavorites();
+  }, [user]);
 
   // Fetch all games
   useEffect(() => {
@@ -74,6 +100,41 @@ export function MyFavoritesPage() {
     };
   }, [user]);
 
+  // Handle favorite toggle with backend sync
+const handleToggleFavorite = async (gameId: number) => {
+  if (!user) return;
+
+  try {
+    // DON'T call context toggle - just call backend directly
+    const response = await fetch('http://localhost:3000/favorites/toggle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: user.id,
+        gameId: gameId,
+      }),
+    });
+
+    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+    
+    const result = await response.json();
+    
+    // Update local state based on backend response
+    if (result.added) {
+      setFavoriteGameIds(prev => [...prev, gameId]);
+      toast.success('Added to favorites!');
+    } else if (result.removed) {
+      setFavoriteGameIds(prev => prev.filter(id => id !== gameId));
+      toast.success('Removed from favorites');
+    }
+  } catch (error) {
+    console.error('Error toggling favorite:', error);
+    toast.error('Failed to update favorite');
+  }
+};
+
   if (loadingUser) {
     return (
       <div className="px-4 py-12 text-center">
@@ -91,16 +152,16 @@ export function MyFavoritesPage() {
     );
   }
 
-  if (loadingGames) {
+  if (loadingGames || loadingFavorites) {
     return (
       <div className="px-4 py-12 text-center">
-        <p>Loading your games...</p>
+        <p>Loading your favorites...</p>
       </div>
     );
   }
 
-  // ✅ Convert game.id to number to match favorites array
-  const favoriteGames = games.filter(game => favorites.includes(Number(game.id)));
+  // Filter games to show only favorites
+  const favoriteGames = games.filter(game => favoriteGameIds.includes(Number(game.id)));
 
   const suggestions = favoriteGames
     .filter(
@@ -169,8 +230,8 @@ export function MyFavoritesPage() {
               <GameCard
                 key={game.id}
                 game={game}
-                isFavorite={favorites.includes(Number(game.id))}
-                onToggleFavorite={() => toggle(Number(game.id))}
+                isFavorite={favoriteGameIds.includes(Number(game.id))}
+                onToggleFavorite={() => handleToggleFavorite(Number(game.id))}
                 onClick={() => navigate(`/games/${game.id}`)}
               />
             ))}
