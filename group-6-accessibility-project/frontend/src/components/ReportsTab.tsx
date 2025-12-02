@@ -1,6 +1,6 @@
-// ...existing code...
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Trash2, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from './ui/alert-dialog';
 
 type User = {
   id: number;
@@ -13,7 +13,7 @@ type Issue = {
   userId: number;
   message: string;
   createdAt: string;
-  User?: User;
+  user?: User;
 };
 
 interface Toast {
@@ -81,9 +81,6 @@ export default function AccessibilityIssuesList() {
   };
 
   const resolveIssue = async (id: number) => {
-    const issue = issues.find(i => i.id === id);
-    const confirmMsg = `Resolve and remove issue #${id}?${issue ? `\n\n"${issue.message.slice(0, 120)}${issue.message.length > 120 ? '…' : ''}"` : ''}`;
-    if (!window.confirm(confirmMsg)) return;
 
     setActionLoading(prev => ({ ...prev, [id]: 'deleting' }));
     try {
@@ -97,14 +94,12 @@ export default function AccessibilityIssuesList() {
 
       if (!res.ok) {
         const text = await res.text();
-        console.error('Delete failed', res.status, text);
         throw new Error(text || 'Delete failed');
       }
 
       setIssues(prev => prev.filter(i => i.id !== id));
       addToast(`Issue #${id} resolved and removed`, 'success');
     } catch (err: any) {
-      console.error(err);
       addToast(err?.message || 'Could not resolve issue', 'error');
       setError(err?.message || 'Could not resolve issue.');
     } finally {
@@ -188,33 +183,43 @@ export default function AccessibilityIssuesList() {
                     <div className="text-sm text-gray-500">{formatDate(issue.createdAt)}</div>
                   </div>
 
-                  <p className="text-gray-500 text-sm italic">Reported by: {issue.User?.name ?? issue.User?.email ?? 'Unknown'}</p>
+                  <p className="text-gray-500 text-sm italic">Reported by: {issue.user?.name ?? issue.user?.email ?? 'Unknown'}</p>
 
                   <p className="text-sm leading-relaxed text-gray-700 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' }}>
                     {issue.message}
                   </p>
                 </div>
 
-                <div className="flex gap-2 p-4 pt-0">
-                  <button
-                    onClick={() => resolveIssue(issue.id)}
-                    disabled={actionLoading[issue.id] === 'deleting'}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md transition-colors font-medium"
-                    aria-label={`Resolve issue ${issue.id}`}
-                  >
-                    {actionLoading[issue.id] === 'deleting' ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Resolving...
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="w-4 h-4" />
-                        Resolve the issue
-                      </>
-                    )}
-                  </button>
-                </div>
+                <div className="flex-1 flex items-center justify-center">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors font-medium mb-1"
+                          aria-label={`Resolve issue ${issue.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Resolve the issue
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Resolve Report</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to resolve the report from "{issue.user?.name ?? issue.user?.email ?? 'Unknown'}"? This will remove it and cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => resolveIssue(issue.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            Resolve
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
               </div>
             ))}
           </div>
@@ -223,4 +228,3 @@ export default function AccessibilityIssuesList() {
     </>
   );
 }
-// ...existing code...
