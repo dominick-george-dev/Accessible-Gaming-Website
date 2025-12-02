@@ -116,6 +116,19 @@ describe('GamesController', () => {
     });
   });
 
+  describe('getGameDetails', () => {
+    it('should throw if service throws', async () => {
+      mockGamesService.findById.mockRejectedValueOnce(new Error('fail'));
+      await expect(controller.getGameDetails({ id: 1 } as any)).rejects.toThrow('Failed to retrieve game details');
+    });
+    it('should handle missing id param', async () => {
+      await expect(controller.getGameDetails({} as any)).rejects.toMatchObject({
+        message: expect.stringContaining('Invalid'),
+        status: HttpStatus.BAD_REQUEST,
+      });
+    });
+  });
+
   describe('getSimilarGames', () => {
     it('returns results from service (success) and passes string id', async () => {
       const expected = [{ id: 2, title: 'A' }];
@@ -226,6 +239,9 @@ describe('GamesController', () => {
       expect(res).toBe('ok');
       expect(mockGamesService.createView).toHaveBeenCalledWith(1, { userId: 2 });
     });
+    it('should throw BAD_REQUEST if id is missing', () => {
+      expect(() => controller.createView(undefined as any, { userId: 2 } as any)).toThrow(HttpException);
+    });
   });
 
   describe('findAll', () => {
@@ -265,6 +281,24 @@ describe('GamesController', () => {
       const req = { user: { userId: 1, role: 'ADMIN' } };
       await expect(controller.update('1', {}, req)).rejects.toThrow('fail');
     });
+    it('should throw FORBIDDEN if ownership check fails for publisher', async () => {
+      controller['checkGameOwnership'] = jest.fn().mockRejectedValue({
+        message: 'Forbidden',
+        status: HttpStatus.FORBIDDEN,
+      });
+      const req = { user: { userId: 2, role: 'PUBLISHER' } };
+      await expect(controller.update('2', { foo: 'bar' }, req)).rejects.toMatchObject({
+        message: 'Forbidden',
+        status: HttpStatus.FORBIDDEN,
+      });
+    });
+    it('should throw BAD_REQUEST if id is missing', async () => {
+      const req = { user: { userId: 1, role: 'ADMIN' } };
+      await expect(controller.update(undefined as any, {}, req)).rejects.toMatchObject({
+        message: expect.stringContaining('Invalid'),
+        status: HttpStatus.BAD_REQUEST,
+      });
+    });
   });
 
   describe('remove', () => {
@@ -287,6 +321,24 @@ describe('GamesController', () => {
       const req = { user: { userId: 1, role: 'ADMIN' } };
       await expect(controller.remove('1', req)).rejects.toThrow('fail');
     });
+    it('should throw FORBIDDEN if ownership check fails for publisher', async () => {
+      controller['checkGameOwnership'] = jest.fn().mockRejectedValue({
+        message: 'Forbidden',
+        status: HttpStatus.FORBIDDEN,
+      });
+      const req = { user: { userId: 2, role: 'PUBLISHER' } };
+      await expect(controller.remove('2', req)).rejects.toMatchObject({
+        message: 'Forbidden',
+        status: HttpStatus.FORBIDDEN,
+      });
+    });
+    it('should throw BAD_REQUEST if id is missing', async () => {
+      const req = { user: { userId: 1, role: 'ADMIN' } };
+      await expect(controller.remove(undefined as any, req)).rejects.toMatchObject({
+        message: expect.stringContaining('Invalid'),
+        status: HttpStatus.BAD_REQUEST,
+      });
+    });
   });
 
   describe('verify', () => {
@@ -302,6 +354,13 @@ describe('GamesController', () => {
       const req = { user: { userId: 1, role: 'ADMIN' } };
       await expect(controller.verify('1', req)).rejects.toThrow('fail');
     });
+    it('should throw BAD_REQUEST if id is missing', async () => {
+      const req = { user: { userId: 1, role: 'ADMIN' } };
+      await expect(controller.verify(undefined as any, req)).rejects.toMatchObject({
+        message: expect.stringContaining('Invalid'),
+        status: HttpStatus.BAD_REQUEST,
+      });
+    });
   });
 
   describe('revokeVerification', () => {
@@ -316,6 +375,13 @@ describe('GamesController', () => {
       mockGamesService.revokeVerification = jest.fn().mockRejectedValue(new Error('fail'));
       const req = { user: { userId: 1, role: 'ADMIN' } };
       await expect(controller.revokeVerification('1', req)).rejects.toThrow('fail');
+    });
+    it('should throw BAD_REQUEST if id is missing', async () => {
+      const req = { user: { userId: 1, role: 'ADMIN' } };
+      await expect(controller.revokeVerification(undefined as any, req)).rejects.toMatchObject({
+        message: expect.stringContaining('Invalid'),
+        status: HttpStatus.BAD_REQUEST,
+      });
     });
   });
 
