@@ -52,7 +52,15 @@ describe('AdminController (e2e) - comprehensive', () => {
 
     expect(res.status).toBe(HttpStatus.OK);
     // controller currently returns no payload; accept empty body / undefined / {}
-    expect([undefined, null, '', {}]).toContain(res.body === '' ? '' : res.body);
+    // use deep equality for object checks
+    const body = res.body === '' ? '' : res.body;
+    if (body && typeof body === 'object') {
+        // deep equality for object responses
+        expect(body).toEqual({});
+    } else {
+        // allow undefined, null or empty-string responses
+        expect([undefined, null, '']).toContain(body);
+    }
   });
 
   it('GET /admin - unauthorized (no Authorization header)', async () => {
