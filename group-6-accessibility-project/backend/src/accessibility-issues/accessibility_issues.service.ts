@@ -16,10 +16,20 @@ export class AccessibilityIssuesService {
   }
 
   async findAll() {
-    return this.databaseService.accessibilityIssues.findMany({
-      include: { user: true },
-      orderBy: { createdAt: 'asc' },
-    });
+    try {
+      const rows = await this.databaseService.accessibilityIssues.findMany({
+        include: { user: true },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      return rows;
+    } catch (err) {
+      console.error('findAll error:', err);
+      
+      return this.databaseService.accessibilityIssues.findMany({
+        orderBy: { createdAt: 'asc' },
+      });
+    }
   }
 
   async resolveIssue(id: number) {

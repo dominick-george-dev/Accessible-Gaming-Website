@@ -13,6 +13,7 @@ import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
 import { PublisherDashboard } from './pages/PublisherDashboard'
 import { Toaster } from "./components/ui/sonner";
 import { AdminDashboard } from './pages/AdminDashboard'
+import { useEffect } from 'react'
 
 const FavoritesPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
@@ -36,9 +37,25 @@ const ProfilePage = () => (
   </div>
 );
 
-function App() {
+export default function App() {
   const { setLoginState } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Accessplay Gaming";
+
+    const setFavicon = (url: string) => {
+      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+      link.href = url;
+    };
+
+    setFavicon('/gamepad.png');
+  }, []);
 
   const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
     console.log('User logged in:', userData);
@@ -162,5 +179,3 @@ function App() {
     </>
   )
 }
-
-export default App

@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Separator } from '../components/ui/separator';
 import { Building, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { TrendingUp, } from 'lucide-react';
+import { Gamepad, FileText, Tag } from 'lucide-react';
 import AdminDeleteAndVerifyTab from '../components/AdminDeleteAndVerifyTab';
 import AccessibilityTagsAdminTab from '../components/AccessibilityTagsAdminTab';
 import ReportsTab from '../components/ReportsTab';
@@ -111,15 +111,15 @@ export function AdminDashboard() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <TabsList className="grid w-full grid-cols-3 gap-2">
                     <TabsTrigger value="games" className="flex items-center justify-center gap-2 w-full">
-                        <Building className="w-4 h-4" />
+                        <Gamepad className="w-4 h-4" />
                         <span>Games Management</span>
                     </TabsTrigger>
                     <TabsTrigger value="reports" className="flex items-center justify-center gap-2 w-full">
-                        <TrendingUp className="w-4 h-4" />
+                        <FileText className="w-4 h-4" />
                         <span>Reports</span>
                     </TabsTrigger>
                     <TabsTrigger value="accessibility-tags" className="flex items-center justify-center gap-2 w-full">
-                        <TrendingUp className="w-4 h-4" />
+                        <Tag className="w-4 h-4" />
                         <span>Accessibility Tags</span>
                     </TabsTrigger>
                 </TabsList>
