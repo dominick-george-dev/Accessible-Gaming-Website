@@ -5,27 +5,23 @@ import { BrowsePage } from './pages/BrowserPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
-import { PublisherAnalyticsTab } from './components/PublisherAnalyticsTab'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
-import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 import { MyFavoritesPage } from './pages/MyFavoritesPage'
+import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
 import { PublisherDashboard } from './pages/PublisherDashboard'
 import { Toaster } from "./components/ui/sonner";
 import AdminDeleteAndVerifyTab from './components/AdminDeleteAndVerifyTab'
 import AccessibilityTagsAdminTab from './components/AccessibilityTagsAdminTab'
 
-// REMOVE the local FavoritesPage definition!
-const AccessibilityPage = () => (
+const FavoritesPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
     <div className="max-w-5xl">
-      <h2 className="text-2xl font-bold mb-6">Accessibility Statement</h2>
-      <p className="text-muted-foreground mb-4">
-        AccessPlay is committed to ensuring digital accessibility for people with disabilities. 
-        We are continually improving the user experience for everyone.
+      <h2 className="text-2xl font-bold mb-6">My Favorites</h2>
+      <p className="text-muted-foreground">
+        You haven't added any games to your favorites yet. Start browsing to find games you love!
       </p>
-      {/* Add more accessibility information */}
     </div>
   </div>
 );
@@ -87,49 +83,49 @@ function App() {
 
   return (
     <>
-    <Toaster />
-    <Routes>
-      {/* Routes with Layout wrapper */}
-      <Route path="/" element={
-        <Layout>
-          <HomePage />
-        </Layout>
-      } />
-      <Route path="/home" element={
-        <Layout>
-          <HomePage />
-        </Layout>
-      } />
-      <Route path="/browserpage" element={
-        <Layout>
-          <BrowsePage />
-        </Layout>
-      } />
-      <Route path="/games/:id" element={
-        <Layout>
-          <GameDetailPage />
-        </Layout>
-      } />
-      <Route path="/favorites" element={
-        <Layout>
-          <MyFavoritesPage />
-        </Layout>
-      } />
-      <Route path="/accessibility" element={
-        <Layout>
-          <AccessibilityPage />
-        </Layout>
-      } />
-      <Route path="/profile" element={
-        <Layout>
-          <ProfilePage />
-        </Layout>
-      } />
-      <Route path="/publisherdashboard" element={
-        <Layout>
-          <PublisherDashboard />
-        </Layout>
-      } />
+      <Toaster />
+      <Routes>
+        {/* Routes with Layout wrapper */}
+        <Route path="/" element={
+          <Layout>
+            <HomePage />
+          </Layout>
+        } />
+        <Route path="/home" element={
+          <Layout>
+            <HomePage />
+          </Layout>
+        } />
+        <Route path="/browserpage" element={
+          <Layout>
+            <BrowsePage />
+          </Layout>
+        } />
+        <Route path="/games/:id" element={
+          <Layout>
+            <GameDetailPage />
+          </Layout>
+        } />
+        <Route path="/favorites" element={
+          <Layout>
+            <MyFavoritesPage />
+          </Layout>
+        } />
+        <Route path="/accessibility" element={
+          <Layout>
+            <AccessibilityStatementPage />
+          </Layout>
+        } />
+        <Route path="/profile" element={
+          <Layout>
+            <ProfilePage />
+          </Layout>
+        } />
+        <Route path="/publisherdashboard" element={
+          <Layout>
+            <PublisherDashboard />
+          </Layout>
+        } />
         <Route path="/makeaccountpublisher" element={
           <Layout>
             <MakeAccountPublisherPage />
@@ -164,10 +160,6 @@ function App() {
               onNavigateToLogin={handleNavigateToLogin}
             />
           }
-        />
-        <Route
-          path="/publisherAnalyticsTab"
-          element={<PublisherAnalyticsTab />}
         />
       </Routes>
     </>
