@@ -1,18 +1,22 @@
-import './App.css'
+// import './App.css'
+import './styles/globals.css'
+// import React, { useEffect, useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import { GameDetailPage } from './pages/GameDetailPage'
+import ProfilePage from './pages/ProfilePage'
 import { BrowsePage } from './pages/BrowserPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
-import { PublisherAnalyticsTab } from './components/PublisherAnalyticsTab'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
+import { MyFavoritesPage } from './pages/MyFavoritesPage'
 import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
 import { PublisherDashboard } from './pages/PublisherDashboard'
 import { Toaster } from "./components/ui/sonner";
 import AdminDeleteAndVerifyTab from './components/AdminDeleteAndVerifyTab'
+import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import AccessibilityTagsAdminTab from './components/AccessibilityTagsAdminTab'
 
 const FavoritesPage = () => (
@@ -26,18 +30,15 @@ const FavoritesPage = () => (
   </div>
 );
 
-const ProfilePage = () => (
-  <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-    <div className="max-w-5xl">
-      <h2 className="text-2xl font-bold mb-6">User Profile</h2>
-      <p className="text-muted-foreground">
-        Manage your account settings and preferences.
-      </p>
-    </div>
-  </div>
-);
-
 function App() {
+  return (
+    <AccessibilityProvider>
+      <AppContent />
+    </AccessibilityProvider>
+  );
+}
+
+function AppContent() {
   const { setLoginState } = useAuth();
   const navigate = useNavigate();
 
@@ -108,7 +109,7 @@ function App() {
         } />
         <Route path="/favorites" element={
           <Layout>
-            <FavoritesPage />
+            <MyFavoritesPage />
           </Layout>
         } />
         <Route path="/accessibility" element={
@@ -142,28 +143,27 @@ function App() {
             <AccessibilityTagsAdminTab />
           </Layout>
         } />
-        {/* Authentication pages without Layout (they have their own layout) */}
-        <Route
+        {/* Authentication pages without Layout (they have their own layout) */}        <Route
           path="/login"
           element={
-            <LoginPage
-              onLogin={handleLogin}
-              onNavigateToSignup={handleNavigateToSignup}
-            />
+            <div className="login-page">
+              <LoginPage
+                onLogin={handleLogin}
+                onNavigateToSignup={handleNavigateToSignup}
+              />
+            </div>
           }
         />
         <Route
           path="/signup"
           element={
-            <SignupPage
-              onSignup={handleSignup}
-              onNavigateToLogin={handleNavigateToLogin}
-            />
+            <div className="signup-page">
+              <SignupPage
+                onSignup={handleSignup}
+                onNavigateToLogin={handleNavigateToLogin}
+              />
+            </div>
           }
-        />
-        <Route
-          path="/publisherAnalyticsTab"
-          element={<PublisherAnalyticsTab />}
         />
       </Routes>
     </>

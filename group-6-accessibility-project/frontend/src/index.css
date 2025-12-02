@@ -239,3 +239,116 @@ html {
   color: #ffff00;
   background-color: #333333;
 }
+
+/* ============================================
+   COLORBLIND FILTER STYLES
+   ============================================ */
+
+/* SVG Filters Container */
+svg.colorblind-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Protanopia Filter (Red-blind) - Apply only to main content, exclude navigation */
+.colorblind-protanopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-protanopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-protanopia .main-content,
+.colorblind-protanopia .page-content,
+.colorblind-protanopia .app-content {
+  filter: url(#protanopia-filter);
+}
+
+/* Deuteranopia Filter (Green-blind) - Apply only to main content, exclude navigation */
+.colorblind-deuteranopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-deuteranopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-deuteranopia .main-content,
+.colorblind-deuteranopia .page-content,
+.colorblind-deuteranopia .app-content {
+  filter: url(#deuteranopia-filter);
+}
+
+/* Tritanopia Filter (Blue-blind) - Apply only to main content, exclude navigation */
+.colorblind-tritanopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-tritanopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-tritanopia .main-content,
+.colorblind-tritanopia .page-content,
+.colorblind-tritanopia .app-content {
+  filter: url(#tritanopia-filter);
+}
+
+/* Achromatopsia Filter (Complete color blindness) - Apply only to main content, exclude navigation */
+.colorblind-achromatopsia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-achromatopsia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-achromatopsia .main-content,
+.colorblind-achromatopsia .page-content,
+.colorblind-achromatopsia .app-content {
+  filter: grayscale(100%) contrast(1.2);
+}
+
+/* Ensure navigation elements are never affected by colorblind filters */
+nav, .navbar, .sidebar, .navigation,
+.colorblind-protanopia nav,
+.colorblind-protanopia .navbar,
+.colorblind-protanopia .sidebar,
+.colorblind-protanopia .navigation,
+.colorblind-deuteranopia nav,
+.colorblind-deuteranopia .navbar,
+.colorblind-deuteranopia .sidebar,
+.colorblind-deuteranopia .navigation,
+.colorblind-tritanopia nav,
+.colorblind-tritanopia .navbar,
+.colorblind-tritanopia .sidebar,
+.colorblind-tritanopia .navigation,
+.colorblind-achromatopsia nav,
+.colorblind-achromatopsia .navbar,
+.colorblind-achromatopsia .sidebar,
+.colorblind-achromatopsia .navigation {
+  filter: none !important;
+  position: sticky !important;
+  z-index: 1000;
+}
+
+/* ============================================
+   AUTHENTICATION PAGES LAYOUT FIXES
+   ============================================ */
+
+/* Reset layout for authentication pages (login/signup) */
+.login-page,
+.signup-page {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+  box-sizing: border-box !important;
+}
+
+/* Specific targeting for auth page content */
+.login-page > *,
+.signup-page > * {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Override any sidebar layout for auth pages */
+.login-page main,
+.signup-page main {
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+}
