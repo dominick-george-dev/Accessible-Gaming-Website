@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { TrendingUp, } from 'lucide-react';
 import AdminDeleteAndVerifyTab from '../components/AdminDeleteAndVerifyTab';
 import AccessibilityTagsAdminTab from '../components/AccessibilityTagsAdminTab';
+import ReportsTab from '../components/ReportsTab';
 
 export function AdminDashboard() {
     const [user, setUser] = useState<any>(null);
@@ -125,7 +126,7 @@ export function AdminDashboard() {
 
                 {/* Reports Tab */}
                 <TabsContent value="reports" className="space-y-6">
-                    
+                    <ReportsTab />
                 </TabsContent>
 
                 {/* Accessibility Tags Tab */}

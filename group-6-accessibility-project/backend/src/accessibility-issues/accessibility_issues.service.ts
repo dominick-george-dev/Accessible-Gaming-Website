@@ -14,4 +14,17 @@ export class AccessibilityIssuesService {
       },
     });
   }
+
+  async findAll() {
+    return this.databaseService.accessibilityIssues.findMany({
+      include: { user: true },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async resolveIssue(id: number) {
+    return this.databaseService.accessibilityIssues.delete({
+      where: { id },
+    });
+  }
 }
