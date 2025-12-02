@@ -7,33 +7,11 @@ import { Building, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { TrendingUp, } from 'lucide-react';
 import AdminDeleteAndVerifyTab from '../components/AdminDeleteAndVerifyTab';
-
-interface Game {
-    id: number;
-    title: string;
-    description: string;
-    genre: string[];
-    releaseDate: string;
-    developer: string;
-    rating: number;
-    images: string[];
-    trailer?: string;
-    transcript?: string;
-    hasBeenVerified: boolean;
-    gameAccessibilityTags?: any[];
-}
-
-interface AccessibilityTag {
-    id: number;
-    tag: string;
-    category: string;
-}
+import AccessibilityTagsAdminTab from '../components/AccessibilityTagsAdminTab';
 
 export function AdminDashboard() {
     const [user, setUser] = useState<any>(null);
     const [admin, setAdmin] = useState<any>(null);
-    const [games, setGames] = useState<Game[]>([]);
-    const [accessibilityTags, setAccessibilityTags] = useState<AccessibilityTag[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('games');
@@ -41,7 +19,6 @@ export function AdminDashboard() {
     useEffect(() => {
         const init = async () => {
             await checkAuthentication();
-            await loadAccessibilityTags();
             setLoading(false);
         };
         init();
@@ -72,18 +49,6 @@ export function AdminDashboard() {
         setUser(userData);
         setAdmin(userData);
         return true;
-    };
-
-    const loadAccessibilityTags = async () => {
-        try {
-            const response = await fetch('http://localhost:3000/accessibility-tags');
-            if (response.ok) {
-                const tags = await response.json();
-                setAccessibilityTags(tags);
-            }
-        } catch (error) {
-            console.error('Failed to load accessibility tags:', error);
-        }
     };
 
     if (loading) {
@@ -143,20 +108,29 @@ export function AdminDashboard() {
 
             {/* NEW: Tabbed Interface */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="games" className="flex items-center gap-2">
+                <TabsList className="grid w-full grid-cols-3 gap-2">
+                    <TabsTrigger value="games" className="flex items-center justify-center gap-2 w-full">
                         <Building className="w-4 h-4" />
-                        Games Management
+                        <span>Games Management</span>
                     </TabsTrigger>
-                    <TabsTrigger value="reports" className="flex items-center gap-2">
+                    <TabsTrigger value="reports" className="flex items-center justify-center gap-2 w-full">
                         <TrendingUp className="w-4 h-4" />
-                        Reports
+                        <span>Reports</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="accessibility-tags" className="flex items-center justify-center gap-2 w-full">
+                        <TrendingUp className="w-4 h-4" />
+                        <span>Accessibility Tags</span>
                     </TabsTrigger>
                 </TabsList>
 
                 {/* Reports Tab */}
                 <TabsContent value="reports" className="space-y-6">
                     
+                </TabsContent>
+
+                {/* Accessibility Tags Tab */}
+                <TabsContent value="accessibility-tags" className="space-y-6">
+                    <AccessibilityTagsAdminTab />
                 </TabsContent>
 
                 {/* Games Management Tab */}
