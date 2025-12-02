@@ -111,10 +111,9 @@ export function SignupPage({ onSignup, onNavigateToLogin }: SignupPageProps) {
           email: email.trim().toLowerCase(),
           password: password,
         }),
-      });
-
-      const data = await response.json();      if (response.ok) {
+      });      const data = await response.json();      if (response.ok) {
         localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         toast.success('Account created successfully! You are now logged in.');
         onSignup(data.user);
       } else {
