@@ -13,16 +13,6 @@ interface Game {
     images?: string[];
 }
 
-interface ApiResponse {
-    data: Game[];
-    pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-    };
-}
-
 interface Toast {
     id: string;
     message: string;
@@ -41,7 +31,6 @@ const AdminDeleteAndVerifyTab: React.FC = () => {
 
     const ITEMS_PER_PAGE = 20;
 
-    // ✅ Helper function to format rating to one decimal place
     const formatRating = (rating: number): string => {
         return Number(rating).toFixed(1);
     };

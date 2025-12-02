@@ -328,22 +328,30 @@ export class GamesService {
 
     async remove(id: number) {
         try {
-            // 1. Delete reviews first (they reference the game)
-            await this.databaseService.review.deleteMany({
-                where: { gameId: id }
-            });
-            // 2. Delete game accessibility tags (junction table)
-            await this.databaseService.gameAccessibilityTags.deleteMany({
-                where: { gameId: id }
-            });
-            // 3. Finally delete the game itself
-            const deletedGame = await this.databaseService.game.delete({
-                where: { id }
-            });
+            return this.databaseService.$transaction(async (tx) => {
+                await tx.view.deleteMany({
+                    where: { gameId: id }
+                });
 
-            console.log(`Game ${id} and all related records deleted successfully`);
-            return deletedGame;
+                await tx.review.deleteMany({
+                    where: { gameId: id }
+                });
 
+                await tx.gameAccessibilityTags.deleteMany({
+                    where: { gameId: id }
+                });
+
+                await tx.favourites.deleteMany({
+                    where: { gameId: id }
+                });
+
+                const deletedGame = await tx.game.delete({
+                    where: { id }
+                });
+
+                console.log(`Game ${id} and all related records deleted successfully`);
+                return deletedGame;
+            });
         } catch (error) {
             console.error('Error deleting game:', error);
             throw new Error(`Failed to delete game: ${error.message}`);
@@ -437,7 +445,7 @@ export class GamesService {
                 include: {
                     Publisher: {
                         select: {
-                            userId: true 
+                            userId: true
                         }
                     }
                 }

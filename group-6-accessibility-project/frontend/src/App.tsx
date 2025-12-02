@@ -17,6 +17,7 @@ import { PublisherDashboard } from './pages/PublisherDashboard'
 import { Toaster } from "./components/ui/sonner";
 import AdminDeleteAndVerifyTab from './components/AdminDeleteAndVerifyTab'
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
+import AccessibilityTagsAdminTab from './components/AccessibilityTagsAdminTab'
 
 const FavoritesPage = () => (
   <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
@@ -79,87 +80,95 @@ function AppContent() {
 
   const handleNavigateToLogin = () => {
     navigate('/login');
-  };  return (
-    <div>
+  };
+
+  return (
+    <>
       <Toaster />
       <Routes>
-          {/* Routes with Layout wrapper */}
-          <Route path="/" element={
-            <Layout>
-              <HomePage />
-            </Layout>
-          } />
-          <Route path="/home" element={
-            <Layout>
-              <HomePage />
-            </Layout>
-          } />
-          <Route path="/browserpage" element={
-            <Layout>
-              <BrowsePage />
-            </Layout>
-          } />
-          <Route path="/games/:id" element={
-            <Layout>
-              <GameDetailPage />
-            </Layout>
-          } />
-          <Route path="/favorites" element={
-            <Layout>
-              <FavoritesPage />
-            </Layout>
-          } />
-          <Route path="/accessibility" element={
-            <Layout>
-              <AccessibilityStatementPage />
-            </Layout>
-          }/>
-          <Route path="/profile" element={
-            <Layout>
-              <ProfilePage />
-            </Layout>
-          } />
-          <Route path="/publisherdashboard" element={
-            <Layout>
-              <PublisherDashboard />
-            </Layout>
-          } />
-          <Route path="/makeaccountpublisher" element={
-            <Layout>
-              <MakeAccountPublisherPage />
-            </Layout>
-          } />
-          {/* ✅ Add the admin route with proper access control */}
-          <Route path="/admin" element={
-            <Layout>
-              <AdminDeleteAndVerifyTab />
-            </Layout>
-          } />
-          {/* Authentication pages without Layout (they have their own layout) */}
-          <Route
-            path="/login"
-            element={
-              <LoginPage
-                onLogin={handleLogin}
-                onNavigateToSignup={handleNavigateToSignup}
-              />
-            }
-          />
-          <Route
-            path="/signup"
-            element={
-              <SignupPage
-                onSignup={handleSignup}
-                onNavigateToLogin={handleNavigateToLogin}
-              />
-            }
-          />
-          <Route
-            path="/publisherAnalyticsTab"
-            element={<PublisherAnalyticsTab />}
-          />        </Routes>
-      </div>
-    );
+        {/* Routes with Layout wrapper */}
+        <Route path="/" element={
+          <Layout>
+            <HomePage />
+          </Layout>
+        } />
+        <Route path="/home" element={
+          <Layout>
+            <HomePage />
+          </Layout>
+        } />
+        <Route path="/browserpage" element={
+          <Layout>
+            <BrowsePage />
+          </Layout>
+        } />
+        <Route path="/games/:id" element={
+          <Layout>
+            <GameDetailPage />
+          </Layout>
+        } />
+        <Route path="/favorites" element={
+          <Layout>
+            <FavoritesPage />
+          </Layout>
+        } />
+        <Route path="/accessibility" element={
+          <Layout>
+            <AccessibilityStatementPage />
+          </Layout>
+        } />
+        <Route path="/profile" element={
+          <Layout>
+            <ProfilePage />
+          </Layout>
+        } />
+        <Route path="/publisherdashboard" element={
+          <Layout>
+            <PublisherDashboard />
+          </Layout>
+        } />
+        <Route path="/makeaccountpublisher" element={
+          <Layout>
+            <MakeAccountPublisherPage />
+          </Layout>
+        } />
+        {/* ✅ Add the admin route with proper access control */}
+        <Route path="/admin" element={
+          <Layout>
+            <AdminDeleteAndVerifyTab />
+          </Layout>
+        } />
+        <Route path="/admin/accessibility-tags" element={
+          <Layout>
+            <AccessibilityTagsAdminTab />
+          </Layout>
+        } />
+        {/* Authentication pages without Layout (they have their own layout) */}
+        <Route
+          path="/login"
+          element={
+            <LoginPage
+              onLogin={handleLogin}
+              onNavigateToSignup={handleNavigateToSignup}
+            />
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <SignupPage
+              onSignup={handleSignup}
+              onNavigateToLogin={handleNavigateToLogin}
+            />
+          }
+        />
+        <Route
+          path="/publisherAnalyticsTab"
+          element={<PublisherAnalyticsTab />}
+        />
+      </Routes>
+    </>
+  )
 }
 
 export default App
