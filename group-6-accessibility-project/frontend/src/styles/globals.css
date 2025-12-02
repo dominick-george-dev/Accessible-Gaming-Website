@@ -174,6 +174,255 @@
   box-shadow: 0 0 10px oklch(0.65 0.25 290);
 }
 
+/* ============================================
+   LAYOUT FIXES FOR NAVIGATION AND SCROLLING
+   ============================================ */
+
+/* Ensure navigation elements stay fixed and don't scroll with content */
+nav, .navbar, .sidebar, .navigation {
+  position: sticky !important;
+  top: 0;
+  z-index: 1000;
+  background: var(--sidebar);
+  border-right: 1px solid var(--sidebar-border);
+}
+
+/* For left sidebar specifically */
+.sidebar, .left-sidebar {
+  position: fixed !important;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+/* Main content area that should scroll */
+main, .main-content, .content-area, .page-content, .app-content {
+  margin-left: var(--sidebar-width, 250px);
+  min-height: 100vh;
+  overflow-y: auto;
+  padding: 2rem;
+  width: calc(100% - var(--sidebar-width, 250px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+/* Prevent filter effects from affecting layout */
+.colorblind-protanopia .sidebar,
+.colorblind-deuteranopia .sidebar,
+.colorblind-tritanopia .sidebar,
+.colorblind-achromatopsia .sidebar,
+.colorblind-protanopia nav,
+.colorblind-deuteranopia nav,
+.colorblind-tritanopia nav,
+.colorblind-achromatopsia nav {
+  position: fixed !important;
+  z-index: 1001 !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Ensure body and html don't interfere with scrolling */
+html, body {
+  overflow-x: hidden;
+  height: 100%;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: row;
+  position: relative;
+}
+
+/* Specific targeting for React app structure */
+#root > main,
+.app > main,
+body main {
+  margin-left: 250px !important;
+  width: calc(100vw - 250px) !important;
+  padding: 2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+}
+
+/* ============================================
+   MAIN CONTENT POSITIONING AND CENTERING
+   ============================================ */
+
+/* Ensure main content is properly positioned relative to sidebar */
+body:has(.sidebar) {
+  --sidebar-width: 250px;
+}
+
+/* Override main content positioning to account for sidebar */
+body:has(.sidebar) main,
+body:has(.left-sidebar) main,
+.app-layout:has(.sidebar) main,
+.page-wrapper:has(.sidebar) main,
+.app main,
+#app main,
+#root main {
+  margin-left: 250px !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+  width: calc(100% - 250px) !important;
+  max-width: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box !important;
+}
+
+/* Ensure content within main is centered and has proper max-width */
+main > *,
+.main-content,
+.content-area,
+.page-content,
+.app-content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Fallback for when sidebar class is not detected */
+main:not(.no-sidebar) {
+  margin-left: 250px;
+  width: calc(100% - 250px);
+}
+
+/* ============================================
+   END MAIN CONTENT POSITIONING
+   ============================================ */
+
+/* ============================================
+   CONTENT LAYOUT AND CENTERING FIXES
+   ============================================ */
+
+/* Ensure proper spacing from fixed sidebar/navbar */
+body:has(.sidebar) main,
+body:has(.navbar) main,
+.app-layout main,
+.page-wrapper main {
+  margin-left: 250px !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+  padding-top: 2rem !important;
+  padding-bottom: 2rem !important;
+  width: calc(100% - 250px) !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+/* Center content within main area */
+.main-content > *,
+.content-area > *,
+.page-content > *,
+.app-content > * {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  body:has(.sidebar) main,
+  body:has(.navbar) main,
+  .app-layout main,
+  .page-wrapper main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .sidebar, .left-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.open, .left-sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* Fix for content being hidden behind fixed navigation */
+.content-wrapper,
+.page-container,
+.main-container {
+  margin-left: var(--sidebar-width, 250px);
+  padding: 2rem;
+  min-height: 100vh;
+  width: calc(100% - var(--sidebar-width, 250px));
+  box-sizing: border-box;
+}
+
+/* ============================================
+   END CONTENT LAYOUT FIXES
+   ============================================ */
+
+/* ============================================
+   ADDITIONAL COLORBLIND FILTER PROTECTION
+   ============================================ */
+
+/* Isolate colorblind filters to content areas only */
+.colorblind-protanopia,
+.colorblind-deuteranopia, 
+.colorblind-tritanopia,
+.colorblind-achromatopsia {
+  /* Create isolation boundary */
+  isolation: isolate;
+}
+
+/* Specifically target content wrapper elements */
+.colorblind-protanopia [data-content-area],
+.colorblind-protanopia .page-wrapper > main,
+.colorblind-protanopia .app-layout > main {
+  filter: url(#protanopia-filter);
+}
+
+.colorblind-deuteranopia [data-content-area],
+.colorblind-deuteranopia .page-wrapper > main,
+.colorblind-deuteranopia .app-layout > main {
+  filter: url(#deuteranopia-filter);
+}
+
+.colorblind-tritanopia [data-content-area],
+.colorblind-tritanopia .page-wrapper > main,
+.colorblind-tritanopia .app-layout > main {
+  filter: url(#tritanopia-filter);
+}
+
+.colorblind-achromatopsia [data-content-area],
+.colorblind-achromatopsia .page-wrapper > main,
+.colorblind-achromatopsia .app-layout > main {
+  filter: grayscale(100%) contrast(1.2);
+}
+
+/* Force navigation to stay unfiltered and properly positioned */
+.sidebar, nav, .navbar, .navigation,
+[data-navigation], [data-sidebar] {
+  filter: none !important;
+  position: fixed !important;
+  z-index: 10000 !important;
+  will-change: auto !important;
+  transform: none !important;
+  contain: layout style !important;
+}
+
+/* ============================================
+   END LAYOUT FIXES
+   ============================================ */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -351,41 +600,63 @@ svg.colorblind-filters {
   pointer-events: none;
 }
 
-/* Protanopia Filter (Red-blind) */
-/* Protanopia Filter (Red-blind) */
-#colorblind-root.colorblind-protanopia,
-.colorblind-protanopia #root,
-.colorblind-protanopia main,
-.colorblind-protanopia .content-area,
-body.colorblind-protanopia #root {
+/* Protanopia Filter (Red-blind) - Apply only to main content, exclude navigation */
+.colorblind-protanopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-protanopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-protanopia .main-content,
+.colorblind-protanopia .page-content,
+.colorblind-protanopia .app-content {
   filter: url(#protanopia-filter);
 }
 
-/* Deuteranopia Filter (Green-blind) */
-#colorblind-root.colorblind-deuteranopia,
-.colorblind-deuteranopia #root,
-.colorblind-deuteranopia main,
-.colorblind-deuteranopia .content-area,
-body.colorblind-deuteranopia #root {
+/* Deuteranopia Filter (Green-blind) - Apply only to main content, exclude navigation */
+.colorblind-deuteranopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-deuteranopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-deuteranopia .main-content,
+.colorblind-deuteranopia .page-content,
+.colorblind-deuteranopia .app-content {
   filter: url(#deuteranopia-filter);
 }
 
-/* Tritanopia Filter (Blue-blind) */
-#colorblind-root.colorblind-tritanopia,
-.colorblind-tritanopia #root,
-.colorblind-tritanopia main,
-.colorblind-tritanopia .content-area,
-body.colorblind-tritanopia #root {
+/* Tritanopia Filter (Blue-blind) - Apply only to main content, exclude navigation */
+.colorblind-tritanopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-tritanopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-tritanopia .main-content,
+.colorblind-tritanopia .page-content,
+.colorblind-tritanopia .app-content {
   filter: url(#tritanopia-filter);
 }
 
-/* Achromatopsia Filter (Complete color blindness) */
-#colorblind-root.colorblind-achromatopsia,
-.colorblind-achromatopsia #root,
-.colorblind-achromatopsia main,
-.colorblind-achromatopsia .content-area,
-body.colorblind-achromatopsia #root {
+/* Achromatopsia Filter (Complete color blindness) - Apply only to main content, exclude navigation */
+.colorblind-achromatopsia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-achromatopsia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-achromatopsia .main-content,
+.colorblind-achromatopsia .page-content,
+.colorblind-achromatopsia .app-content {
   filter: grayscale(100%) contrast(1.2);
+}
+
+/* Ensure navigation elements are never affected by colorblind filters */
+nav, .navbar, .sidebar, .navigation,
+.colorblind-protanopia nav,
+.colorblind-protanopia .navbar,
+.colorblind-protanopia .sidebar,
+.colorblind-protanopia .navigation,
+.colorblind-deuteranopia nav,
+.colorblind-deuteranopia .navbar,
+.colorblind-deuteranopia .sidebar,
+.colorblind-deuteranopia .navigation,
+.colorblind-tritanopia nav,
+.colorblind-tritanopia .navbar,
+.colorblind-tritanopia .sidebar,
+.colorblind-tritanopia .navigation,
+.colorblind-achromatopsia nav,
+.colorblind-achromatopsia .navbar,
+.colorblind-achromatopsia .sidebar,
+.colorblind-achromatopsia .navigation {
+  filter: none !important;
+  position: sticky !important;
+  z-index: 1000;
 }
 
 

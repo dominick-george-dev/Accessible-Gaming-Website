@@ -252,30 +252,61 @@ svg.colorblind-filters {
   pointer-events: none;
 }
 
-/* Protanopia Filter (Red-blind) */
-.colorblind-protanopia, html.colorblind-protanopia {
+/* Protanopia Filter (Red-blind) - Apply only to main content, exclude navigation */
+.colorblind-protanopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-protanopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-protanopia .main-content,
+.colorblind-protanopia .page-content,
+.colorblind-protanopia .app-content {
   filter: url(#protanopia-filter);
 }
 
-/* Deuteranopia Filter (Green-blind) */
-.colorblind-deuteranopia, html.colorblind-deuteranopia {
+/* Deuteranopia Filter (Green-blind) - Apply only to main content, exclude navigation */
+.colorblind-deuteranopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-deuteranopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-deuteranopia .main-content,
+.colorblind-deuteranopia .page-content,
+.colorblind-deuteranopia .app-content {
   filter: url(#deuteranopia-filter);
 }
 
-/* Tritanopia Filter (Blue-blind) */
-.colorblind-tritanopia, html.colorblind-tritanopia {
+/* Tritanopia Filter (Blue-blind) - Apply only to main content, exclude navigation */
+.colorblind-tritanopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-tritanopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-tritanopia .main-content,
+.colorblind-tritanopia .page-content,
+.colorblind-tritanopia .app-content {
   filter: url(#tritanopia-filter);
 }
 
-/* Achromatopsia Filter (Complete color blindness) */
-.colorblind-achromatopsia, html.colorblind-achromatopsia {
+/* Achromatopsia Filter (Complete color blindness) - Apply only to main content, exclude navigation */
+.colorblind-achromatopsia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-achromatopsia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-achromatopsia .main-content,
+.colorblind-achromatopsia .page-content,
+.colorblind-achromatopsia .app-content {
   filter: grayscale(100%) contrast(1.2);
 }
 
-/* Ensure filters apply to entire page */
-html.colorblind-protanopia,
-html.colorblind-deuteranopia,
-html.colorblind-tritanopia,
-html.colorblind-achromatopsia {
-  /* Filter is applied to the root element */
+/* Ensure navigation elements are never affected by colorblind filters */
+nav, .navbar, .sidebar, .navigation,
+.colorblind-protanopia nav,
+.colorblind-protanopia .navbar,
+.colorblind-protanopia .sidebar,
+.colorblind-protanopia .navigation,
+.colorblind-deuteranopia nav,
+.colorblind-deuteranopia .navbar,
+.colorblind-deuteranopia .sidebar,
+.colorblind-deuteranopia .navigation,
+.colorblind-tritanopia nav,
+.colorblind-tritanopia .navbar,
+.colorblind-tritanopia .sidebar,
+.colorblind-tritanopia .navigation,
+.colorblind-achromatopsia nav,
+.colorblind-achromatopsia .navbar,
+.colorblind-achromatopsia .sidebar,
+.colorblind-achromatopsia .navigation {
+  filter: none !important;
+  position: sticky !important;
+  z-index: 1000;
 }

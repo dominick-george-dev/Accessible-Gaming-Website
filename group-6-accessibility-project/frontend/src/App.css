@@ -1,10 +1,79 @@
 @import url('https://fonts.googleapis.com/css2?family=OpenDyslexic:wght@400;700&display=swap');
 
+/* CSS Variables for layout dimensions */
+:root {
+  --sidebar-width: 250px;
+  --navbar-height: 64px; /* Match h-16 from Navigation component */
+}
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  max-width: none;
+  margin: 0;
+  padding: 0;
   text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: row;
+}
+
+/* Enhanced main content positioning */
+main, .main-content, .content-area, .page-content, .app-content {  
+  margin-left: var(--sidebar-width);
+  margin-top: var(--navbar-height) !important;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-bottom: 2rem;
+  padding-top: 2rem !important;
+  width: calc(100% - var(--sidebar-width));
+  min-height: calc(100vh - var(--navbar-height));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* More specific targeting to override globals.css */
+#root main,
+#root .main-content,
+#root .content-area,
+#root .page-content,
+#root .app-content {
+  margin-top: calc(var(--navbar-height) + 4rem) !important;
+  padding-top: 2rem !important;
+}
+
+/* Alternative approach - add spacing to first child */
+main > *:first-child,
+.main-content > *:first-child,
+.content-area > *:first-child,
+.page-content > *:first-child,
+.app-content > *:first-child {
+  margin-top: calc(var(--navbar-height) + 2rem) !important;
+}
+
+/* Fallback with even higher specificity */
+html body #root main,
+html body #root .main-content,
+html body #root .content-area {
+  padding-top: calc(var(--navbar-height) + 3rem) !important;
+  margin-top: 2rem !important;
+}
+
+/* Ultra-specific override to ensure top spacing works */
+body #root > main,
+body #root main,
+div#root > main,
+div#root main {
+  margin-top: 200px !important;
+  padding-top: 50px !important;
+}
+
+/* Force spacing on any content wrapper */
+main > div:first-child,
+main > section:first-child,
+main > article:first-child {
+  padding-top: 50px !important;
 }
 
 .dyslexia-font, .dyslexia-font * {
@@ -48,6 +117,40 @@
   color: #888;
 }
 
+/* Ensure top navbar is properly positioned */
+.navbar, .top-navbar, header, .navbar-header {
+  position: fixed !important;
+  top: 0;
+  left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+  height: var(--navbar-height);
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+/* Specific targeting for your Navigation header component */
+header.navbar-header {
+  height: 64px !important; /* Match the h-16 class from your component */
+}
+
+/* Add spacer div approach - alternative solution */
+.navbar-spacer, .header-spacer {
+  height: var(--navbar-height);
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* Force main content to start below navbar with transform */
+html body main {
+  transform: translateY(var(--navbar-height)) !important;
+}
+
+/* Alternative: Use viewport height calculation */
+main {
+  min-height: calc(100vh - var(--navbar-height)) !important;
+  padding-top: var(--navbar-height) !important;
+}
+
 /* ============================================
    COLORBLIND FILTER STYLES
    ============================================ */
@@ -60,23 +163,102 @@ svg.colorblind-filters {
   pointer-events: none;
 }
 
-/* Protanopia Filter (Red-blind) */
-.colorblind-protanopia, html.colorblind-protanopia {
+/* Protanopia Filter (Red-blind) - Apply only to main content, exclude navigation */
+.colorblind-protanopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-protanopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-protanopia .main-content,
+.colorblind-protanopia .page-content,
+.colorblind-protanopia .app-content {
   filter: url(#protanopia-filter);
 }
 
-/* Deuteranopia Filter (Green-blind) */
-.colorblind-deuteranopia, html.colorblind-deuteranopia {
+/* Deuteranopia Filter (Green-blind) - Apply only to main content, exclude navigation */
+.colorblind-deuteranopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-deuteranopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-deuteranopia .main-content,
+.colorblind-deuteranopia .page-content,
+.colorblind-deuteranopia .app-content {
   filter: url(#deuteranopia-filter);
 }
 
-/* Tritanopia Filter (Blue-blind) */
-.colorblind-tritanopia, html.colorblind-tritanopia {
+/* Tritanopia Filter (Blue-blind) - Apply only to main content, exclude navigation */
+.colorblind-tritanopia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-tritanopia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-tritanopia .main-content,
+.colorblind-tritanopia .page-content,
+.colorblind-tritanopia .app-content {
   filter: url(#tritanopia-filter);
 }
 
-/* Achromatopsia Filter (Complete color blindness) */
-.colorblind-achromatopsia, html.colorblind-achromatopsia {
+/* Achromatopsia Filter (Complete color blindness) - Apply only to main content, exclude navigation */
+.colorblind-achromatopsia main:not(nav):not(.navbar):not(.sidebar),
+.colorblind-achromatopsia .content-area:not(nav):not(.navbar):not(.sidebar),
+.colorblind-achromatopsia .main-content,
+.colorblind-achromatopsia .page-content,
+.colorblind-achromatopsia .app-content {
   filter: grayscale(100%) contrast(1.2);
+}
+
+/* Ensure navigation elements are never affected by colorblind filters */
+nav, .navbar, .sidebar, .navigation,
+.colorblind-protanopia nav,
+.colorblind-protanopia .navbar,
+.colorblind-protanopia .sidebar,
+.colorblind-protanopia .navigation,
+.colorblind-deuteranopia nav,
+.colorblind-deuteranopia .navbar,
+.colorblind-deuteranopia .sidebar,
+.colorblind-deuteranopia .navigation,
+.colorblind-tritanopia nav,
+.colorblind-tritanopia .navbar,
+.colorblind-tritanopia .sidebar,
+.colorblind-tritanopia .navigation,
+.colorblind-achromatopsia nav,
+.colorblind-achromatopsia .navbar,
+.colorblind-achromatopsia .sidebar,
+.colorblind-achromatopsia .navigation {
+  filter: none !important;
+  position: sticky !important;
+  z-index: 1000;
+}
+
+/* Absolute last resort - maximum specificity override */
+body.app #root main,
+html body.app #root main,
+body #root > main.content,
+html body #root > main.content,
+#app #root main,
+.app #root main {
+  margin-top: 180px !important;
+  padding-top: 60px !important;
+  min-height: calc(100vh - 180px) !important;
+}
+
+/* Force all content inside main to respect spacing */
+main * {
+  position: relative;
+}
+
+main > *:first-child {
+  margin-top: 60px !important;
+}
+
+/* Emergency override - maximum possible specificity */
+html body div#root main,
+html body div#root > main,
+html body #root main.main-content,
+html body #root .main-content,
+html body #root .content-area {
+  margin-top: var(--navbar-height) !important;
+  padding-top: 2rem !important;
+  position: relative !important;
+  top: 0 !important;
+}
+
+/* Force first element spacing */
+html body div#root main > *:first-child,
+html body div#root .main-content > *:first-child {
+  padding-top: 100px !important;
+  margin-top: 50px !important;
 }
 
