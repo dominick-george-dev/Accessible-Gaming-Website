@@ -13,7 +13,9 @@ export interface Game {
   images: string[];
   trailer: string;
   transcript: string;
-  genre: string[];
+  genre: string[]; // Deprecated, use genres instead
+  genres: string[]; // Added for compatibility with GameDetailPage and tests
+  platforms: string[]; // Added for compatibility with GameDetailPage and tests
   developer: string;
   rating: number;
   reviewCount: number;

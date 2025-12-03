@@ -577,34 +577,29 @@ export function GameDetailPage() {
         <div className="space-y-4 lg:space-y-6">
           <div>
             <div className="flex items-start justify-between gap-3 mb-2 lg:mb-3">
-              <h1 className="flex-1">{game.title}</h1>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onToggleFavorite}
-                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                aria-pressed={isFavorite}
-                className="flex-shrink-0"
-              >
-                <Heart
-                  className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`}
-                />
-              </Button>
+              <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold">
+                {game.title}
+              </h1>
+              {game.verified && (
+                <span
+                  className="ml-2 bg-primary text-primary-foreground rounded-full px-3 py-1 flex items-center gap-2"
+                  role="status"
+                  aria-label="Verified accessible game"
+                >
+                  <Check className="w-4 h-4" />
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 lg:gap-4 flex-wrap mb-3 lg:mb-4">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" aria-hidden="true" />
-                <span>{Number(game.rating).toFixed(1)}</span>
-                <span className="text-muted-foreground">({reviews.length})</span>
-              </div>
-              <Separator orientation="vertical" className="h-6 hidden sm:block" />
-              <div className="flex gap-2 flex-wrap">
-                {game.genre.map((genre) => (
-                  <Badge key={genre} variant="outline">
-                    {genre}
-                  </Badge>
+              {Array.isArray(game.genres) &&
+                game.genres.map((genre: string) => (
+                  <Badge key={genre}>{genre}</Badge>
                 ))}
-              </div>
+              <Separator orientation="vertical" className="h-6 hidden sm:block" />
+              {Array.isArray(game.platforms) &&
+                game.platforms.map((platform: string) => (
+                  <Badge key={platform}>{platform}</Badge>
+                ))}
             </div>
             <p className="text-muted-foreground">
               <strong>Developer:</strong> {game.developer}
