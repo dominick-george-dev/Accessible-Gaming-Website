@@ -57,7 +57,30 @@ Ensure you have all of the following:
 
 15. Go back to the dashboard. Click New Item, then choose an appropriate name e.g. "main-pipeline" or "dev-pipeline" as examples. Then select Pipeline.
 
-16. 
+16. In the pipeline configuration page:
+    - **General Tab**: Leave default settings
+    - **Build Triggers**: Check "Poll SCM" and set schedule to `H/5 * * * *` (polls every 5 minutes)
+    - **Pipeline Section**:
+      - **Definition**: Select "Pipeline script from SCM"
+      - **SCM**: Select "Git"
+      - **Repository URL**: Enter your GitLab repository URL:
+        ```
+        https://git.cardiff.ac.uk/c23069362/team-6-accessible-gaming-website.git
+        ```
+      - **Credentials**: Click "Add" > "Jenkins" to add GitLab credentials:
+        - **Kind**: Username with password
+        - **Username**: Your GitLab username
+        - **Password**: Your GitLab personal access token
+        - **ID**: `gitlab-credentials`
+        - **Description**: GitLab Access Token
+      - **Branches to build**: `*/main` (or your target branch)
+      - **Script Path**: `group-6-accessibility-project/Jenkinsfile`
+
+## 📝 Creating a Jenkinsfile
+
+If you don't have a `Jenkinsfile` in your repository root, create one with this basic structure:
+
+Put finalised pipeline script here!!!!!
 
 ## 🔄 Migration from Previous Version
 
@@ -76,9 +99,68 @@ git pull origin main
 
 After those steps, redo the steps from the start guide and it will work.
 
-## 🎯 Next Steps After Deployment
+## 🔑 GitLab Personal Access Token Setup
 
-1. **Access Jenkins**: http://YOUR_FLOATING_IP:8080
-2. **Login**: Use admin/PASSWORD from deployment output
-3. **Monitor Pipeline**: Check the "team-6-accessibility-project" job
-4. **Verify Build**: Ensure the automatic build completes successfully
+To create a GitLab personal access token for Jenkins:
+
+1. Go to **Cardiff GitLab**: https://git.cardiff.ac.uk  ← Updated URL
+2. Click your profile picture → Settings → Access Tokens
+3. Create a new token with these settings:
+   - **Name**: `jenkins-ci`
+   - **Expiration**: Set to 1 year from now
+   - **Scopes**: Check these permissions:
+     - ✅ `api` (Full API access)
+     - ✅ `read_repository` (Read repository)
+     - ✅ `write_repository` (Write to repository if needed)
+     - ✅ `read_user` (Read user information)
+4. Click "Create personal access token"
+5. **Copy the token immediately** (you won't see it again)
+6. Use this token as the password in step 16 above
+
+## 🚀 Testing Your Pipeline
+
+1. **Manual Trigger**: Go to your pipeline → "Build Now"
+2. **Automatic Trigger**: Push changes to your repository
+3. **Monitor Build**: Click on the build number to see console output
+4. **View Results**: Check the pipeline stages and their status
+
+## 🔧 Common Pipeline Issues & Solutions
+
+### Issue: "Host key verification failed"
+**Solution**: The Jenkins setup script should handle this, but if it persists:
+```bash
+# SSH into Jenkins server
+ssh -i cloud.key rocky@YOUR_JENKINS_IP
+sudo su - jenkins
+ssh-keyscan gitlab.dcu.ie >> ~/.ssh/known_hosts
+```
+
+### Issue: "Permission denied (publickey)"
+**Solution**: Ensure you're using the correct GitLab credentials (username + personal access token)
+
+### Issue: Node.js not found
+**Solution**: 
+1. Go to Jenkins → Manage Jenkins → Global Tool Configuration
+2. Add NodeJS installation:
+   - **Name**: `NodeJS`
+   - **Install automatically**: Check
+   - **Version**: Select latest LTS
+
+## 📊 Pipeline Features
+
+Your pipeline will now:
+- ✅ Automatically trigger on code changes
+- ✅ Check out your repository
+- ✅ Install dependencies (if package.json exists)
+- ✅ Run build scripts
+- ✅ Execute tests
+- ✅ Provide detailed build logs
+- ✅ Show build status and history
+
+## 🎯 Next Steps After Pipeline Setup
+
+1. **Commit a Jenkinsfile** to your repository root
+2. **Test the pipeline** with a manual build
+3. **Push changes** to trigger automatic builds
+4. **Monitor build results** and fix any issues
+5. **Customize the pipeline** for your specific project needs
