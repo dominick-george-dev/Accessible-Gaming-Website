@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, CheckCircle, AlertCircle, Loader2, X, XCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, Loader2, X, XCircle } from 'lucide-react';
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from './ui/alert-dialog';
+
 
 interface Game {
     id: number;
@@ -122,9 +124,6 @@ const AdminDeleteAndVerifyTab: React.FC = () => {
 
     // ✅ New function to revoke verification
     const handleRevokeVerification = async (gameId: number) => {
-        const gameName = games.find(g => g.id === gameId)?.title || 'this game';
-        const confirmed = window.confirm(`Are you sure you want to revoke verification for "${gameName}"? It will be marked as pending.`);
-        if (!confirmed) return;
 
         setActionLoading(prev => ({ ...prev, [gameId]: 'revoking' }));
 
@@ -141,6 +140,9 @@ const AdminDeleteAndVerifyTab: React.FC = () => {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to revoke verification');
             }
+
+            const gameName = games.find(g => g.id === gameId)?.title || 'this game';
+
 
             setGames(prevGames =>
                 prevGames.map(game =>
@@ -161,10 +163,7 @@ const AdminDeleteAndVerifyTab: React.FC = () => {
     };
 
     const handleDelete = async (gameId: number, gameTitle: string) => {
-        // Custom confirmation dialog
-        const confirmed = window.confirm(`Are you sure you want to delete "${gameTitle}"? This action cannot be undone.`);
-        if (!confirmed) return;
-
+        // Just utilises AlertDialog UI
         setActionLoading(prev => ({ ...prev, [gameId]: 'deleting' }));
 
         try {
@@ -379,64 +378,93 @@ const AdminDeleteAndVerifyTab: React.FC = () => {
                                 <div className="flex gap-2 p-4 pt-0">
                                     {!game.hasBeenVerified ? (
                                         // Show verify button for unverified games
-                                        <button
-                                            onClick={() => handleVerify(game.id)}
-                                            disabled={actionLoading[game.id] === 'verifying'}
-                                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-md transition-colors font-medium"
-                                            aria-label={`Verify ${game.title}`}
-                                        >
-                                            {actionLoading[game.id] === 'verifying' ? (
-                                                <>
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                                    Verifying...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <CheckCircle className="w-4 h-4" />
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <button
+                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors font-medium mb-1"
+                                                aria-label={`Verify ${game?.title ?? 'game'}`}
+                                                >
+                                                Verify
+                                                </button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Verify {game?.title ?? 'game'}</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Confirm verifying "{game?.title ?? 'this game'}". This will mark it as verified.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    onClick={() => handleVerify(game.id)}
+                                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                                >
                                                     Verify
-                                                </>
-                                            )}
-                                        </button>
+                                                </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     ) : (
                                         // Show revoke button for verified games
-                                        <button
-                                            onClick={() => handleRevokeVerification(game.id)}
-                                            disabled={actionLoading[game.id] === 'revoking'}
-                                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white rounded-md transition-colors font-medium"
-                                            aria-label={`Revoke verification for ${game.title}`}
-                                        >
-                                            {actionLoading[game.id] === 'revoking' ? (
-                                                <>
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                                    Revoking...
-                                                </>
-                                            ) : (
-                                                <>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <button
+                                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-md transition-colors font-medium mb-1"
+                                                    aria-label={`Revoke verification for ${game.title}`}
+                                                >
                                                     <XCircle className="w-4 h-4" />
                                                     Revoke
-                                                </>
-                                            )}
-                                        </button>
+                                                </button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Revoke verification</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Are you sure you want to revoke verification for "{game.title}"? This will mark it as pending.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={() => handleRevokeVerification(game.id)}
+                                                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                                                        disabled={actionLoading[game.id] === 'revoking'}
+                                                    >
+                                                        {actionLoading[game.id] === 'revoking' ? 'Revoking...' : 'Revoke'}
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     )}
 
-                                    <button
-                                        onClick={() => handleDelete(game.id, game.title)}
-                                        disabled={actionLoading[game.id] === 'deleting'}
-                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md transition-colors font-medium"
-                                        aria-label={`Delete ${game.title}`}
-                                    >
-                                        {actionLoading[game.id] === 'deleting' ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                Deleting...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Trash2 className="w-4 h-4" />
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <button
+                                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors font-medium mb-1"
+                                            aria-label={`Delete ${game?.title ?? 'game'}`}
+                                            >
+                                            Delete
+                                            </button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete {game?.title ?? 'game'}</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Are you sure you want to delete "{game?.title ?? 'this game'}"? This action cannot be undone.
+                                            </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={() => handleDelete(game.id, game.title)}
+                                                className="bg-red-600 hover:bg-red-700 text-white"
+                                            >
                                                 Delete
-                                            </>
-                                        )}
-                                    </button>
+                                            </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
                             </div>
                         ))}
