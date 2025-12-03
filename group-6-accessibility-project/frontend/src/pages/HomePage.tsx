@@ -32,21 +32,16 @@ function useUser() {
 export function HomePage() {
   const navigate = useNavigate();
   const { user } = useUser();
-  
-  const [favorites, setFavorites] = useState<number[]>([]);
+    const [favorites, setFavorites] = useState<number[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [loadingFavorites, setLoadingFavorites] = useState(false);
   const [topShownCount, setTopShownCount] = useState<number>(3);
 
   const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:3000";
 
   // Fetch user's favorites
   useEffect(() => {
-    if (!user) return;
-
-    const fetchFavorites = async () => {
-      setLoadingFavorites(true);
+    if (!user) return;    const fetchFavorites = async () => {
       try {
         const response = await fetch(`${API_BASE}/favorites/${user.id}`);
         if (response.ok) {
@@ -56,8 +51,6 @@ export function HomePage() {
         }
       } catch (error) {
         console.error('Error fetching favorites:', error);
-      } finally {
-        setLoadingFavorites(false);
       }
     };
 

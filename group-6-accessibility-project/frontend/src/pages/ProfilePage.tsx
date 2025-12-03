@@ -36,41 +36,17 @@ interface User {
   };
 }
 
-// ===== MOCK USER FOR FALLBACK =====
-const MOCK_USER: User = {
-  id: '0',
-  name: 'Mock User',
-  email: 'mockuser@email.com',
-  favorites: [],
-  isAdmin: false,
-  isPublisher: false,
-  accessibilityPreferences: {
-    visual: false,
-    hearing: false,
-    dexterity: false,
-    cognitive: false,
-    textSize: 16,
-    highContrast: false,
-    dyslexiaFont: false,
-    colorblindFilter: 'none',
-    theme: 'light',
-    fontFamily: 'default',
-  },
-};
-
 // ===== MAIN COMPONENT =====
 
 export default function ProfilePageStandalone() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const { 
+  const navigate = useNavigate();  const { 
     preferences, 
     magnifierEnabled, 
     updatePreferences, 
     toggleMagnifier, 
-    adjustTextSize,
-    isLoading: accessibilityLoading 
+    adjustTextSize
   } = useAccessibility();
   // Fetch user and accessibility settings on mount
   useEffect(() => {

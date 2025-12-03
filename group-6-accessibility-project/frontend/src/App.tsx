@@ -19,17 +19,6 @@ import AdminDeleteAndVerifyTab from './components/AdminDeleteAndVerifyTab'
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import AccessibilityTagsAdminTab from './components/AccessibilityTagsAdminTab'
 
-const FavoritesPage = () => (
-  <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-    <div className="max-w-5xl">
-      <h2 className="text-2xl font-bold mb-6">My Favorites</h2>
-      <p className="text-muted-foreground">
-        You haven't added any games to your favorites yet. Start browsing to find games you love!
-      </p>
-    </div>
-  </div>
-);
-
 function App() {
   return (
     <AccessibilityProvider>

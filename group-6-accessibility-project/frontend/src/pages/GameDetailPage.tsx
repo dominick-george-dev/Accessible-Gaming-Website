@@ -76,12 +76,9 @@ export function GameDetailPage() {
   const [reviewText, setReviewText] = useState("");
   const [selectedAccessibilityTags, setSelectedAccessibilityTags] = useState<string[]>([]);
   const hasLoggedView = useRef(false);
-  const headingRef = useRef<HTMLHeadingElement | null>(null);
-
-  const isLoggedIn = JSON.parse(localStorage.getItem("isLoggedIn") || "false");
+  const headingRef = useRef<HTMLHeadingElement | null>(null);  const isLoggedIn = JSON.parse(localStorage.getItem("isLoggedIn") || "false");
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const [loadingFavorites, setLoadingFavorites] = useState(false);
+  const [_favorites, setFavorites] = useState<number[]>([]);
 
 
   // Hook to get user from localStorage (add this function)
@@ -112,10 +109,7 @@ export function GameDetailPage() {
 
   // Add this useEffect for fetching favorites:
   useEffect(() => {
-    if (!user) return;
-
-    const fetchFavorites = async () => {
-      setLoadingFavorites(true);
+    if (!user) return;    const fetchFavorites = async () => {
       try {
         const response = await fetch(`http://localhost:3000/favorites/${user.id}`);
         if (response.ok) {
@@ -127,11 +121,8 @@ export function GameDetailPage() {
           if (game) {
             setIsFavorite(gameIds.includes(Number(game.id)));
           }
-        }
-      } catch (error) {
+        }      } catch (error) {
         console.error('Error fetching favorites:', error);
-      } finally {
-        setLoadingFavorites(false);
       }
     };
 

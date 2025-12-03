@@ -7,7 +7,7 @@ import { UndoButton } from './UndoButton';
 import { toast } from 'sonner';
 import { addUndoAction } from '../utils/undoManager';
 import { useAuth } from '../hooks/useAuth';
-import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../utils/applyAccessibilitySettings';
+import { applyDyslexiaFont } from '../utils/applyAccessibilitySettings';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -216,26 +216,10 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         toast(`Voice controls ${previousState ? 'enabled' : 'disabled'}`);
       }
     );
-    
-    toast(`Voice controls ${!previousState ? 'enabled' : 'disabled'}`);
+      toast(`Voice controls ${!previousState ? 'enabled' : 'disabled'}`);
   };
 
-  // Example handler for toggling dyslexia font
-  const handleDyslexiaFontToggle = (enabled: boolean) => {
-    if (!user) return;
-    // Update both dyslexiaFont and fontFamily in preferences
-    const newPreferences = {
-      ...user.accessibilityPreferences,
-      dyslexiaFont: enabled,
-      fontFamily: enabled ? 'OpenDyslexic' : 'default',
-    };
-    // Call your update preferences function (replace with your actual function)
-    // Example: handleUpdatePreferences(newPreferences);
-    // Apply font immediately
-    applyDyslexiaFont(enabled);
-  };
-
-  return (    
+  return (
     <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      
       {/* Desktop Sidebar - Conditionally shown */}
       {isDesktopSidebarOpen && (

@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner'; 
 import { useAuth } from '../hooks/useAuth';
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../utils/applyAccessibilitySettings';
 
 interface LoginPageProps {
   onLogin: (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => void;
