@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+    tools {
+        go 'go-1.25.4'
+    }
+
+    environment {
+        GO111MODULE = 'on'
+    }
+
+    stages {
+        stage('Test') {
+            steps {
+                withCredentials([file(credentialsId: 'env_file', variable: 'ENV_FILE_PATH')]) {
+                    bat 'echo "Testing..."'
+                    bat 'copy "%ENV_FILE_PATH%" ".env"'
+                    bat 'cd team-6-accessible-gaming-website/group-6-accessibility-project/backend && npm ci'
+                    bat 'cd team-6-accessible-gaming-website/group-6-accessibility-project/backend && npm install prisma@6.19.0 --save-dev'
+                    bat 'cd team-6-accessible-gaming-website/group-6-accessibility-project/backend && npx prisma generate --schema=prisma/schema.prisma'
+                    bat 'cd team-6-accessible-gaming-website/group-6-accessibility-project/backend && npm install --save-dev ts-jest typescript'
+                    bat 'cd team-6-accessible-gaming-website/group-6-accessibility-project/backend && npm run test -- --coverage'
+                }   
+            }
+        }
+        stage('Build') {
+            steps {
+                withCredentials([file(credentialsId: 'env_file', variable: 'ENV_FILE_PATH')]) {
+                    bat """
+                        echo Building Docker image...
+                        cd team-6-accessible-gaming-website/group-6-accessibility-project
+                        copy "%ENV_FILE_PATH%" ".env"
+                        git checkout 11-ci-cd-pipeline-integration
+                        docker-compose -f docker-compose.yml build backend
+                        docker-compose -f docker-compose.yml up -d backend
+                        
+                        docker-compose -f docker-compose.yml build frontend
+                        docker-compose -f docker-compose.yml up -d frontend
+                    """
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                bat 'echo "Deploying..."'
+                // Add deploy steps here
+            }
+        }
+    }
+}
