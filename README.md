@@ -134,7 +134,7 @@ AWS_CLOUDFRONT_URL=https://xxxx.cloudfront.net
    cd group-6-accessibility-project
 
 2. **Download Ollama**
-
+   ```sh
    Navigate to https://ollama.com/download
    Click "Download for Windows"
    Run the "OllamaSetup.exe"
@@ -145,19 +145,23 @@ AWS_CLOUDFRONT_URL=https://xxxx.cloudfront.net
      ```sh
      cd backend
      npm install
-     ollama pull llama3.2:1b
      ```
    - Frontend:
      ```sh
      cd ../frontend
      npm install
      ```
-4. **Run the backend:**
+
+4. **Pull the Ollama model**
+   ```sh
+   Ollama pull llama3.2:1b
+   ```
+5. **Run the backend:**
    ```sh
    cd backend
    npm run start:dev
    ```
-5. **Run the frontend:**
+6. **Run the frontend:**
    ```sh
    cd frontend
    npm run dev
