@@ -64,6 +64,9 @@ export class GamesController {
     @Get('/gameDetails/:id')
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
     async getGameDetails(@Param() params: GameIdParamDto) {
+        if (params.id === undefined || params.id === null || isNaN(Number(params.id))) {
+            throw new HttpException('Invalid or missing game id', HttpStatus.BAD_REQUEST);
+        }
         try {
             return await this.gamesService.findById(params.id);
         } catch (error) {
@@ -93,6 +96,9 @@ export class GamesController {
 
     @Post('/view/:id')
     createView(@Param("id", ParseIntPipe) id: number, @Body() createViewDto: CreateViewDto) {
+        if (id === undefined || id === null || isNaN(Number(id))) {
+            throw new HttpException('Invalid or missing game id', HttpStatus.BAD_REQUEST);
+        }
         return this.gamesService.createView(id, createViewDto);
     }
 
@@ -171,6 +177,9 @@ export class GamesController {
     @UseGuards(ThrottlerGuard, JwtAuthGuard, RolesGuard)
     @Roles('PUBLISHER', 'ADMIN')
     async update(@Param('id') id: string, @Body() updateGameDto: any, @Req() req: any) {
+        if (id === undefined || id === null || isNaN(Number(id))) {
+            throw new HttpException('Invalid or missing game id', HttpStatus.BAD_REQUEST);
+        }
         console.log('PUT /games/:id endpoint HIT by user:', req.user?.userId, 'role:', req.user?.role);
 
         try {
@@ -190,6 +199,9 @@ export class GamesController {
     @UseGuards(ThrottlerGuard, JwtAuthGuard, RolesGuard)
     @Roles('PUBLISHER', 'ADMIN')
     async remove(@Param('id') id: string, @Req() req: any) {
+        if (id === undefined || id === null || isNaN(Number(id))) {
+            throw new HttpException('Invalid or missing game id', HttpStatus.BAD_REQUEST);
+        }
         console.log('DELETE /games/:id endpoint HIT by user:', req.user?.userId, 'role:', req.user?.role);
 
         try {
@@ -210,6 +222,9 @@ export class GamesController {
     @UseGuards(ThrottlerGuard, JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
     async verify(@Param('id') id: string, @Req() req: any) {
+        if (id === undefined || id === null || isNaN(Number(id))) {
+            throw new HttpException('Invalid or missing game id', HttpStatus.BAD_REQUEST);
+        }
         console.log('PATCH /games/:id/verify endpoint HIT by admin:', req.user?.userId);
 
         try {
@@ -225,6 +240,9 @@ export class GamesController {
     @UseGuards(ThrottlerGuard, JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
     async revokeVerification(@Param('id') id: string, @Req() req: any) {
+        if (id === undefined || id === null || isNaN(Number(id))) {
+            throw new HttpException('Invalid or missing game id', HttpStatus.BAD_REQUEST);
+        }
         console.log('PATCH /games/:id/revoke-verification endpoint HIT by admin:', req.user?.userId);
 
         try {

@@ -47,7 +47,7 @@ export default function ProfilePageStandalone() {
   } = useAccessibility();
   // Fetch user and accessibility settings on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem('userData');
     console.log('User in localStorage on ProfilePage load:', storedUser);
     if (!storedUser) {
       setLoading(false);
