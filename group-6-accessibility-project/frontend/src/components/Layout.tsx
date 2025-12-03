@@ -5,9 +5,12 @@ import { Breadcrumbs } from './Breadcrumbs';
 import { LoadingBar } from './LoadingBar';
 import { UndoButton } from './UndoButton';
 import { toast } from 'sonner';
-import { addUndoAction } from '../utils/undoManager';
+import { addUndoAction, undoManager } from '../utils/undoManager';
 import { useAuth } from '../hooks/useAuth';
-import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../utils/applyAccessibilitySettings';
+import { useAccessibility } from '../contexts/AccessibilityContext';
+import { Magnifier } from './ui/magnifier';
+import { applyDyslexiaFont } from '../utils/applyAccessibilitySettings';
+import { AidenChatPanel } from './AidenChatPanel';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,17 +18,12 @@ interface LayoutProps {
   selectedPublisherName?: string;
 }
 
-export function Layout({ children, selectedGameName, selectedPublisherName }: LayoutProps) {
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(() => {
-    // Load sidebar state from localStorage, default to true
-    const savedState = localStorage.getItem('isDesktopSidebarOpen');
-    return savedState !== null ? JSON.parse(savedState) : true;
-  });
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [magnifierEnabled, setMagnifierEnabled] = useState(false);
-  const [voiceControlsEnabled, setVoiceControlsEnabled] = useState(false);
+export function Layout({ children, selectedGameName, selectedPublisherName }: LayoutProps) {  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    // Load sidebar collapsed state from localStorage, default to false
+    const savedState = localStorage.getItem('isSidebarCollapsed');
+    return savedState !== null ? JSON.parse(savedState) : false;
+  });  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<{
     id: string;
     name: string;
@@ -33,6 +31,20 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     isAdmin: boolean;
     isPublisher: boolean;
   } | null>(null);
+
+  const [isAidenOpen, setIsAidenOpen] = useState(false);
+  
+  // Use magnifier from accessibility context
+  const { magnifierEnabled, toggleMagnifier } = useAccessibility();
+  // Ensure only one of sidebar or chat is open at a time
+  function handleOpenAiden(open: boolean) {
+    if (open) {
+      setIsAidenOpen(true);
+      setIsMobileSidebarOpen(false);
+    } else {
+      setIsAidenOpen(false);
+    }
+  }
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -168,81 +180,53 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     setTimeout(() => {
       window.location.reload();
     }, 100);
-  };
-
-  const handleToggleSidebar = () => {
-    const newState = !isDesktopSidebarOpen;
-    const previousState = isDesktopSidebarOpen;
+  };  const handleToggleSidebar = () => {
+    const previousCollapsedState = isSidebarCollapsed;
     
-    setIsDesktopSidebarOpen(newState);
-    localStorage.setItem('isDesktopSidebarOpen', JSON.stringify(newState));
+    // Toggle between expanded and collapsed only
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+    localStorage.setItem('isSidebarCollapsed', JSON.stringify(!isSidebarCollapsed));
     
-    // Add undo action for sidebar toggle
     addUndoAction(
-      `${newState ? 'Show' : 'Hide'} sidebar`,
+      `${!isSidebarCollapsed ? 'Collapse' : 'Expand'} sidebar`,
       () => {
-        setIsDesktopSidebarOpen(previousState);
-        localStorage.setItem('isDesktopSidebarOpen', JSON.stringify(previousState));
-        toast(`Sidebar ${previousState ? 'shown' : 'hidden'}`);
+        setIsSidebarCollapsed(previousCollapsedState);
+        localStorage.setItem('isSidebarCollapsed', JSON.stringify(previousCollapsedState));
+        toast(`Sidebar ${previousCollapsedState ? 'collapsed' : 'expanded'}`);
       }
     );
-  };
-
-  const handleToggleMagnifier = () => {
+    
+    toast(`Sidebar ${!isSidebarCollapsed ? 'collapsed' : 'expanded'}`);
+  };  const handleToggleMagnifier = () => {
     const previousState = magnifierEnabled;
-    setMagnifierEnabled(!magnifierEnabled);
+    toggleMagnifier();
     
     // Add undo action for magnifier
     addUndoAction(
       `${!previousState ? 'Enable' : 'Disable'} screen magnifier`,
       () => {
-        setMagnifierEnabled(previousState);
+        toggleMagnifier();
         toast(`Screen magnifier ${previousState ? 'enabled' : 'disabled'}`);
       }
     );
-    
-    toast(`Screen magnifier ${!previousState ? 'enabled' : 'disabled'}`);
+  };  const handleUndo = () => {
+    if (undoManager && typeof undoManager.executeUndo === 'function') {
+      undoManager.executeUndo();
+    } else {
+      console.warn('Undo functionality not available');
+    }
   };
 
-  const handleToggleVoiceControls = () => {
-    const previousState = voiceControlsEnabled;
-    setVoiceControlsEnabled(!voiceControlsEnabled);
-    
-    // Add undo action for voice controls
-    addUndoAction(
-      `${!previousState ? 'Enable' : 'Disable'} voice controls`,
-      () => {
-        setVoiceControlsEnabled(previousState);
-        toast(`Voice controls ${previousState ? 'enabled' : 'disabled'}`);
-      }
-    );
-    
-    toast(`Voice controls ${!previousState ? 'enabled' : 'disabled'}`);
-  };
-
-  // Example handler for toggling dyslexia font
-  const handleDyslexiaFontToggle = (enabled: boolean) => {
-    if (!user) return;
-    // Update both dyslexiaFont and fontFamily in preferences
-    const newPreferences = {
-      ...user.accessibilityPreferences,
-      dyslexiaFont: enabled,
-      fontFamily: enabled ? 'OpenDyslexic' : 'default',
-    };
-    // Call your update preferences function (replace with your actual function)
-    // Example: handleUpdatePreferences(newPreferences);
-    // Apply font immediately
-    applyDyslexiaFont(enabled);
-  };
-
-  return (    
-    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      
-      {/* Desktop Sidebar - Conditionally shown */}
-      {isDesktopSidebarOpen && (
-        <div className="hidden lg:block">
-          <Sidebar isLoggedIn={isLoggedIn} />
-        </div>
-      )}
+  return (
+    <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      {/* Desktop Sidebar - Always shown on desktop */}
+      <div className="hidden lg:block">
+        <Sidebar 
+          isLoggedIn={isLoggedIn} 
+          isCollapsed={isSidebarCollapsed}
+          onToggleChat={() => handleOpenAiden(!isAidenOpen)}
+          isChatOpen={isAidenOpen}
+        />
+      </div>
 
       {/* Mobile Sidebar Drawer */}
       <MobileSidebar
@@ -250,46 +234,47 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         isAdmin={user?.isAdmin || false}
         isPublisher={user?.isPublisher || false}
         isOpen={isMobileSidebarOpen}
-        onClose={() => setIsMobileSidebarOpen(false)}      
+        onClose={() => setIsMobileSidebarOpen(false)}
+        onToggleChat={() => handleOpenAiden(!isAidenOpen)}
+        isChatOpen={isAidenOpen}
       />
-      
-      {/* Main Layout with content shrinking behavior */}
-      <div 
-        className={`w-full max-w-full overflow-x-hidden main-content-wrapper content-shrink-transition ${
-          isDesktopSidebarOpen ? 'shrunk-content' : ''
-        }`}
-      >        
-        {/* Top Header */}        
-        <Header
+        {/* Main Layout with content shrinking behavior */}
+      <div className="w-full max-w-full overflow-x-hidden">        
+        {/* Top Header */}        <Header
           selectedGameName={selectedGameName}
           selectedPublisherName={selectedPublisherName}
           onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
           onToggleSidebar={handleToggleSidebar}
-          isSidebarOpen={isDesktopSidebarOpen}
+          isSidebarOpen={true}
+          isSidebarCollapsed={isSidebarCollapsed}
           isLoggedIn={isLoggedIn}
           onLogin={handleLogin}
           onLogout={handleLogout}
           onToggleMagnifier={handleToggleMagnifier}
           magnifierEnabled={magnifierEnabled}
-          onToggleVoiceControls={handleToggleVoiceControls}
-          voiceControlsEnabled={voiceControlsEnabled}
           user={user}
+          onUndo={handleUndo}
         />
 
         {/* Dynamic Loading Bar */}
         <LoadingBar />        
-        {/* Breadcrumb Navigation */}
-        <Breadcrumbs 
-          selectedGameName={selectedGameName}
-          selectedPublisherName={selectedPublisherName}
-          isSidebarOpen={isDesktopSidebarOpen}
-        />
+        
+        {/* Breadcrumb Navigation with proper positioning */}
+        <div className={`fixed top-16 left-0 right-0 z-40 transition-all duration-300 ${
+          isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-52'
+        }`}>
+          <Breadcrumbs 
+            selectedGameName={selectedGameName}
+            selectedPublisherName={selectedPublisherName}
+            isSidebarOpen={!isSidebarCollapsed}
+          />
+        </div>
 
         {/* Main Content */}        
         <main 
           id="main-content" 
           className={`content-with-bottom-nav w-full max-w-full overflow-x-hidden transition-all duration-300 ${
-            isDesktopSidebarOpen ? 'lg:pl-52' : 'lg:pl-4'
+            isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-52'
           }`}
           style={{ paddingTop: 'calc(4rem + 3rem)' }} /* Header + Breadcrumbs + spacing */
           tabIndex={-1}
@@ -300,10 +285,24 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         {/* Bottom Navigation - Only shown on mobile */}
         <div className="lg:hidden">
           <BottomNav />        
-        </div>
-
-        {/* Undo Button */}
+        </div>        {/* Undo Button */}
         <UndoButton />
+
+        {/* Chat Bot Panel (reuse AidenChatPanel if present) */}
+        <AidenChatPanel 
+          open={isAidenOpen} 
+          onOpenChange={handleOpenAiden} 
+          onWakeWord={() => {
+            handleOpenAiden(true);
+          }}
+        />
+
+        {/* Screen Magnifier */}
+        <Magnifier 
+          isActive={magnifierEnabled}
+          magnification={2}
+          size={200}
+        />
       </div>
     </div>
   );
