@@ -138,7 +138,7 @@ const VOICE_COMMANDS: VoiceCommandCategory[] = [
 export function AccessibilityPage() {
     
   const [issueReport, setIssueReport] = useState('');
-  const user = JSON.parse(localStorage.getItem('user') || '{}');  
+  const user = JSON.parse(localStorage.getItem('userData') || '{}');  
   const userId = user?.id;
 
   const handleReportIssue = async () => {
