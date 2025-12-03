@@ -80,6 +80,100 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+.deep-space {
+  /* Background Colors */
+  --background: oklch(0.15 0.02 250);           /* Very dark blue-grey */
+  --foreground: oklch(0.95 0.01 250);           /* Almost white with blue tint */
+  
+  /* Card Colors */
+  --card: oklch(0.18 0.02 250);                 /* Slightly lighter than background */
+  --card-foreground: oklch(0.95 0.01 250);      /* Almost white with blue tint */
+  
+  /* Popover Colors */
+  --popover: oklch(0.18 0.02 250);              /* Same as card */
+  --popover-foreground: oklch(0.95 0.01 250);   /* Almost white with blue tint */
+  
+  /* Primary Colors - Purple/Magenta */
+  --primary: oklch(0.65 0.25 290);              /* Bright purple */
+  --primary-foreground: oklch(0.98 0.01 290);   /* Nearly white with purple tint */
+  
+  /* Secondary Colors - Pink */
+  --secondary: oklch(0.55 0.20 320);            /* Pink */
+  --secondary-foreground: oklch(0.98 0.01 320); /* Nearly white with pink tint */
+  
+  /* Muted Colors */
+  --muted: oklch(0.25 0.02 250);                /* Dark grey-blue */
+  --muted-foreground: oklch(0.65 0.01 250);     /* Medium light grey-blue */
+  
+  /* Accent Colors - Blue */
+  --accent: oklch(0.60 0.25 260);               /* Bright blue */
+  --accent-foreground: oklch(0.98 0.01 260);    /* Nearly white with blue tint */
+  
+  /* Destructive Colors - Red/Orange */
+  --destructive: oklch(0.55 0.22 10);           /* Reddish */
+  --destructive-foreground: oklch(0.98 0.01 10);/* Nearly white with red tint */
+  
+  /* Border & Input Colors */
+  --border: oklch(0.30 0.02 250);               /* Medium dark blue-grey */
+  --input: oklch(0.25 0.02 250);                /* Dark grey-blue */
+  --input-background: oklch(0.20 0.02 250);     /* Even darker grey-blue */
+  --switch-background: oklch(0.35 0.02 250);    /* Lighter grey-blue for switches */
+  
+  /* Ring Color (Focus Indicator) */
+  --ring: oklch(0.65 0.25 290);                 /* Bright purple (same as primary) */
+  
+  /* Sidebar Colors */
+  --sidebar: oklch(0.16 0.02 250);              /* Slightly lighter than background */
+  --sidebar-foreground: oklch(0.95 0.01 250);   /* Almost white with blue tint */
+  --sidebar-primary: oklch(0.65 0.25 290);      /* Bright purple */
+  --sidebar-primary-foreground: oklch(0.98 0.01 290); /* Nearly white with purple tint */
+  --sidebar-accent: oklch(0.22 0.02 250);       /* Dark grey-blue */
+  --sidebar-accent-foreground: oklch(0.95 0.01 250);  /* Almost white with blue tint */
+  --sidebar-border: oklch(0.30 0.02 250);       /* Medium dark blue-grey */
+  --sidebar-ring: oklch(0.65 0.25 290);         /* Bright purple */
+}
+
+/* ============================================
+   HIGH CONTRAST MODE FOR DEEP SPACE
+   ============================================
+   Enhanced version with maximum contrast
+   for users with visual impairments
+   ============================================ */
+
+.deep-space.high-contrast {
+  --background: #000000;                        /* Pure black */
+  --foreground: #ffffff;                        /* Pure white */
+  --card: #000000;                              /* Pure black */
+  --card-foreground: #ffffff;                   /* Pure white */
+  --primary: #ffff00;                           /* Bright yellow */
+  --primary-foreground: #000000;                /* Pure black */
+  --secondary: #ff00ff;                         /* Bright magenta */
+  --secondary-foreground: #000000;              /* Pure black */
+  --accent: #00ffff;                            /* Bright cyan */
+  --accent-foreground: #000000;                 /* Pure black */
+  --border: #ffff00;                            /* Bright yellow */
+}
+
+/* ============================================
+   LOADING BAR SPECIAL EFFECTS
+   ============================================
+   Custom gradient and glow effects for
+   loading indicators in deep space theme
+   ============================================ */
+
+.deep-space .loading-bar-themed [data-slot="progress-indicator"] {
+  /* Tri-color gradient: Purple → Pink → Blue */
+  background: linear-gradient(
+    90deg, 
+    oklch(0.65 0.25 290),  /* Purple */
+    oklch(0.55 0.20 320),  /* Pink */
+    oklch(0.60 0.25 260)   /* Blue */
+  );
+  
+  /* Purple glow effect */
+  box-shadow: 0 0 10px oklch(0.65 0.25 290);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
