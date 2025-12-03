@@ -3,7 +3,7 @@ resource "openstack_networking_floatingip_v2" "floating_ip" {
 }
 
 resource "openstack_compute_secgroup_v2" "security_group" {
-  name        = var.security_name
+  name        = "${var.security_name}-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
   description = var.security_description
   rule {
     from_port   = 22
@@ -25,7 +25,9 @@ resource "openstack_compute_instance_v2" "instance" {
   flavor_name     = var.flavor
   security_groups = [openstack_compute_secgroup_v2.security_group.id]
   key_pair        = var.keypair
-  user_data       = file(var.server_script)
+  user_data       = templatefile(var.server_script, {
+    project_ssh_key = file("${path.module}/project.key")
+  })
 }
 
 resource "openstack_compute_floatingip_associate_v2" "floating_ip" {
