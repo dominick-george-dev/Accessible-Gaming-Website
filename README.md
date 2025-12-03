@@ -132,24 +132,32 @@ AWS_CLOUDFRONT_URL=https://xxxx.cloudfront.net
    ```sh
    git clone https://git.cardiff.ac.uk/c23069362/team-6-accessible-gaming-website.git
    cd group-6-accessibility-project
+
+2. **Download Ollama**
+
+   Navigate to https://ollama.com/download
+   Click "Download for Windows"
+   Run the "OllamaSetup.exe"
+   Follow the Install Steps
    ```
-2. **Install dependencies:**
+3. **Install dependencies and ollama model:**
    - Backend:
      ```sh
      cd backend
      npm install
+     ollama pull llama3.2:1b
      ```
    - Frontend:
      ```sh
      cd ../frontend
      npm install
      ```
-3. **Run the backend:**
+4. **Run the backend:**
    ```sh
    cd backend
    npm run start:dev
    ```
-4. **Run the frontend:**
+5. **Run the frontend:**
    ```sh
    cd frontend
    npm run dev
