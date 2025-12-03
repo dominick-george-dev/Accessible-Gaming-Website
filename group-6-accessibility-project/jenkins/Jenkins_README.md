@@ -18,16 +18,15 @@ GitLab plugin
 2. Source you OpenRC file (only need to run each shell session):
     source ./c1414376-openrc.sh
 
-2. Initialise Terraform with this command:
+2. Initialise Terraform with this command (Type "yes" if prompted):
     terraform init
 
-3. Creates the project's Terraform configuration
+3. Creates the project's Terraform configuration:
     terraform plan
 
-4. Apply terraform configuration to project infrastructure.
+4. Apply terraform configuration to project infrastructure (Type "yes" if prompted):
     terraform apply
 
-    terraform destroy
 
 # Build Shell Script
 
@@ -36,7 +35,8 @@ GitLab plugin
 
 # Post-Build Task Shell Script
 
-
+(Type "yes" if prompted)
+    terraform destroy
 
 Job name:
 blood-donation-project

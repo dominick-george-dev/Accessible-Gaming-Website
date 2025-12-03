@@ -23,7 +23,7 @@ resource "openstack_compute_instance_v2" "instance" {
   name            = var.name
   image_name      = var.image
   flavor_name     = var.flavor
-  security_groups = [openstack_compute_secgroup_v2.security_group.name]
+  security_groups = [openstack_compute_secgroup_v2.security_group.id]
   key_pair        = var.keypair
   user_data       = file(var.server_script)
 }
