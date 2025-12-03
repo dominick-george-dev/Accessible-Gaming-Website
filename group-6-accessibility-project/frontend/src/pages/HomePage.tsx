@@ -235,9 +235,8 @@ export function HomePage() {
       <div
         className="min-w-full flex-shrink-0 snap-center px-4"
         style={{ scrollSnapAlign: "center" }}
-      >
-        <div
-          className="relative rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition transform hover:-translate-y-1 bg-gradient-to-b from-white/80 to-white/60"
+      >        <div
+          className="relative rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition transform hover:-translate-y-1 bg-card border border-border"
           role="group"
           tabIndex={0}
           onClick={() => handleGameClick(id)}
@@ -247,9 +246,8 @@ export function HomePage() {
             <div className="relative h-64 md:h-72 lg:h-80">
               <img src={img} alt={`${("name" in game ? (game as any).name : (game as any).title) || "Game"} cover`} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-            </div>
-          ) : (
-            <div className="h-64 md:h-72 lg:h-80 bg-gray-100 flex items-center justify-center text-sm text-muted-foreground">No image</div>
+            </div>          ) : (
+            <div className="h-64 md:h-72 lg:h-80 bg-muted flex items-center justify-center text-sm text-muted-foreground">No image</div>
           )}
 
           <div className="p-4">
@@ -257,12 +255,10 @@ export function HomePage() {
               <div className="min-w-0">
                 <h4 className="text-base font-semibold truncate">{("name" in game ? (game as any).name : (game as any).title) || "Untitled"}</h4>
                 <p className="text-xs text-muted-foreground mt-1 truncate">{Array.isArray((game as any).genre) ? (game as any).genre.join(", ") : (game as any).genre}</p>
-              </div>
-
-              <button
+              </div>              <button
                 onClick={(e) => { e.stopPropagation(); handleToggleFavorite(id); }}
                 aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-                className="p-2 rounded-md hover:bg-gray-100"
+                className="p-2 rounded-md hover:bg-accent transition-colors"
                 disabled={!user}
               >
                 <Heart className={`w-5 h-5 ${isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
@@ -285,14 +281,13 @@ export function HomePage() {
           </p>
 
           {/* Carousel container */}
-          <div className="relative">
-            <button
+          <div className="relative">            <button
               aria-label="Previous featured"
               onClick={prev}
               disabled={activeIndex === 0}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/90 shadow-md p-2 hover:bg-white focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-40"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-card/90 shadow-md p-2 hover:bg-card focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-40 border border-border"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 text-foreground" />
             </button>
 
             <div
@@ -318,23 +313,19 @@ export function HomePage() {
                   return <SlideCard key={id} game={game} id={id} />;
                 })
               )}
-            </div>
-
-            <button
+            </div>            <button
               aria-label="Next featured"
               onClick={next}
               disabled={activeIndex >= Math.max(0, featured.length - 1)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/90 shadow-md p-2 hover:bg-white focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-40"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-card/90 shadow-md p-2 hover:bg-card focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-40 border border-border"
             >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center justify-center gap-2 mt-3">
+              <ChevronRight className="w-5 h-5 text-foreground" />
+            </button>            <div className="flex items-center justify-center gap-2 mt-3">
               {featured.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => scrollToIndex(i)}
-                  className={`w-2 h-2 rounded-full transition ${i === activeIndex ? "bg-primary scale-110" : "bg-gray-300"}`}
+                  className={`w-2 h-2 rounded-full transition ${i === activeIndex ? "bg-primary scale-110" : "bg-muted-foreground/50"}`}
                   aria-label={`Go to slide ${i + 1}`}
                 />
               ))}
@@ -415,9 +406,8 @@ export function HomePage() {
 
                     <CardContent className="space-y-3">
                       {imgSrc ? (
-                        <img src={imgSrc} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} alt={`${("name" in game ? (game as any).name : (game as any).title) || "Game"} cover`} className="rounded-md w-full h-40 object-cover" />
-                      ) : (
-                        <div className="rounded-md w-full h-40 bg-gray-100 flex items-center justify-center text-sm text-muted-foreground">No image</div>
+                        <img src={imgSrc} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} alt={`${("name" in game ? (game as any).name : (game as any).title) || "Game"} cover`} className="rounded-md w-full h-40 object-cover" />                      ) : (
+                        <div className="rounded-md w-full h-40 bg-muted flex items-center justify-center text-sm text-muted-foreground">No image</div>
                       )}
 
                       <div className="flex items-center justify-between">
