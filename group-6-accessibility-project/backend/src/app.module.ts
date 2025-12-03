@@ -15,10 +15,11 @@ import { PublishersModule } from './publishers/publishers.module';
 import { UploadModule } from './upload/upload.module';
 import { AwsService } from './services/aws/aws.service';
 import { FavoritesModule } from './favorites/favorites.module';
+import { AdminModule } from './admin/admin.module';
 
 
 @Module({
-  imports: [GamesModule, DatabaseModule, AccessibilitySettingsModule,   FavoritesModule,AccessibilityTagsModule, AccessibilityIssuesModule, ReviewsModule, UsersModule, AuthModule, AnalyticsModule, PublishersModule, UploadModule, 
+  imports: [GamesModule, DatabaseModule, AccessibilitySettingsModule,   FavoritesModule,AccessibilityTagsModule, AccessibilityIssuesModule, ReviewsModule, UsersModule, AuthModule, AnalyticsModule, PublishersModule, UploadModule, AdminModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {

@@ -15,20 +15,9 @@ import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
 import { PublisherDashboard } from './pages/PublisherDashboard'
 import { Toaster } from "./components/ui/sonner";
-import AdminDeleteAndVerifyTab from './components/AdminDeleteAndVerifyTab'
+import { AdminDashboard } from './pages/AdminDashboard'
+import { useEffect } from 'react'
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
-import AccessibilityTagsAdminTab from './components/AccessibilityTagsAdminTab'
-
-const FavoritesPage = () => (
-  <div className="px-4 py-4 lg:pr-16 lg:py-6 w-full max-w-full overflow-x-hidden">
-    <div className="max-w-5xl">
-      <h2 className="text-2xl font-bold mb-6">My Favorites</h2>
-      <p className="text-muted-foreground">
-        You haven't added any games to your favorites yet. Start browsing to find games you love!
-      </p>
-    </div>
-  </div>
-);
 
 function App() {
   return (
@@ -41,6 +30,22 @@ function App() {
 function AppContent() {
   const { setLoginState } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Accessplay Gaming";
+
+    const setFavicon = (url: string) => {
+      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+      link.href = url;
+    };
+
+    setFavicon('/gamepad.png');
+  }, []);
 
   const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
     console.log('User logged in:', userData);
@@ -132,15 +137,9 @@ function AppContent() {
             <MakeAccountPublisherPage />
           </Layout>
         } />
-        {/* ✅ Add the admin route with proper access control */}
         <Route path="/admin" element={
           <Layout>
-            <AdminDeleteAndVerifyTab />
-          </Layout>
-        } />
-        <Route path="/admin/accessibility-tags" element={
-          <Layout>
-            <AccessibilityTagsAdminTab />
+            <AdminDashboard />
           </Layout>
         } />
         {/* Authentication pages without Layout (they have their own layout) */}        <Route
