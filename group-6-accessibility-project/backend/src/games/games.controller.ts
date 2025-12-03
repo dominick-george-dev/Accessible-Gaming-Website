@@ -128,6 +128,34 @@ export class GamesController {
         }
     }
 
+    // Add chatbot games query endpoint
+    @Get('/search-accessibility')
+    @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
+    async searchGamesByAccessibility(@Query() query: {
+        categories?: string;
+        tags?: string;
+        search?: string;
+        limit?: string;
+    }) {
+        try {
+            const categories = query.categories ? query.categories.split(',').map(c => c.trim()) : [];
+            const tags = query.tags ? query.tags.split(',').map(t => t.trim()) : [];
+            const limit = query.limit ? parseInt(query.limit, 10) : 10;
+            
+            return await this.gamesService.findGamesByAccessibility({
+                accessibilityCategories: categories,
+                accessibilityTags: tags,
+                searchTerm: query.search,
+                limit
+            });
+        } catch (error) {
+            if (error instanceof HttpException) {
+                throw error;
+            }
+            throw new HttpException('Failed to search games by accessibility', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @Get()
     async findAll() {
         return this.gamesService.findAll();

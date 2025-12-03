@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { createPortal } from 'react-dom';
 
 interface MagnifierProps {
   isActive: boolean;
@@ -353,3 +352,4 @@ function MagnifiedView({
     </div>
   );
 }
+

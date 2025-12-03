@@ -6,11 +6,11 @@ import {
   AlertCircle,
   Shield,
   BarChart3,
-  Code,
   Menu,
-  Mic,
+  Undo, // <-- keep Undo only
   LogOut,
-  ChevronDown
+  ChevronDown,
+  MessageCircle
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -28,14 +28,19 @@ import React from 'react';
 
 interface SidebarProps {
   isLoggedIn: boolean;
+  isCollapsed?: boolean;
+  onToggleChat?: () => void;
+  isChatOpen?: boolean;
 }
 
 interface MobileSidebarProps {
   isLoggedIn: boolean;
-  isAdmin: boolean;
-  isPublisher: boolean;
+  isAdmin?: boolean;
+  isPublisher?: boolean;
   isOpen: boolean;
   onClose: () => void;
+  onToggleChat?: () => void;
+  isChatOpen?: boolean;
 }
 
 interface HeaderProps {
@@ -44,13 +49,13 @@ interface HeaderProps {
   onOpenMobileMenu: () => void;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
+  isSidebarCollapsed?: boolean;
   isLoggedIn: boolean;
   onLogin: () => void;
   onLogout: () => void;
   onToggleMagnifier: () => void;
   magnifierEnabled: boolean;
-  onToggleVoiceControls?: () => void;
-  voiceControlsEnabled?: boolean;
+  onUndo?: () => void;
   user?: {
     name: string;
     username?: string;
@@ -60,7 +65,7 @@ interface HeaderProps {
   } | null;
 }
 
-export function Sidebar({ isLoggedIn }: SidebarProps) {
+export function Sidebar({ isLoggedIn, isCollapsed = false, onToggleChat, isChatOpen }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -118,14 +123,15 @@ export function Sidebar({ isLoggedIn }: SidebarProps) {
   };
 
   const currentPage = getCurrentPage();
-
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-48 bg-card border-r flex flex-col z-60 hidden lg:flex sidebar-above-header sidebar-transition"
+      className={`fixed left-0 top-0 h-screen bg-card border-r flex flex-col z-60 hidden lg:flex sidebar-above-header sidebar-transition ${
+        isCollapsed ? 'w-16' : 'w-48'
+      }`}
       aria-label="Main navigation"
     >
       {/* Logo Section */}
-      <div className="py-4 pl-4 pr-0 flex items-center gap-2">
+      <div className={`py-4 flex items-center ${isCollapsed ? 'px-3 justify-center' : 'pl-4 pr-0 gap-2'}`}>
         <div
           className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0"
           aria-hidden="true"
@@ -141,13 +147,15 @@ export function Sidebar({ isLoggedIn }: SidebarProps) {
             <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
         </div>
-        <h2 className="text-lg font-semibold">AccessPlay</h2>
+        {!isCollapsed && (
+          <h2 className="text-lg font-semibold">AccessPlay</h2>
+        )}
       </div>
 
       <Separator />
 
       {/* Main Navigation */}
-      <nav className="flex-1 py-3 pl-3 pr-0 space-y-1">
+      <nav className={`flex-1 py-3 space-y-1 ${isCollapsed ? 'px-2' : 'pl-3 pr-0'}`}>
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
@@ -156,24 +164,46 @@ export function Sidebar({ isLoggedIn }: SidebarProps) {
             <Button
               key={item.id}
               variant={isActive ? 'secondary' : 'ghost'}
-              className="w-full justify-start gap-2 h-9 px-3 text-sm"
+              className={`w-full h-9 px-3 text-sm ${
+                isCollapsed ? 'justify-center' : 'justify-start gap-2'
+              }`}
               onClick={() => navigate(item.path)}
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
+              title={isCollapsed ? item.label : undefined}
             >
               <Icon className="w-4 h-4" aria-hidden="true" />
-              <span>{item.label}</span>
+              {!isCollapsed && <span>{item.label}</span>}
             </Button>
-          );
-        })}
+          );        })}
       </nav>
 
       <Separator />
 
-      {/* Footer Info */}
-      <div className="py-3 pl-3 pr-0 text-muted-foreground">
-        <p className="text-xs">Discover accessible games for everyone</p>
+      {/* Chat Toggle Button */}
+      <div className={`py-3 ${isCollapsed ? 'px-2' : 'pl-3 pr-0'}`}>
+        <Button
+          variant={isChatOpen ? 'secondary' : 'ghost'}
+          className={`w-full h-9 px-3 text-sm ${
+            isCollapsed ? 'justify-center' : 'justify-start gap-2'
+          }`}
+          onClick={onToggleChat}
+          aria-label={isChatOpen ? "Close Aiden chat" : "Open Aiden chat"}
+          title={isCollapsed ? (isChatOpen ? "Close Aiden chat" : "Open Aiden chat") : undefined}
+        >
+          <MessageCircle className="w-4 h-4" aria-hidden="true" />
+          {!isCollapsed && <span>Aiden Chat</span>}
+        </Button>
       </div>
+
+      <Separator />
+
+      {/* Footer Info */}
+      {!isCollapsed && (
+        <div className="py-3 pl-3 pr-0 text-muted-foreground">
+          <p className="text-xs">Discover accessible games for everyone</p>
+        </div>
+      )}
     </aside>
   );
 }
@@ -183,10 +213,13 @@ export function MobileSidebar({
   isAdmin,
   isPublisher,
   isOpen,
-  onClose
+  onClose,
+  onToggleChat,
+  isChatOpen
 }: MobileSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  
   // Base navigation items
   const baseNavItems = [
     { id: 'home', icon: Home, label: 'Home', path: '/' },
@@ -196,17 +229,35 @@ export function MobileSidebar({
     { id: 'profile', icon: User, label: 'Profile', path: '/profile' },
   ];
 
-  // Add admin/publisher items only if logged in
-  const navItems = isLoggedIn ? [
-    ...baseNavItems,
-    { id: 'admin', icon: Shield, label: 'Admin Dashboard', path: '/admin' },
-    { id: 'publisher', icon: BarChart3, label: 'Publisher Dashboard', path: '/publisher' },
-  ] : baseNavItems;
+  // Get user info to determine what to show (same logic as desktop sidebar)
+  const getUserInfo = () => {
+    if (!isLoggedIn) return { role: null, isAdmin: false, isPublisher: false };
 
-  // Admin and special user navigation items
-  const adminItem = { id: 'admin', icon: Shield, label: 'Admin Dashboard', path: '/admin' };
-  const developerItem = { id: 'developer', icon: Code, label: 'Developer Dashboard', path: '/developer' };
-  const publisherItem = { id: 'publisher', icon: BarChart3, label: 'Publisher Dashboard', path: '/publisher' };
+    const user = JSON.parse(localStorage.getItem('userData') || '{}');
+    return {
+      role: user.role,
+      isAdmin: user.role === 'ADMIN',
+      isPublisher: user.role === 'PUBLISHER'
+    };
+  };
+
+  const userInfo = getUserInfo();
+  // Create navigation items based on user role (same logic as desktop sidebar)
+  const navItems = [...baseNavItems];
+
+  if (isLoggedIn) {
+    // Add admin dashboard for admins
+    if (userInfo.isAdmin) {
+      navItems.push({ id: 'admin', icon: Shield, label: 'Admin Dashboard', path: '/admin' });
+    }
+
+    // Add publisher dashboard for publishers, or make publisher account for regular users
+    if (userInfo.isPublisher) {
+      navItems.push({ id: 'publisher', icon: BarChart3, label: 'Publisher Dashboard', path: '/publisherdashboard' });
+    } else if (userInfo.role === 'USER') {
+      navItems.push({ id: 'make-publisher', icon: BarChart3, label: 'Become Publisher', path: '/makeaccountpublisher' });
+    }
+  }
 
   const getCurrentPage = () => {
     const pathname = location.pathname;
@@ -255,9 +306,7 @@ export function MobileSidebar({
             </div>
           </SheetHeader>
 
-          <Separator />
-
-          {/* Main Navigation */}
+          <Separator />          {/* Main Navigation */}
           <nav className="flex-1 p-4 space-y-2" aria-label="Main navigation">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -276,55 +325,22 @@ export function MobileSidebar({
                   <span>{item.label}</span>
                 </Button>
               );
-            })}
+            })}          </nav>
 
-            {/* Admin Navigation - Only show for admin users */}
-            {isLoggedIn && isAdmin && (
-              <>
-                <Separator className="my-4" />
-                <Button
-                  key={adminItem.id}
-                  variant={currentPage === adminItem.id ? 'secondary' : 'ghost'}
-                  className="w-full justify-start gap-3"
-                  onClick={() => handleNavigate(adminItem.path)}
-                  aria-label={adminItem.label}
-                  aria-current={currentPage === adminItem.id ? 'page' : undefined}
-                >
-                  <Shield className="w-5 h-5" aria-hidden="true" />
-                  <span>{adminItem.label}</span>
-                </Button>
-                <Button
-                  key={developerItem.id}
-                  variant={currentPage === developerItem.id ? 'secondary' : 'ghost'}
-                  className="w-full justify-start gap-3"
-                  onClick={() => handleNavigate(developerItem.path)}
-                  aria-label={developerItem.label}
-                  aria-current={currentPage === developerItem.id ? 'page' : undefined}
-                >
-                  <Code className="w-5 h-5" aria-hidden="true" />
-                  <span>{developerItem.label}</span>
-                </Button>
-              </>
-            )}
+          <Separator />
 
-            {/* Publisher Navigation - Only show for publisher users */}
-            {isLoggedIn && isPublisher && (
-              <>
-                <Separator className="my-4" />
-                <Button
-                  key={publisherItem.id}
-                  variant={currentPage === publisherItem.id ? 'secondary' : 'ghost'}
-                  className="w-full justify-start gap-3"
-                  onClick={() => handleNavigate(publisherItem.path)}
-                  aria-label={publisherItem.label}
-                  aria-current={currentPage === publisherItem.id ? 'page' : undefined}
-                >
-                  <BarChart3 className="w-5 h-5" aria-hidden="true" />
-                  <span>{publisherItem.label}</span>
-                </Button>
-              </>
-            )}
-          </nav>
+          {/* Chat Toggle Button */}
+          <div className="p-4">
+            <Button
+              variant={isChatOpen ? 'secondary' : 'ghost'}
+              className="w-full justify-start gap-3"
+              onClick={onToggleChat}
+              aria-label={isChatOpen ? "Close Aiden chat" : "Open Aiden chat"}
+            >
+              <MessageCircle className="w-5 h-5" aria-hidden="true" />
+              <span>Aiden Chat</span>
+            </Button>
+          </div>
 
           <Separator />
 
@@ -343,14 +359,13 @@ export function Header({
   selectedPublisherName,
   onOpenMobileMenu,
   onToggleSidebar,
-  isSidebarOpen = true,
+  isSidebarCollapsed = false,
   isLoggedIn,
   onLogin,
   onLogout,
   onToggleMagnifier,
   magnifierEnabled,
-  onToggleVoiceControls,
-  voiceControlsEnabled = false,
+  onUndo,
   user
 }: HeaderProps) {
   const location = useLocation();
@@ -385,10 +400,10 @@ export function Header({
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full h-16 navbar-header">
-      {/* Background that extends full viewport width */}
-      <div className="w-full h-full bg-card border-b navbar-header-bg">
-        <div className={`w-full h-full px-4 lg:px-6 flex items-center justify-between gap-3 relative z-20 max-w-full overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'lg:pl-52' : 'lg:pl-6'
-          }`}>
+      {/* Background that extends full viewport width */}      <div className="w-full h-full bg-card border-b navbar-header-bg">
+        <div className={`w-full h-full px-4 lg:px-6 flex items-center justify-between gap-3 relative z-20 max-w-full overflow-hidden transition-all duration-300 ${
+          isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-52'
+        }`}>
           {/* Menu Button & Logo - Always visible */}
           <div className="flex items-center gap-3 flex-shrink-0">
             <Button
@@ -444,19 +459,15 @@ export function Header({
 
           {/* Header Actions */}
           <div className="flex items-center gap-2 lg:gap-4 relative z-30 navbar-header-actions flex-shrink-0">
-            {/* Voice Controls Toggle Button */}
+            {/* Undo Button (replaces mic) */}
             <Button
-              variant={voiceControlsEnabled ? 'default' : 'outline'}
+              variant="outline"
               size="icon"
-              onClick={onToggleVoiceControls}
-              aria-label={voiceControlsEnabled ? 'Disable voice controls' : 'Enable voice controls'}
-              aria-pressed={voiceControlsEnabled}
+              aria-label="Undo"
               className="relative z-30"
+              onClick={onUndo}
             >
-              <Mic className="w-5 h-5" />
-              {voiceControlsEnabled && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" aria-hidden="true" />
-              )}
+              <Undo className="w-5 h-5" />
             </Button>
 
             {/* Magnifier Toggle Button */}
