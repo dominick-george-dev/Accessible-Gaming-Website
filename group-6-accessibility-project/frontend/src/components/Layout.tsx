@@ -7,9 +7,11 @@ import { UndoButton } from './UndoButton';
 import { toast } from 'sonner';
 import { addUndoAction, undoManager } from '../utils/undoManager';
 import { useAuth } from '../hooks/useAuth';
-import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../utils/applyAccessibilitySettings';
+import { useAccessibility } from '../contexts/AccessibilityContext';
+import { Magnifier } from './ui/magnifier';
+import { applyDyslexiaFont } from '../utils/applyAccessibilitySettings';
 import { MessageCircle } from 'lucide-react';
-import { AidenChatPanel, CHAT_PANEL_WIDTH } from './AidenChatPanel';
+import { AidenChatPanel } from './AidenChatPanel';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -23,7 +25,6 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     const savedState = localStorage.getItem('isSidebarCollapsed');
     return savedState !== null ? JSON.parse(savedState) : false;
   });  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [magnifierEnabled, setMagnifierEnabled] = useState(false);
   const [user, setUser] = useState<{
     id: string;
     name: string;
@@ -33,6 +34,9 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
   } | null>(null);
 
   const [isAidenOpen, setIsAidenOpen] = useState(false);
+  
+  // Use magnifier from accessibility context
+  const { magnifierEnabled, toggleMagnifier } = useAccessibility();
   // Ensure only one of sidebar or chat is open at a time
   function handleOpenAiden(open: boolean) {
     if (open) {
@@ -196,38 +200,22 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
     toast(`Sidebar ${!isSidebarCollapsed ? 'collapsed' : 'expanded'}`);
   };  const handleToggleMagnifier = () => {
     const previousState = magnifierEnabled;
-    setMagnifierEnabled(!magnifierEnabled);
+    toggleMagnifier();
     
     // Add undo action for magnifier
     addUndoAction(
       `${!previousState ? 'Enable' : 'Disable'} screen magnifier`,
       () => {
-        setMagnifierEnabled(previousState);
+        toggleMagnifier();
         toast(`Screen magnifier ${previousState ? 'enabled' : 'disabled'}`);
       }
     );
-    
-    toast(`Screen magnifier ${!previousState ? 'enabled' : 'disabled'}`);
-  };
-  const handleUndo = () => {
+  };  const handleUndo = () => {
     if (undoManager && typeof undoManager.executeUndo === 'function') {
       undoManager.executeUndo();
     } else {
       console.warn('Undo functionality not available');
     }
-  };
-
-  // Navigation functions for chatbot
-  const handleNavigateToLogin = () => {
-    // Store the current path for redirect after login
-    saveRedirectPath(location.pathname);
-    navigate('/login');
-  };
-
-  const handleNavigateToSignup = () => {
-    // Store the current path for redirect after signup
-    saveRedirectPath(location.pathname);
-    navigate('/signup');
   };
 
   return (
@@ -312,8 +300,13 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
           onWakeWord={() => {
             handleOpenAiden(true);
           }}
-          onNavigateToLogin={handleNavigateToLogin}
-          onNavigateToSignup={handleNavigateToSignup}
+        />
+
+        {/* Screen Magnifier */}
+        <Magnifier 
+          isActive={magnifierEnabled}
+          magnification={2}
+          size={200}
         />
       </div>
     </div>
