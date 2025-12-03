@@ -14,6 +14,19 @@ pipeline {
                     sh '''
                         echo "Current directory: $(pwd)"
                         ls -la
+                        
+                        # Copy environment file to workspace
+                        if [ -f /var/lib/jenkins/workspace-env/.env ]; then
+                            cp /var/lib/jenkins/workspace-env/.env group-6-accessibility-project/.env
+                            echo "Environment file copied to project"
+                            echo "Environment variables available:"
+                            cat group-6-accessibility-project/.env | grep -v SECRET | head -3
+                        else
+                            echo "Warning: Environment file not found at /var/lib/jenkins/workspace-env/.env"
+                                echo "Checking if Jenkins has environment variables..."
+                                ls -la /var/lib/jenkins/workspace-env/ || echo "Directory not found"
+                        fi
+                        
                         cd group-6-accessibility-project/backend
                         npm ci || npm install
                         npm install prisma@6.19.0 --save-dev || true
