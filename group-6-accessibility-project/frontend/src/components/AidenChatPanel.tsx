@@ -21,20 +21,11 @@ export function AidenChatPanel({ open, onOpenChange, onWakeWord }: { open: boole
     >      <div
         className="h-full bg-card shadow-2xl border-l border-border flex flex-col w-full pointer-events-auto relative"
         tabIndex={-1}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-border bg-card">
+      >        <div className="flex items-center justify-between p-4 border-b border-border bg-card">
           <h2 className="text-lg font-semibold text-card-foreground">Aiden – Accessibility Chat</h2>
-        </div>
-        <div className="p-2 h-full overflow-y-auto">
+        </div><div className="p-2 h-full overflow-y-auto">
           <A11yChat onWakeWord={onWakeWord} />
-        </div>        <button
-          aria-label="Close chat panel"
-          className="absolute left-4 bottom-4 text-muted-foreground hover:text-foreground text-2xl font-bold px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-ring bg-card/90 shadow-lg border border-border"
-          onClick={() => onOpenChange(false)}
-          style={{ lineHeight: 1, fontSize: 28 }}
-        >
-          ×
-        </button>
+        </div>
       </div>
     </div>
   );

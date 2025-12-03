@@ -9,7 +9,8 @@ import {
   Menu,
   Undo, // <-- keep Undo only
   LogOut,
-  ChevronDown
+  ChevronDown,
+  MessageCircle
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -28,6 +29,8 @@ import React from 'react';
 interface SidebarProps {
   isLoggedIn: boolean;
   isCollapsed?: boolean;
+  onToggleChat?: () => void;
+  isChatOpen?: boolean;
 }
 
 interface MobileSidebarProps {
@@ -36,6 +39,8 @@ interface MobileSidebarProps {
   isPublisher?: boolean;
   isOpen: boolean;
   onClose: () => void;
+  onToggleChat?: () => void;
+  isChatOpen?: boolean;
 }
 
 interface HeaderProps {
@@ -60,7 +65,7 @@ interface HeaderProps {
   } | null;
 }
 
-export function Sidebar({ isLoggedIn, isCollapsed = false }: SidebarProps) {
+export function Sidebar({ isLoggedIn, isCollapsed = false, onToggleChat, isChatOpen }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -170,9 +175,26 @@ export function Sidebar({ isLoggedIn, isCollapsed = false }: SidebarProps) {
               <Icon className="w-4 h-4" aria-hidden="true" />
               {!isCollapsed && <span>{item.label}</span>}
             </Button>
-          );
-        })}
+          );        })}
       </nav>
+
+      <Separator />
+
+      {/* Chat Toggle Button */}
+      <div className={`py-3 ${isCollapsed ? 'px-2' : 'pl-3 pr-0'}`}>
+        <Button
+          variant={isChatOpen ? 'secondary' : 'ghost'}
+          className={`w-full h-9 px-3 text-sm ${
+            isCollapsed ? 'justify-center' : 'justify-start gap-2'
+          }`}
+          onClick={onToggleChat}
+          aria-label={isChatOpen ? "Close Aiden chat" : "Open Aiden chat"}
+          title={isCollapsed ? (isChatOpen ? "Close Aiden chat" : "Open Aiden chat") : undefined}
+        >
+          <MessageCircle className="w-4 h-4" aria-hidden="true" />
+          {!isCollapsed && <span>Aiden Chat</span>}
+        </Button>
+      </div>
 
       <Separator />
 
@@ -191,7 +213,9 @@ export function MobileSidebar({
   isAdmin,
   isPublisher,
   isOpen,
-  onClose
+  onClose,
+  onToggleChat,
+  isChatOpen
 }: MobileSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -301,8 +325,22 @@ export function MobileSidebar({
                   <span>{item.label}</span>
                 </Button>
               );
-            })}
-          </nav>
+            })}          </nav>
+
+          <Separator />
+
+          {/* Chat Toggle Button */}
+          <div className="p-4">
+            <Button
+              variant={isChatOpen ? 'secondary' : 'ghost'}
+              className="w-full justify-start gap-3"
+              onClick={onToggleChat}
+              aria-label={isChatOpen ? "Close Aiden chat" : "Open Aiden chat"}
+            >
+              <MessageCircle className="w-5 h-5" aria-hidden="true" />
+              <span>Aiden Chat</span>
+            </Button>
+          </div>
 
           <Separator />
 

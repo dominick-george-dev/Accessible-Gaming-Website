@@ -10,7 +10,6 @@ import { useAuth } from '../hooks/useAuth';
 import { useAccessibility } from '../contexts/AccessibilityContext';
 import { Magnifier } from './ui/magnifier';
 import { applyDyslexiaFont } from '../utils/applyAccessibilitySettings';
-import { MessageCircle } from 'lucide-react';
 import { AidenChatPanel } from './AidenChatPanel';
 
 interface LayoutProps {
@@ -221,7 +220,12 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
   return (
     <div className="min-h-screen bg-background w-full overflow-x-hidden main-app-container">      {/* Desktop Sidebar - Always shown on desktop */}
       <div className="hidden lg:block">
-        <Sidebar isLoggedIn={isLoggedIn} isCollapsed={isSidebarCollapsed} />
+        <Sidebar 
+          isLoggedIn={isLoggedIn} 
+          isCollapsed={isSidebarCollapsed}
+          onToggleChat={() => handleOpenAiden(!isAidenOpen)}
+          isChatOpen={isAidenOpen}
+        />
       </div>
 
       {/* Mobile Sidebar Drawer */}
@@ -230,7 +234,9 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         isAdmin={user?.isAdmin || false}
         isPublisher={user?.isPublisher || false}
         isOpen={isMobileSidebarOpen}
-        onClose={() => setIsMobileSidebarOpen(false)}      
+        onClose={() => setIsMobileSidebarOpen(false)}
+        onToggleChat={() => handleOpenAiden(!isAidenOpen)}
+        isChatOpen={isAidenOpen}
       />
         {/* Main Layout with content shrinking behavior */}
       <div className="w-full max-w-full overflow-x-hidden">        
@@ -279,21 +285,10 @@ export function Layout({ children, selectedGameName, selectedPublisherName }: La
         {/* Bottom Navigation - Only shown on mobile */}
         <div className="lg:hidden">
           <BottomNav />        
-        </div>
-
-        {/* Undo Button */}
+        </div>        {/* Undo Button */}
         <UndoButton />
 
-        {/* Chat Bot Button (bottom right, large, circular, colorful) */}
-        {!isAidenOpen && (
-          <button
-            onClick={() => handleOpenAiden(true)}
-            aria-label="Open Aiden chat bot"
-            className="fixed bottom-8 right-8 z-50 w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl flex items-center justify-center hover:scale-105 transition-transform focus:outline-none focus:ring-4 focus:ring-blue-300"
-          >
-            <MessageCircle className="w-12 h-12 text-white drop-shadow-lg" />
-          </button>
-        )}        {/* Chat Bot Panel (reuse AidenChatPanel if present) */}
+        {/* Chat Bot Panel (reuse AidenChatPanel if present) */}
         <AidenChatPanel 
           open={isAidenOpen} 
           onOpenChange={handleOpenAiden} 

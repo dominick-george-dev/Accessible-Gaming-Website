@@ -1,74 +1,122 @@
 import express, { Request, Response, Router } from "express";
-import { z } from "zod";
 import fetch from 'node-fetch';
 
 const router: Router = express.Router();
 
-// Add JSON parsing middleware specifically for this router
+// Add JSON parsing middleware
 router.use(express.json());
 
-// Helper function to search games by accessibility
-async function searchGames(query: string): Promise<any[]> {
+// Helper function to fetch games from database
+async function fetchGamesData(): Promise<any[]> {
   try {
     const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/games`);
     
-    // Extract accessibility keywords from the query
-    const visualKeywords = ['visual', 'sight', 'blind', 'screen reader', 'contrast', 'colorblind', 'color blind'];
-    const hearingKeywords = ['hearing', 'deaf', 'subtitle', 'sound', 'audio', 'caption'];
-    const motorKeywords = ['motor', 'mobility', 'one hand', 'touch', 'gesture', 'control'];
-    const cognitiveKeywords = ['cognitive', 'memory', 'simple', 'easy', 'clear'];
-      const lowerQuery = query.toLowerCase();
-    
-    const categories: string[] = [];
-    if (visualKeywords.some(keyword => lowerQuery.includes(keyword))) {
-      categories.push('Visual Accessibility');
-    }
-    if (hearingKeywords.some(keyword => lowerQuery.includes(keyword))) {
-      categories.push('Hearing Accessibility');
-    }
-    if (motorKeywords.some(keyword => lowerQuery.includes(keyword))) {
-      categories.push('Motor Accessibility');
-    }
-    if (cognitiveKeywords.some(keyword => lowerQuery.includes(keyword))) {
-      categories.push('Cognitive Accessibility');
-    }
-    
-    // Build query parameters
-    const params = new URLSearchParams();
-    if (categories.length > 0) {
-      params.append('categories', categories.join(','));
-    }
-    params.append('limit', '5'); // Limit to top 5 results
-    
-    const response = await fetch(`${baseUrl}/games/search-accessibility?${params}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.log('Fetching games from:', `${baseUrl}/games`);
+    console.log('Response status:', response.status);
     
     if (response.ok) {
       const games = await response.json();
-      return Array.isArray(games) ? games : [];
+      console.log('Games fetched successfully:', games?.data?.length || 0, 'games');
+      
+      // Handle both direct array and paginated response
+      const gameArray = Array.isArray(games) ? games : games?.data || [];
+      return gameArray;
+    } else {
+      console.error('Failed to fetch games. Status:', response.status);
+      return [];
     }
     
-    return [];
   } catch (error) {
-    console.error('Error searching games:', error);
-    return [];  }
+    console.error('Error fetching games:', error);
+    return [];
+  }
 }
 
-// Helper function to get user accessibility settings
-async function getUserSettings(userId: number): Promise<any> {
+// Helper function to fetch user accessibility settings
+async function fetchUserSettings(userId: number): Promise<any> {
   try {
     const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/accessibility-settings/${userId}`);
+    const url = `${baseUrl}/api/accessibility-settings/${userId}`;
+    
+    console.log('🔍 Attempting to fetch user settings...');
+    console.log('📍 URL:', url);
+    console.log('👤 User ID:', userId);
+    
+    const response = await fetch(url);
+    
+    console.log('📡 Response status:', response.status);
+    console.log('📡 Response ok:', response.ok);
     
     if (response.ok) {
-      return await response.json();
+      const settings = await response.json();
+      console.log('✅ Settings fetched successfully:');
+      console.log('📋 Raw settings data:', JSON.stringify(settings, null, 2));
+      return settings;
+    } else {
+      const errorText = await response.text();
+      console.error('❌ Failed to fetch user settings');
+      console.error('📍 Status:', response.status);
+      console.error('📋 Error response:', errorText);
+      return null;
     }
-    return null;
   } catch (error) {
-    console.error('Error fetching user settings:', error);
-    return null;
+    console.error('🚨 Error fetching user settings:');
+    console.error('📋 Error details:', error);
+    console.error('📋 Error message:', error.message);
+    console.error('📋 Error stack:', error.stack);
+    return null;  }
+}
+
+// Helper function to update user accessibility settings
+async function updateUserSettings(userId: number, setting: string, value: any): Promise<boolean> {
+  try {
+    const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
+    const url = `${baseUrl}/api/accessibility-settings/${userId}`;
+    
+    console.log('🔧 Attempting to update user setting...');
+    console.log('👤 User ID:', userId);
+    console.log('⚙️ Setting:', setting);
+    console.log('💎 Value:', value);
+    
+    // First, get current settings
+    const currentSettings = await fetchUserSettings(userId);
+    if (!currentSettings) {
+      console.error('❌ Cannot update settings: failed to fetch current settings');
+      return false;
+    }
+    
+    // Update the specific setting
+    const updatedSettings = {
+      ...currentSettings,
+      [setting]: value
+    };
+    
+    console.log('📤 Sending updated settings:', JSON.stringify(updatedSettings, null, 2));
+    
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedSettings)
+    });
+    
+    console.log('📡 Update response status:', response.status);
+    
+    if (response.ok) {
+      console.log('✅ Settings updated successfully');
+      return true;
+    } else {
+      const errorText = await response.text();
+      console.error('❌ Failed to update settings');
+      console.error('📍 Status:', response.status);
+      console.error('📋 Error response:', errorText);
+      return false;
+    }
+    
+  } catch (error) {
+    console.error('🚨 Error updating user settings:');
+    console.error('📋 Error details:', error);
+    return false;
   }
 }
 
@@ -77,185 +125,223 @@ interface ChatMessage {
   content: string;
 }
 
-type ChatContext = { route?: string; userId?: number; featureFlags?: Record<string, boolean> };
+interface NavigationCommand {
+  type: "navigate";
+  target: string;
+}
 
-const AllowedRoutes = ["/", "/browserpage", "/favorites", "/accessibility", "/profile", "/login" , "/signup"] as const;
+interface SettingUpdateCommand {
+  type: "update_setting";
+  setting: string;
+  value: any;
+  refreshSettings?: boolean; // Flag to tell frontend to refresh settings
+}
 
-const CommandSchema = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("NAVIGATE"),
-    target: z.enum(AllowedRoutes),
-  }),
-  z.object({
-    type: z.literal("UPDATE_SETTING"),
-    setting: z.string(),
-    value: z.union([z.string(), z.number(), z.boolean()]),
-  }),
-  z.object({
-    type: z.literal("GET_SETTINGS"),
-  }),
-  z.object({
-    type: z.literal("CLICK_UNDO"),
-  }),
-  z.object({
-    type: z.literal("TOGGLE_MAGNIFIER"),
-    enabled: z.boolean(),
-  }),
-]);
+interface ChatResponse {
+  reply: string;
+  command?: NavigationCommand | SettingUpdateCommand;
+}
 
-const ModelOutputSchema = z.object({
-  reply: z.string().default(""),
-  command: CommandSchema.optional(),
-});
-
-// Add a GET handler for health check/testing
+// Health check endpoint
 router.get("/a11y-chat", (req, res) => {
   res.status(200).json({ status: "ok", message: "a11y-chat endpoint is up" });
 });
 
-router.post("/a11y-chat", async (req: Request, res: Response) => {
+// Test endpoint to check game data fetching
+router.get("/a11y-chat/test-games", async (req, res) => {
   try {
-    // Debug logging
-    console.log('Received request body:', JSON.stringify(req.body, null, 2));
-    console.log('Request body type:', typeof req.body);
+    console.log('Testing game data fetch...');
+    const gameData = await fetchGamesData();
     
-    // Defensive: ensure req.body is always an object
-    const body = typeof req.body === 'object' && req.body !== null ? req.body : {};
-    const { messages, context } = body as {
-      messages: ChatMessage[];
-      context?: ChatContext;
+    const result = {
+      success: true,
+      totalGames: gameData.length,
+      sampleGame: gameData[0] || null,
+      allGameTitles: gameData.map(game => game.title),
+      gameInfo: gameData.length > 0 ? 
+        gameData.map(game => 
+          `- ${game.title} (${game.developer}) - Rating: ${game.rating}/5\n` +
+          `  Genre: ${game.genre}, Platform: ${game.platform}\n` +
+          `  Accessibility: ${game.accessibilityTags?.map((tag: any) => tag.tag).join(', ') || 'None listed'}\n` +
+          `  Description: ${game.description?.substring(0, 150)}...`
+        ).join('\n\n') : 
+        'No games currently available in database.'
     };
+    
+    console.log('Game data test result:', result);
+    return res.json(result);
+  } catch (error) {
+    console.error('Game data test failed:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stack: error.stack 
+    });
+  }
+});
 
-    console.log('Extracted messages:', messages);
-    console.log('Messages is array:', Array.isArray(messages));
-    console.log('Messages length:', messages?.length);
+// Test endpoint to check user accessibility settings fetching
+router.get("/a11y-chat/test-settings/:userId", async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    console.log('Testing accessibility settings fetch for user:', userId);
+    
+    const settings = await fetchUserSettings(userId);
+    
+    const result = {
+      success: true,
+      userId: userId,
+      settings: settings,
+      formattedSettings: settings ? 
+        `USER'S CURRENT ACCESSIBILITY SETTINGS:
+- Theme: ${settings.theme || 'light-mode'}
+- Text Size: ${settings.textSize || 16}px
+- High Contrast: ${settings.highContrast ? 'On' : 'Off'}
+- Colorblind Filter: ${settings.colorblindFilter || 'none'}
+- Visual Accessibility: ${settings.visual ? 'On' : 'Off'}
+- Hearing Accessibility: ${settings.hearing ? 'On' : 'Off'}
+- Motor Accessibility: ${settings.dexterity ? 'On' : 'Off'}
+- Cognitive Accessibility: ${settings.cognitive ? 'On' : 'Off'}
+- Screen Magnifier: ${settings.screenMagnifier ? 'On' : 'Off'}` :
+        'Could not retrieve user accessibility settings.'
+    };
+    
+    console.log('Settings test result:', result);
+    return res.json(result);
+  } catch (error) {
+    console.error('Settings test failed:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stack: error.stack 
+    });
+  }
+});
+
+// Test endpoint for setting updates
+router.post("/a11y-chat/test-update/:userId", async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const { setting, value } = req.body;
+    
+    console.log('Testing setting update for user:', userId, setting, value);
+    
+    const success = await updateUserSettings(userId, setting, value);
+    
+    return res.json({
+      success: success,
+      userId: userId,
+      setting: setting,
+      value: value,
+      message: success ? 'Setting updated successfully!' : 'Failed to update setting'
+    });
+  } catch (error) {
+    console.error('Setting update test failed:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stack: error.stack 
+    });
+  }
+});
+
+// Main chat endpoint
+router.post("/a11y-chat", async (req: Request, res: Response) => {  try {
+    console.log('Received request body:', JSON.stringify(req.body, null, 2));
+    
+    const body = typeof req.body === 'object' && req.body !== null ? req.body : {};
+    const { messages, context } = body as { 
+      messages: ChatMessage[]; 
+      context?: { userId?: number; route?: string; featureFlags?: any } 
+    };
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "messages must be a non-empty array" });
-    }    // Check if user is asking about games or settings
-    const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
-    const isGameQuery = lastMessage.includes('game') || lastMessage.includes('play') || 
-                       lastMessage.includes('visual') || lastMessage.includes('hearing') || 
-                       lastMessage.includes('motor') || lastMessage.includes('cognitive') ||
-                       lastMessage.includes('accessibility');
-
-    const isSettingsQuery = lastMessage.includes('setting') || lastMessage.includes('theme') ||
-                            lastMessage.includes('text size') || lastMessage.includes('contrast') ||
-                            lastMessage.includes('dark mode') || lastMessage.includes('light mode') ||
-                            lastMessage.includes('apply') || lastMessage.includes('change') ||
-                            lastMessage.includes('switch') || lastMessage.includes('enable') ||
-                            lastMessage.includes('disable') || lastMessage.includes('turn on') ||
-                            lastMessage.includes('turn off') || lastMessage.includes('font') ||
-                            lastMessage.includes('magnifier') || lastMessage.includes('colorblind') ||
-                            lastMessage.includes('my settings') || lastMessage.includes('increase') ||
-                            lastMessage.includes('decrease');
-
-    // Search for relevant games if it's a game-related query
-    let gameResults: any[] = [];
-    if (isGameQuery) {
-      gameResults = await searchGames(lastMessage);
     }
 
-    // Get user settings if it's a settings-related query and user is logged in
-    let userSettings: any = null;
-    if (isSettingsQuery && context?.userId) {
-      userSettings = await getUserSettings(context.userId);
-    }
-
-    const trimmed = messages.slice(-20).map((m) => ({
+    // Limit message history to last 10 messages for simplicity
+    const trimmed = messages.slice(-10).map((m) => ({
       role: m.role === "assistant" ? "assistant" : "user",
-      content: String(m.content ?? "").slice(0, 4000),
-    }));    const safeContext = {
-      route: typeof context?.route === "string" ? context.route.slice(0, 200) : undefined,
-      userId: typeof context?.userId === "number" ? context.userId : undefined,
-      featureFlags:
-        context?.featureFlags && typeof context.featureFlags === "object"
-          ? Object.fromEntries(
-              Object.entries(context.featureFlags)
-                .slice(0, 50)
-                .map(([k, v]) => [String(k).slice(0, 50), Boolean(v)])
-            )
-          : undefined,
-      gameResults: gameResults.length > 0 ? gameResults : undefined,
-      userSettings: userSettings || undefined,
-    };const system = {
+      content: String(m.content ?? "").slice(0, 1000),
+    }));
+
+    // Fetch game data for AI context
+    const gameData = await fetchGamesData();
+    const gameInfo = gameData.length > 0 ? 
+      gameData.map(game => 
+        `- ${game.title} (${game.developer}) - Rating: ${game.rating}/5\n` +
+        `  Genre: ${game.genre}, Platform: ${game.platform}\n` +
+        `  Accessibility: ${game.accessibilityTags?.map((tag: any) => tag.tag).join(', ') || 'None listed'}\n` +
+        `  Description: ${game.description?.substring(0, 150)}...`
+      ).join('\n\n') : 
+      'No games currently available in database.';    // Fetch user accessibility settings if user is logged in
+    let userSettings: any = null;
+    let userSettingsText = "User is not logged in.";
+    
+    if (context?.userId) {
+      console.log('Fetching settings for user ID:', context.userId);
+      userSettings = await fetchUserSettings(context.userId);
+      
+      if (userSettings) {
+        userSettingsText = `USER'S CURRENT ACCESSIBILITY SETTINGS:
+- Theme: ${userSettings.theme || 'light-mode'}
+- Text Size: ${userSettings.textSize || 16}px
+- High Contrast: ${userSettings.highContrast ? 'On' : 'Off'}
+- Colorblind Filter: ${userSettings.colorblindFilter || 'none'}
+- Visual Accessibility: ${userSettings.visual ? 'On' : 'Off'}
+- Hearing Accessibility: ${userSettings.hearing ? 'On' : 'Off'}
+- Motor Accessibility: ${userSettings.dexterity ? 'On' : 'Off'}
+- Cognitive Accessibility: ${userSettings.cognitive ? 'On' : 'Off'}
+- Screen Magnifier: ${userSettings.screenMagnifier ? 'On' : 'Off'}
+
+You can help users view and change these settings.`;
+      } else {
+        userSettingsText = "Could not retrieve user's accessibility settings.";
+      }
+    }const system = {
       role: "system",
-      content:
-        "You are an accessibility helper for this application.\n" +
-        "You CAN control the app and change user settings using commands.\n\n" +
-        "IMPORTANT: You have FULL ACCESS to change user accessibility settings!\n\n" +
-        "Allowed commands:\n" +
-        `- NAVIGATE: target must be one of ${JSON.stringify(AllowedRoutes)}\n` +
-        "- UPDATE_SETTING: setting (string) and value (string/number/boolean) - USE THIS TO CHANGE USER SETTINGS\n" +
-        "- GET_SETTINGS: retrieve user's current accessibility settings\n" +
-        "- CLICK_UNDO: click the undo button if available\n" +
-        "- TOGGLE_MAGNIFIER: enable or disable the magnifier (enabled: true/false)\n\n" +
-        "ACCESSIBILITY SETTINGS YOU CAN CHANGE:\n" +
-        "- theme: 'light-mode' or 'dark-mode'\n" +
-        "- textSize: number (14-24)\n" +
-        "- highContrast: true/false\n" +
-        "- colorblindFilter: 'none', 'protanopia', 'deuteranopia', 'tritanopia'\n" +
-        "- visual: true/false (visual accessibility preference)\n" +
-        "- hearing: true/false (hearing accessibility preference)\n" +
-        "- dexterity: true/false (motor accessibility preference)\n" +
-        "- cognitive: true/false (cognitive accessibility preference)\n" +
-        "- screenMagnifier: true/false\n\n" +
-        (userSettings ? 
-          "USER'S CURRENT SETTINGS:\n" +
-          `Theme: ${userSettings.theme || 'light-mode'}\n` +
-          `Text size: ${userSettings.textSize || 16}px\n` +
-          `High contrast: ${userSettings.highContrast ? 'On' : 'Off'}\n` +
-          `Colorblind filter: ${userSettings.colorblindFilter || 'none'}\n` +
-          `Visual accessibility: ${userSettings.visual ? 'On' : 'Off'}\n` +
-          `Hearing accessibility: ${userSettings.hearing ? 'On' : 'Off'}\n` +
-          `Motor accessibility: ${userSettings.dexterity ? 'On' : 'Off'}\n` +
-          `Cognitive accessibility: ${userSettings.cognitive ? 'On' : 'Off'}\n` +
-          `Screen magnifier: ${userSettings.screenMagnifier ? 'On' : 'Off'}\n\n` : 
-          "User is not logged in - suggest they log in to change settings.\n\n") +
-        "WHEN USER ASKS TO CHANGE SETTINGS:\n" +
-        "- ALWAYS respond with UPDATE_SETTING command\n" +
-        "- Be confident: 'I'll change that for you right now'\n" +
-        "- Use exact setting names listed above\n" +
-        "- Example: User says 'apply light mode' -> {\"reply\": \"I'll switch you to light mode right now\", \"command\": {\"type\": \"UPDATE_SETTING\", \"setting\": \"theme\", \"value\": \"light-mode\"}}\n\n" +        "GAME RECOMMENDATIONS:\n" +
-        "IMPORTANT: Only recommend games that are available in this application's database.\n" +
-        "When users ask about games with accessibility features:\n" +
-        "- Only suggest games from the AVAILABLE GAMES list below\n" +
-        "- If no games are found, say 'We don't currently have games with those specific features in our database'\n" +
-        "- Do NOT mention external games like Civilization, Steam games, or other platforms\n" +
-        "- Focus only on the games available in this accessibility gaming platform\n\n" +
-        "Game categories to search for:\n" +
-        "- Visual Accessibility: screen readers, high contrast, large text, colorblind support\n" +
-        "- Hearing Accessibility: subtitles, visual cues, sound alternatives\n" +
-        "- Motor Accessibility: one-handed controls, adjustable difficulty, pause options\n" +
-        "- Cognitive Accessibility: simple interface, clear instructions, memory aids\n\n" +
-        (gameResults.length > 0 ? 
-          "AVAILABLE GAMES:\n" + 
-          gameResults.map(g => `- ${g.title} (${g.developer}) - Rating: ${g.rating}/5\n  Accessibility: ${g.accessibilityTags?.map((t: any) => t.tag).join(', ') || 'None listed'}\n  ${g.description?.substring(0, 100)}...`).join('\n') + 
-          "\n\n" : "") +
-        "RESPONSE FORMAT:\n" +
-        "ALWAYS respond with VALID JSON:\n" +
-        'FOR SETTING CHANGES: {"reply": "I\'ll switch you to light mode right now", "command": {"type": "UPDATE_SETTING", "setting": "theme", "value": "light-mode"}}\n' +
-        'FOR GETTING SETTINGS: {"reply": "Let me check your current settings", "command": {"type": "GET_SETTINGS"}}\n' +
-        'FOR NAVIGATION: {"reply": "I\'ll take you to the browse page", "command": {"type": "NAVIGATE", "target": "/browserpage"}}\n' +
-        'FOR GENERAL HELP: {"reply": "your helpful response text here"}\n\n' +
-        "IMPORTANT RULES:\n" +
-        "- Always use UPDATE_SETTING command when user wants to change settings\n" +
-        "- Be confident about your ability to change settings\n" +
-        "- Use exact setting names: theme, textSize, highContrast, etc.\n" +
-        "- Do NOT say you can't change settings - you absolutely can!\n" +
-        "- For theme changes: use 'light-mode' or 'dark-mode' as values\n\n" +
-        JSON.stringify(safeContext),
+      content: "You are a helpful accessibility assistant for a gaming website. " +
+               "Provide clear and friendly responses about accessibility features and gaming. " +
+               "Be conversational and helpful.\n\n" +
+               "GAME DATABASE:\n" +
+               "Here are the games available in our database:\n" +
+               gameInfo + "\n\n" +
+               "When users ask about games, only recommend games from the above database. " +
+               "Do not mention external games or platforms.\n\n" +               "ACCESSIBILITY SETTINGS:\n" +
+               userSettingsText + "\n\n" +
+               "When users ask about their accessibility settings, refer to the information above. " +
+               "You can help users understand what each setting does and how to change them.\n\n" +
+               "SETTING UPDATE CAPABILITIES:\n" +
+               "When a user asks to change a setting, respond with JSON containing an update command.\n" +
+               "Available settings: theme, textSize, highContrast, colorblindFilter, visual, hearing, dexterity, cognitive, screenMagnifier\n\n" +               "Setting update examples (respond with JSON):\n" +
+               "- 'change theme to dark' -> {\"reply\": \"I'll change your theme to dark mode!\", \"command\": {\"type\": \"update_setting\", \"setting\": \"theme\", \"value\": \"dark-mode\"}}\n" +
+               "- 'set text size to 20' -> {\"reply\": \"Setting your text size to 20px!\", \"command\": {\"type\": \"update_setting\", \"setting\": \"textSize\", \"value\": 20}}\n" +
+               "- 'turn on high contrast' -> {\"reply\": \"Enabling high contrast mode!\", \"command\": {\"type\": \"update_setting\", \"setting\": \"highContrast\", \"value\": true}}\n" +
+               "- 'enable screen magnifier' -> {\"reply\": \"Turning on screen magnifier!\", \"command\": {\"type\": \"update_setting\", \"setting\": \"screenMagnifier\", \"value\": true}}\n" +
+               "- 'disable high contrast' -> {\"reply\": \"Turning off high contrast!\", \"command\": {\"type\": \"update_setting\", \"setting\": \"highContrast\", \"value\": false}}\n" +
+               "- 'change theme to deep-space' -> {\"reply\": \"Setting your theme to deep-space!\", \"command\": {\"type\": \"update_setting\", \"setting\": \"theme\", \"value\": \"deep-space\"}}\n\n"+
+               "NAVIGATION CAPABILITIES:\n"+
+               "ONLY when a user explicitly asks to navigate to a page, respond with VALID JSON containing a navigation command.\n" +
+               "Available pages: home, browserpage, favourites, accessibility, profile\n\n" +
+               "Navigation keywords that require JSON responses:\n" +
+               "- 'take me to [page]' or 'go to [page]' or 'navigate to [page]'\n" +
+               "- 'take me home' -> {\"reply\": \"Taking you to the home page!\", \"command\": {\"type\": \"navigate\", \"target\": \"home\"}}\n" +
+               "- 'go to browse' -> {\"reply\": \"Opening the browser page for you!\", \"command\": {\"type\": \"navigate\", \"target\": \"browserpage\"}}\n" +
+               "- 'show my favourites' -> {\"reply\": \"Here are your favourites!\", \"command\": {\"type\": \"navigate\", \"target\": \"favourites\"}}\n" +
+               "- 'open accessibility settings' -> {\"reply\": \"Opening accessibility settings!\", \"command\": {\"type\": \"navigate\", \"target\": \"accessibility\"}}\n" +
+               "- 'go to my profile' -> {\"reply\": \"Taking you to your profile!\", \"command\": {\"type\": \"navigate\", \"target\": \"profile\"}}\n\n" +
+               "For ALL OTHER questions (about games, accessibility features, help, etc.), respond with regular text WITHOUT JSON formatting. " +
+               "Just answer normally as a helpful assistant."
     };
 
     const ollamaResp = await fetch("http://127.0.0.1:11434/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: process.env.OLLAMA_MODEL || "llama3.1",
-        messages: [system, ...trimmed],
-        stream: false,
+        model: process.env.OLLAMA_MODEL || "llama3.2:1b",
+        messages: [system, ...trimmed],        stream: false,
         keep_alive: "10m",
-        options: {num_predict: 120}
+        options: { num_predict: 200 }
       }),
     });
 
@@ -264,28 +350,146 @@ router.post("/a11y-chat", async (req: Request, res: Response) => {
       return res.status(502).json({ error: "ollama_error", detail: text });
     }    const data = await ollamaResp.json();
     const raw = String(data?.message?.content ?? "");
+    
+    console.log('AI raw response:', raw);    // Try to parse navigation commands from the response
+    let response: ChatResponse = { reply: raw };
+      // Check if this is a navigation request by looking for keywords
+    const lastUserMessage = trimmed[trimmed.length - 1]?.content?.toLowerCase() || '';
+    const isNavigationRequest = lastUserMessage.includes('take me') || 
+                               lastUserMessage.includes('go to') ||
+                               lastUserMessage.includes('navigate') ||
+                               lastUserMessage.includes('home') ||
+                               lastUserMessage.includes('browse') ||
+                               lastUserMessage.includes('favourites') ||
+                               lastUserMessage.includes('favorites') ||
+                               lastUserMessage.includes('accessibility') ||
+                               lastUserMessage.includes('profile');    // Check if this is a setting update request
+    const isSettingUpdate = lastUserMessage.includes('increase') ||
+                           lastUserMessage.includes('decrease') ||
+                           lastUserMessage.includes('change') ||
+                           lastUserMessage.includes('set') ||
+                           lastUserMessage.includes('turn on') ||
+                           lastUserMessage.includes('turn off') ||
+                           lastUserMessage.includes('enable') ||
+                           lastUserMessage.includes('disable') ||
+                           (lastUserMessage.includes('text') && lastUserMessage.includes('size')) ||
+                           lastUserMessage.includes('theme') ||
+                           lastUserMessage.includes('contrast') ||
+                           lastUserMessage.includes('magnifier');
 
-    // Parse assistant output as JSON (fallback to plain reply)
-    let parsed: { reply: string; command?: unknown } = { reply: raw };
-    try {
-      // Try to parse as JSON first
-      const jsonParsed = JSON.parse(raw);
-      if (jsonParsed && typeof jsonParsed.reply === 'string') {
-        parsed = jsonParsed;
+    console.log('Navigation request detected:', isNavigationRequest);
+    console.log('Setting update detected:', isSettingUpdate);
+    console.log('User message:', lastUserMessage);
+      try {
+      // Check if response is JSON with command
+      const parsed = JSON.parse(raw);
+      console.log('Parsed JSON:', parsed);
+      if (parsed && typeof parsed.reply === 'string' && parsed.command) {
+        response = parsed;
+        console.log('Command detected:', response);
+          // Execute the command if it's a setting update
+        if (response.command && response.command.type === "update_setting" && context?.userId) {
+          console.log('Executing setting update command...');
+          const settingCommand = response.command as SettingUpdateCommand;
+          const success = await updateUserSettings(
+            context.userId,
+            settingCommand.setting,
+            settingCommand.value
+          );
+            if (success) {
+            response.reply += " ✅ Settings updated successfully!";
+            // Add refresh flag to tell frontend to reload settings
+            if (response.command) {
+              (response.command as SettingUpdateCommand).refreshSettings = true;
+            }
+          } else {
+            response.reply += " ❌ Failed to update settings. Please try again.";
+          }
+        }
+      }    } catch (error) {
+      console.log('JSON parse failed:', error);
+      
+      // If AI didn't return JSON but this was a setting update request, force create setting command
+      if (isSettingUpdate && context?.userId) {
+        console.log('Forcing setting update command creation...');
+        let setting = '';
+        let value: any = null;
+        
+        // Parse the user's intent
+        if (lastUserMessage.includes('increase') && lastUserMessage.includes('text')) {
+          setting = 'textSize';
+          value = Math.min(24, (userSettings?.textSize || 16) + 2); // Increase by 2, max 24
+        } else if (lastUserMessage.includes('decrease') && lastUserMessage.includes('text')) {
+          setting = 'textSize';
+          value = Math.max(12, (userSettings?.textSize || 16) - 2); // Decrease by 2, min 12
+        } else if (lastUserMessage.includes('turn on') || lastUserMessage.includes('enable')) {
+          if (lastUserMessage.includes('contrast')) {
+            setting = 'highContrast';
+            value = true;
+          } else if (lastUserMessage.includes('magnifier')) {
+            setting = 'screenMagnifier';
+            value = true;
+          }
+        } else if (lastUserMessage.includes('turn off') || lastUserMessage.includes('disable')) {
+          if (lastUserMessage.includes('contrast')) {
+            setting = 'highContrast';
+            value = false;
+          } else if (lastUserMessage.includes('magnifier')) {
+            setting = 'screenMagnifier';
+            value = false;
+          }
+        } else if (lastUserMessage.includes('theme')) {
+          setting = 'theme';
+          if (lastUserMessage.includes('dark')) value = 'dark-mode';
+          else if (lastUserMessage.includes('light')) value = 'light-mode';
+          else if (lastUserMessage.includes('deep')) value = 'deep-space';
+        }
+          if (setting && value !== null) {
+          const success = await updateUserSettings(context.userId, setting, value);
+          response = {
+            reply: success ? 
+              `✅ I've updated your ${setting} setting!` : 
+              `❌ Sorry, I couldn't update your ${setting} setting. Please try again.`,
+            command: success ? {
+              type: "update_setting",
+              setting: setting,
+              value: value,
+              refreshSettings: true
+            } : undefined
+          };
+        }
       }
-    } catch {
-      // If JSON parsing fails, treat the entire response as the reply
-      parsed = { reply: raw };
+      // If AI didn't return JSON but this was a navigation request, force create navigation command
+      else if (isNavigationRequest) {
+        console.log('Forcing navigation command creation...');
+        let target = 'home';
+        
+        if (lastUserMessage.includes('browse') || lastUserMessage.includes('games')) {
+          target = 'browserpage';
+        } else if (lastUserMessage.includes('favourites') || lastUserMessage.includes('favorites')) {
+          target = 'favourites';
+        } else if (lastUserMessage.includes('accessibility') || lastUserMessage.includes('settings')) {
+          target = 'accessibility';
+        } else if (lastUserMessage.includes('profile') || lastUserMessage.includes('account')) {
+          target = 'profile';
+        }
+        
+        response = {
+          reply: raw,
+          command: {
+            type: "navigate",
+            target: target
+          }
+        };
+        console.log('Forced navigation command:', response);
+      } else {
+        // If not JSON, use raw response
+        response = { reply: raw };
+      }
     }
 
-    // Validate the parsed result
-    const safe = ModelOutputSchema.safeParse(parsed);
-    if (safe.success) {
-      return res.json(safe.data);
-    }
-
-    // If validation fails, return just the text as reply
-    return res.json({ reply: parsed.reply || raw });
+    return res.json(response);
+    
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "server_error" });

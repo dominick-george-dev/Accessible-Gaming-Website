@@ -9,13 +9,35 @@ import { Card } from '../components/ui/card';
 import { Search } from 'lucide-react';
 import { toast } from "sonner";
 
-// Use your CloudFront URL with https://
+// Hook to get user from localStorage
+function useUser() {
+  const [user, setUser] = useState<{ id: number; username: string; email: string; isAdmin: boolean; isPublisher: boolean } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const userData = localStorage.getItem("userData");
+    if (isLoggedIn && userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch {
+        setUser(null);
+      }
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+  }, []);
+
+  return { user, loading };
+}
 
 
 export function BrowsePage() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [games, setGames] = useState<Game[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -26,6 +48,27 @@ export function BrowsePage() {
     cognitive: false,
   });
   const [, setLoading] = useState(true);
+  const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:3000";
+
+  // Fetch user's favorites
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchFavorites = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/favorites/${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const gameIds = data.map((fav: any) => fav.gameId);
+          setFavorites(gameIds);
+        }
+      } catch (error) {
+        console.error('Error fetching favorites:', error);
+      }
+    };
+
+    fetchFavorites();
+  }, [user, API_BASE]);
 
   useEffect(() => {
     const storedSearches = localStorage.getItem('accessplay_recent_searches');
@@ -51,13 +94,58 @@ export function BrowsePage() {
     };
     loadGames();
   }, []);
-
   const handleGameClick = (gameId: string) => {
     navigate(`/games/${gameId}`);
   };
 
-  const toggleFavorite = (id: string) => {
-    setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
+  // Updated favorite toggle with backend sync
+  const toggleFavorite = async (gameId: string) => {
+    if (!user) {
+      toast.error('Please login to add favorites');
+      return;
+    }
+
+    const numericGameId = Number(gameId);
+    const previousFavoriteState = favorites.includes(numericGameId);
+
+    // Optimistic update
+    setFavorites(prev => 
+      prev.includes(numericGameId) 
+        ? prev.filter(id => id !== numericGameId)
+        : [...prev, numericGameId]
+    );
+
+    try {
+      const response = await fetch(`${API_BASE}/favorites/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, gameId: numericGameId }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update state based on backend response
+        if (result.added) {
+          setFavorites(prev => prev.includes(numericGameId) ? prev : [...prev, numericGameId]);
+          toast.success('Added to favorites!');
+        } else {
+          setFavorites(prev => prev.filter(id => id !== numericGameId));
+          toast.success('Removed from favorites');
+        }
+      } else {
+        throw new Error('Failed to update favorite');
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setFavorites(prev => 
+        previousFavoriteState 
+          ? [...prev, numericGameId]
+          : prev.filter(id => id !== numericGameId)
+      );
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorite');
+    }
   };
 
   const saveToRecentSearches = (query: string) => {
@@ -184,14 +272,13 @@ export function BrowsePage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">                
-              {filteredGames.map(game => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">                  {filteredGames.map(game => (
                   <GameCard
                     key={game.id}
                     game={game}
-                    isFavorite={favorites.includes(game.id)}
-                    onToggleFavorite={() => toggleFavorite(game.id)}
-                    onClick={() => handleGameClick(game.id)}
+                    isFavorite={favorites.includes(Number(game.id))}
+                    onToggleFavorite={() => toggleFavorite(game.id.toString())}
+                    onClick={() => handleGameClick(game.id.toString())}
                   />
                 ))}
               </div>

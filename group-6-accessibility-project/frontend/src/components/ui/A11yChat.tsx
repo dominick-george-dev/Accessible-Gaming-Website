@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSpeechInput } from "../../hooks/useSpeechInput";
 import { speak } from "../../utils/textToSpeech";
+import { useAccessibility } from "../../contexts/AccessibilityContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -9,9 +10,17 @@ type Command = {
   type: "NAVIGATE"; 
   target: "/" | "/games" | "/settings" | "/help" 
 } | {
+  type: "navigate";
+  target: "home" | "browserpage" | "favourites" | "accessibility" | "profile";
+} | {
   type: "UPDATE_SETTING";
   setting: string;
   value: any;
+} | {
+  type: "update_setting";
+  setting: string;
+  value: any;
+  refreshSettings?: boolean;
 } | {
   type: "GET_SETTINGS";
 };
@@ -42,9 +51,10 @@ export default function A11yChat({ onWakeWord }: { onWakeWord?: () => void }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const [ttsEnabled, setTtsEnabled] = useState(true);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
   const navigate = useNavigate();
   const user = useUser();
+  const { updatePreferences } = useAccessibility();
   const endpoint = useMemo(() => {
     // Use environment variable or fallback to localhost:3000
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
@@ -76,12 +86,74 @@ export default function A11yChat({ onWakeWord }: { onWakeWord?: () => void }) {
     } else {
       console.log('Speech recognition stopped');
     }
-  }, [speech.listening]);
+  }, [speech.listening]);  
+
+  // Function to refresh accessibility settings after chatbot update
+  async function refreshAccessibilitySettings() {
+    try {
+      if (!user) return;
+      
+      const response = await fetch(`http://localhost:3000/api/accessibility-settings/${user.id}`);
+      if (response.ok) {
+        const settings = await response.json();
+        
+        // Map backend settings to frontend format
+        const mappedSettings = {
+          visual: settings.visual || false,
+          hearing: settings.hearing || false,
+          dexterity: settings.dexterity || false,
+          cognitive: settings.cognitive || false,
+          textSize: settings.textSize || 16,
+          highContrast: settings.highContrast || false,
+          dyslexiaFont: settings.fontFamily === 'OpenDyslexic',
+          colorblindFilter: settings.colorblindFilter || 'none',
+          theme: settings.theme || 'light',
+        };
+        
+        // Update the accessibility context
+        await updatePreferences(mappedSettings);
+        console.log('Accessibility settings refreshed successfully');
+      }
+    } catch (error) {
+      console.error('Failed to refresh accessibility settings:', error);
+    }
+  }
+
   function handleCommand(cmd: Command) {
     if (cmd.type === "NAVIGATE") {
       navigate(cmd.target);
+    } else if (cmd.type === "navigate") {
+      // Handle the new lowercase navigation commands from backend
+      console.log('Navigation command received:', cmd.target);
+      
+      switch (cmd.target) {
+        case 'home':
+          navigate('/');
+          break;
+        case 'browserpage':
+          navigate('/browserpage');
+          break;
+        case 'favourites':
+          navigate('/favourites');
+          break;
+        case 'accessibility':
+          navigate('/accessibility');
+          break;
+        case 'profile':
+          navigate('/profile');
+          break;
+        default:
+          console.warn('Unknown navigation target:', cmd.target);
+      }
     } else if (cmd.type === "UPDATE_SETTING") {
-      handleUpdateSetting(cmd.setting, cmd.value);
+      handleUpdateSetting(cmd.setting, cmd.value);    } else if (cmd.type === "update_setting") {
+      // Handle setting updates from chatbot
+      console.log('Setting update command received:', cmd);
+      if (cmd.refreshSettings) {
+        // Refresh the accessibility settings to apply changes immediately
+        refreshAccessibilitySettings();
+        console.log('Refreshing accessibility settings...');
+      }
     } else if (cmd.type === "GET_SETTINGS") {
       handleGetSettings();
     }
@@ -231,10 +303,9 @@ export default function A11yChat({ onWakeWord }: { onWakeWord?: () => void }) {
       
       if (ttsEnabled) {
         speak(replyText, { lang: "en-GB", rate: 1 });
-      }
-      
-      // Handle commands separately (don't show them to user)
+      }      // Handle commands separately (don't show them to user)
       if (data.command) {
+        console.log('Command received from backend:', data.command);
         handleCommand(data.command);
       }
     } catch (e) {
@@ -254,7 +325,7 @@ export default function A11yChat({ onWakeWord }: { onWakeWord?: () => void }) {
       className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-4 shadow-sm relative"
     >
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-lg font-semibold text-card-foreground">Accessibility Help</h2>
+        <h2 className="text-lg font-semibold text-card-foreground">Aiden - ChatBot</h2>
         <div className="flex gap-2 items-center">
           <button
             type="button"
