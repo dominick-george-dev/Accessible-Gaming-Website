@@ -40,6 +40,9 @@ describe('AnalyticsService', () => {
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    
+    // Mock console.error to prevent test output noise
+    jest.spyOn(console, 'error').mockImplementation(() => {});
 
     db = createMockDB();
 
@@ -263,6 +266,10 @@ describe("AnalyticsService Security & Sanitization", () => {
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    
+    // Mock console.error to prevent test output noise
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    
     db = createMockDB();
 
     const module: TestingModule = await Test.createTestingModule({

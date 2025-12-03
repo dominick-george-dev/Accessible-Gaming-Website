@@ -6,27 +6,28 @@ export class FavoritesService {
   constructor(private readonly databaseService: DatabaseService) {}
 
   async toggleFavorite(userId: number, gameId: number) {
-    try {
-      const existing = await this.databaseService.favourites.findFirst({ 
-        where: { userId, gameId } 
-      });
+  try {
+    const existing = await this.databaseService.favourites.findFirst({ 
+      where: { userId, gameId } 
+    });
 
-      if (existing) {
-        await this.databaseService.favourites.delete({ 
-          where: { id: existing.id } 
-        });
-        return { removed: true, gameId };
-      }
-
-      await this.databaseService.favourites.create({ 
-        data: { userId, gameId } 
+    if (existing) {
+      // Use deleteMany instead of delete to avoid P2025 error
+      await this.databaseService.favourites.deleteMany({ 
+        where: { userId, gameId } // Delete by userId + gameId instead of id
       });
-      return { added: true, gameId };
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      throw new InternalServerErrorException('Failed to toggle favorite');
+      return { removed: true, gameId };
     }
+
+    await this.databaseService.favourites.create({ 
+      data: { userId, gameId } 
+    });
+    return { added: true, gameId };
+  } catch (error) {
+    console.error('Error toggling favorite:', error);
+    throw new InternalServerErrorException('Failed to toggle favorite');
   }
+}
 
   async getFavorites(userId: number) {
     try {
