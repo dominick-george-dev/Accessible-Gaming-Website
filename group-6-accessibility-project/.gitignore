@@ -14,6 +14,8 @@ coverage
 /jenkins/project.key
 /jenkins/cloud.key
 /jenkins/c23069362-openrc.sh
+/jenkins/c23035937-openrc.sh
+/jenkins/.env
 
 # Logs
 logs
