@@ -128,7 +128,7 @@ export class GamesService {
                     totalPages: Math.ceil(total / validatedLimit),
                 },
             };
-        } catch (error) {
+        } catch {
             // Don't leak database errors
             throw new BadRequestException('Failed to retrieve games');
         }
@@ -453,6 +453,97 @@ export class GamesService {
         } catch (error) {
             console.error('Error finding game with publisher:', error);
             throw new Error(`Failed to find game: ${error.message}`);
+        }
+    }
+
+    // New method for chatbot game queries
+    async findGamesByAccessibility(filters: {
+        accessibilityCategories?: string[];
+        accessibilityTags?: string[];
+        limit?: number;
+        searchTerm?: string;
+    }) {
+        try {
+            const { accessibilityCategories = [], accessibilityTags = [], limit = 10, searchTerm } = filters;
+            
+            // Build the where clause
+            const whereConditions: any = {
+                hasBeenVerified: true, // Only show verified games
+            };
+
+            // Add search term filtering
+            if (searchTerm && searchTerm.trim()) {
+                whereConditions.OR = [
+                    { title: { contains: searchTerm, mode: 'insensitive' } },
+                    { description: { contains: searchTerm, mode: 'insensitive' } },
+                    { developer: { contains: searchTerm, mode: 'insensitive' } },
+                ];
+            }
+
+            // Add accessibility filtering
+            if (accessibilityCategories.length > 0 || accessibilityTags.length > 0) {
+                const accessibilityWhere: any = {};
+
+                if (accessibilityCategories.length > 0) {
+                    accessibilityWhere.accessibilityTags = {
+                        category: { in: accessibilityCategories }
+                    };
+                }
+
+                if (accessibilityTags.length > 0) {
+                    accessibilityWhere.accessibilityTags = {
+                        ...accessibilityWhere.accessibilityTags,
+                        tag: { in: accessibilityTags }
+                    };
+                }
+
+                whereConditions.gameAccessibilityTags = {
+                    some: accessibilityWhere
+                };
+            }
+
+            const games = await this.databaseService.game.findMany({
+                where: whereConditions,
+                take: Math.min(limit, 20), // Cap at 20 results
+                orderBy: [
+                    { rating: 'desc' },
+                    { createdAt: 'desc' }
+                ],
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    images: true,
+                    genre: true,
+                    developer: true,
+                    rating: true,
+                    gameAccessibilityTags: {
+                        select: {
+                            accessibilityTags: {
+                                select: {
+                                    id: true,
+                                    tag: true,
+                                    category: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Format the response for the chatbot
+            return games.map(game => {
+                const { gameAccessibilityTags, ...rest } = game;
+                return {
+                    ...rest,
+                    accessibilityTags: gameAccessibilityTags.map(gat => gat.accessibilityTags),
+                    images: game.images ?? []
+                };
+            });
+
+        } catch (error) {
+            console.error('Error finding games by accessibility:', error);
+            throw new BadRequestException('Failed to search games by accessibility');
         }
     }
 }

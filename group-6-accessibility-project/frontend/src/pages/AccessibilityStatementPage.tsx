@@ -102,15 +102,13 @@ const VOICE_COMMANDS: VoiceCommandCategory[] = [
       { phrase: 'Browse games', description: 'Go to the browse page' },
       { phrase: 'My favorites', description: 'View your favorite games' },
       { phrase: 'Open profile', description: 'Go to your profile page' },
-      { phrase: 'Show accessibility', description: 'View accessibility information' },
     ],
   },
   {
     category: 'Actions',
     commands: [
-      { phrase: 'Add to favorites', description: 'Add the current game to favorites' },
-      { phrase: 'Search for [game name]', description: 'Search for a specific game' },
-      { phrase: 'Filter by [category]', description: 'Filter games by accessibility category' },
+      { phrase: 'Undo my last action', description: 'Undoes last action' },
+      { phrase: 'Show me games with visual accessibility', description: 'Filter games by visual accessibility' },
       { phrase: 'Sort by rating', description: 'Sort games by their rating' },
     ],
   },
@@ -140,7 +138,7 @@ const VOICE_COMMANDS: VoiceCommandCategory[] = [
 export function AccessibilityPage() {
     
   const [issueReport, setIssueReport] = useState('');
-  const user = JSON.parse(localStorage.getItem('user') || '{}');  
+  const user = JSON.parse(localStorage.getItem('userData') || '{}');  
   const userId = user?.id;
 
   const handleReportIssue = async () => {

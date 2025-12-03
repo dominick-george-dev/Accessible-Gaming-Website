@@ -145,9 +145,19 @@ const handleToggleFavorite = async (gameId: number) => {
 
   if (!user) {
     return (
-      <div className="px-4 py-12 text-center space-y-4">
-        <p>You need to log in to view and favorite games.</p>
-        <Button onClick={() => navigate("/login")}>Go to Login</Button>
+      <div className="flex items-center justify-center min-h-[60vh] w-full">
+        <div className="bg-white dark:bg-gray-900 shadow-lg rounded-lg p-8 flex flex-col items-center border border-gray-200 dark:border-gray-700 max-w-md w-full">
+          <h2 className="text-3xl font-bold mb-4 text-primary">Favourites</h2>
+          <p className="mb-6 text-lg text-gray-700 dark:text-gray-200 text-center">
+            You must be logged in to save favourites.
+          </p>
+          <button
+            className="px-6 py-2 bg-primary text-white rounded-lg font-semibold shadow hover:bg-primary-foreground transition-colors duration-200"
+            onClick={() => navigate('/login')}
+          >
+            Go to Login
+          </button>
+        </div>
       </div>
     );
   }

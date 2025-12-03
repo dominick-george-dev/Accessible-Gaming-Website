@@ -1,4 +1,8 @@
+# Use a base image that supports running multiple services
 FROM node:20-alpine
+
+# Install Docker CLI to manage Ollama container
+RUN apk add --no-cache docker-cli curl
 
 WORKDIR /app
 
@@ -25,7 +29,7 @@ RUN npm ci --only=production && npm cache clean --force
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
 USER nestjs
 
-# Expose the backend port
+# Expose the backend port and Ollama port
 EXPOSE 3000
 
 # Use production start command

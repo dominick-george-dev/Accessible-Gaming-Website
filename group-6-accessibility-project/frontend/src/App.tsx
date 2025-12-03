@@ -15,9 +15,9 @@ import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 import { MakeAccountPublisherPage } from './pages/MakeAccountPublisherPage'
 import { PublisherDashboard } from './pages/PublisherDashboard'
 import { Toaster } from "./components/ui/sonner";
-import AdminDeleteAndVerifyTab from './components/AdminDeleteAndVerifyTab'
+import { AdminDashboard } from './pages/AdminDashboard'
+import { useEffect } from 'react'
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
-import AccessibilityTagsAdminTab from './components/AccessibilityTagsAdminTab'
 
 function App() {
   return (
@@ -30,6 +30,22 @@ function App() {
 function AppContent() {
   const { setLoginState } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Accessplay Gaming";
+
+    const setFavicon = (url: string) => {
+      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+      link.href = url;
+    };
+
+    setFavicon('/gamepad.png');
+  }, []);
 
   const handleLogin = (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string, id?: number }) => {
     console.log('User logged in:', userData);
@@ -121,15 +137,9 @@ function AppContent() {
             <MakeAccountPublisherPage />
           </Layout>
         } />
-        {/* ✅ Add the admin route with proper access control */}
         <Route path="/admin" element={
           <Layout>
-            <AdminDeleteAndVerifyTab />
-          </Layout>
-        } />
-        <Route path="/admin/accessibility-tags" element={
-          <Layout>
-            <AccessibilityTagsAdminTab />
+            <AdminDashboard />
           </Layout>
         } />
         {/* Authentication pages without Layout (they have their own layout) */}        <Route
