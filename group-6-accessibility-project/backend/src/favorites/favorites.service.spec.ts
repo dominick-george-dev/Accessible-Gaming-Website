@@ -6,31 +6,28 @@ import { InternalServerErrorException } from '@nestjs/common';
 describe('FavoritesService', () => {
   let service: FavoritesService;
 
-  // Mock database methods used in the service
+  // Correct mock with deleteMany instead of delete
   const mockDatabaseService = {
     favourites: {
       findFirst: jest.fn(),
-      delete: jest.fn(),
+      deleteMany: jest.fn(),   // ✅ FIXED
       create: jest.fn(),
       findMany: jest.fn(),
     },
   };
 
   beforeEach(async () => {
-    // Create a testing module with mocked DatabaseService
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FavoritesService,
         {
           provide: DatabaseService,
-          useValue: mockDatabaseService, // inject mocked database service
+          useValue: mockDatabaseService,
         },
       ],
     }).compile();
 
     service = module.get<FavoritesService>(FavoritesService);
-
-    // Reset mock calls before each test
     jest.clearAllMocks();
   });
 
@@ -39,41 +36,47 @@ describe('FavoritesService', () => {
   // ------------------------------------------------------
   describe('toggleFavorite', () => {
     it('should remove an existing favorite', async () => {
-      // Mock: favorite already exists
+      // Mock: favorite exists
       mockDatabaseService.favourites.findFirst.mockResolvedValue({
         id: 1,
         userId: 10,
         gameId: 20,
       });
 
-      const result = await service.toggleFavorite(10, 20);
-
-      // Ensure delete was called with correct id
-      expect(mockDatabaseService.favourites.delete).toHaveBeenCalledWith({
-        where: { id: 1 },
+      mockDatabaseService.favourites.deleteMany.mockResolvedValue({
+        count: 1,
       });
 
-      // Expect returned value indicating removal
+      const result = await service.toggleFavorite(10, 20);
+
+      // Expect deleteMany to be called correctly
+      expect(mockDatabaseService.favourites.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 10, gameId: 20 },
+      });
+
       expect(result).toEqual({ removed: true, gameId: 20 });
     });
 
     it('should add a new favorite if none exists', async () => {
-      // Mock: no existing favorite
+      // Mock: no favorite present
       mockDatabaseService.favourites.findFirst.mockResolvedValue(null);
+
+      mockDatabaseService.favourites.create.mockResolvedValue({
+        id: 99,
+        userId: 10,
+        gameId: 20,
+      });
 
       const result = await service.toggleFavorite(10, 20);
 
-      // Ensure create was called with correct data
       expect(mockDatabaseService.favourites.create).toHaveBeenCalledWith({
         data: { userId: 10, gameId: 20 },
       });
 
-      // Expect returned value indicating addition
       expect(result).toEqual({ added: true, gameId: 20 });
     });
 
     it('should throw InternalServerErrorException on database error', async () => {
-      // Mock: database throws error
       mockDatabaseService.favourites.findFirst.mockRejectedValue(
         new Error('DB error'),
       );
@@ -94,8 +97,9 @@ describe('FavoritesService', () => {
         { id: 2, userId: 10, gameId: 200 },
       ];
 
-      // Mock: findMany returns favorite list
-      mockDatabaseService.favourites.findMany.mockResolvedValue(mockFavorites);
+      mockDatabaseService.favourites.findMany.mockResolvedValue(
+        mockFavorites,
+      );
 
       const result = await service.getFavorites(10);
 
@@ -107,7 +111,6 @@ describe('FavoritesService', () => {
     });
 
     it('should throw InternalServerErrorException when database fails', async () => {
-      // Mock: database throws error
       mockDatabaseService.favourites.findMany.mockRejectedValue(
         new Error('DB error'),
       );
