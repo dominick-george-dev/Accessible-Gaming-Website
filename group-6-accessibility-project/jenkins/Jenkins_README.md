@@ -4,6 +4,19 @@
 Ensure you have all of the following:
 - Your OpenStack openrc.sh file e.g. c123456-openrc.sh (Unique for each user) and place it in the group-6-accessibility-project/jenkins.
 - cloud.key - This is a private key which the user can find within the Teams. Under General/Files.
+
+- **🔐 .env file**: Create a `.env` file in the `/jenkins` directory with your environment variables:
+```
+JWT_SECRET="your_jwt_secret_here"
+AWS_ACCESS_KEY_ID="your_aws_key_here"
+AWS_SECRET_ACCESS_KEY="your_aws_secret_here"
+AWS_REGION="eu-north-1"
+AWS_S3_BUCKET_NAME="your_bucket_name"
+CLOUDFRONT_URL="your_cloudfront_url"
+DATABASE_URL="your_database_url"
+```
+⚠️ **NEVER commit this file to the repository!**
+
 - Terraform is installed on your machine. Link to the installation instructions: https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
 - You MUST be on the university GlobalProtect VPN otherwise TERRAFORM WILL NOT WORK.
 

@@ -52,11 +52,11 @@ log "Adding repositories..."
 dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo || log "Warning: Docker repo failed"
 
 # Node.js repository (with error handling)
-log "Adding Node.js repository..."
-if curl -fsSL https://rpm.nodesource.com/setup_18.x | bash -; then
-    log "Node.js repository added successfully"
+log "Adding Node.js 20.x repository..."
+if curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -; then
+    log "Node.js 20.x repository added successfully"
 else
-    log "Warning: Node.js repository setup failed, will use system packages"
+    log "Warning: Node.js 20.x repository setup failed, will use system packages"
 fi
 
 # Jenkins repository
@@ -69,18 +69,36 @@ critical_command "rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2
 log "Installing Docker..."
 dnf install -y --quiet docker-ce docker-ce-cli containerd.io || log "Warning: Docker installation had issues"
 
-log "Installing Node.js..."
+log "Installing Docker Compose..."
+if ! command -v docker-compose &> /dev/null; then
+    log "Downloading Docker Compose..."
+    # Install Docker Compose v2
+    if curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose; then
+        chmod +x /usr/local/bin/docker-compose
+        # Create symlink for compatibility
+        ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+        log "Docker Compose installed successfully"
+        docker-compose --version || log "Warning: Docker Compose version check failed"
+    else
+        log "Warning: Docker Compose installation failed"
+    fi
+else
+    log "Docker Compose already installed"
+    docker-compose --version || log "Warning: Docker Compose version check failed"
+fi
+
+log "Installing Node.js 20.x..."
 # Use set +e temporarily to handle Node.js package conflicts gracefully
 set +e
 if dnf list available nodejs | grep -q nodesource; then
-    log "Installing Node.js from NodeSource..."
+    log "Installing Node.js 20.x from NodeSource..."
     dnf install -y --quiet nodejs --exclude=npm
     if [ $? -ne 0 ]; then
         log "NodeSource installation failed, trying system packages..."
         dnf install -y --quiet nodejs --nobest
     fi
 else
-    log "Installing Node.js from system repositories..."
+    log "NodeSource not available, installing system Node.js (may be older version)..."
     dnf install -y --quiet nodejs
 fi
 set -u
@@ -105,6 +123,29 @@ else
     log "npm is already available"
 fi
 set -u
+
+log "Setting up environment variables..."
+# Create .env file for Jenkins workspace
+mkdir -p /var/lib/jenkins/workspace-env
+
+# Since this runs on the server, we need to get env vars from Terraform template
+# Create .env file from template variables (will be populated by Terraform)
+cat > /var/lib/jenkins/workspace-env/.env << 'ENV_EOF'
+${env_file_content}
+ENV_EOF
+
+# Only set permissions if file has content
+if [ -s /var/lib/jenkins/workspace-env/.env ]; then
+    chown jenkins:jenkins /var/lib/jenkins/workspace-env/.env
+    chmod 600 /var/lib/jenkins/workspace-env/.env
+    log "Environment variables configured from template"
+else
+    log "WARNING: No environment variables provided in template"
+    log "Creating empty .env file - configure manually if needed"
+    touch /var/lib/jenkins/workspace-env/.env
+    chown jenkins:jenkins /var/lib/jenkins/workspace-env/.env
+    chmod 600 /var/lib/jenkins/workspace-env/.env
+fi
 
 ########################################
 # Service Configuration
@@ -261,13 +302,13 @@ if (privateKeyFile.exists()) {
 }
 
 // Environment credentials
-def envContent = """
-NODE_ENV=production
-DATABASE_URL=postgresql://user:password@localhost:5432/gamedb
-JWT_SECRET=your-jwt-secret-here
-FRONTEND_URL=http://localhost:3000
-BACKEND_URL=http://localhost:8000
-""".trim()
+# def envContent = """
+# NODE_ENV=production
+# DATABASE_URL=postgresql://user:password@localhost:5432/gamedb
+# JWT_SECRET=your-jwt-secret-here
+# FRONTEND_URL=http://localhost:3000
+# BACKEND_URL=http://localhost:8000
+# """.trim()
 
 def envCredentials = new StringCredentialsImpl(
     CredentialsScope.GLOBAL,
@@ -414,8 +455,10 @@ EOF
 
 echo "• Jenkins: $(get_status jenkins)"
 echo "• Docker: $(get_status docker)"
+echo "• Docker Compose: $(docker-compose --version 2>/dev/null | head -n1 || echo 'Not detected')"
 echo "• Java: $(java -version 2>&1 | head -n1 || echo 'Not detected')"
 echo "• Node.js: $(node --version 2>/dev/null || echo 'Not detected')"
+echo "• npm: $(npm --version 2>/dev/null || echo 'Not detected')"
 
 cat << 'EOF'
 
