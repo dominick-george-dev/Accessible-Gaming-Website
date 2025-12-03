@@ -15,4 +15,5 @@ export default defineConfig({
       "/games": "http://localhost:3000",
     },
   },
+  }
 })
