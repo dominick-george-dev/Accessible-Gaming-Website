@@ -6,39 +6,31 @@ RUN apk add --no-cache docker-cli curl
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
 RUN npm install
 
+# Copy source code
 COPY . .
 
-# Generate Prisma client (creates types used by TypeScript)
+# Copy environment file from parent directory
+COPY ../.env .env
+
+# Generate Prisma client
 RUN npx prisma generate
 
 # Build the NestJS app
 RUN npm run build
 
+# Install production dependencies only
+RUN npm ci --only=production && npm cache clean --force
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
+USER nestjs
+
 # Expose the backend port and Ollama port
 EXPOSE 3000
-EXPOSE 11434
 
-# Create startup script that runs both NestJS and Ollama
-RUN echo '#!/bin/sh' > /app/start.sh && \
-    echo 'set -e' >> /app/start.sh && \
-    echo '' >> /app/start.sh && \
-    echo '# Start Ollama in the background' >> /app/start.sh && \
-    echo 'echo "Starting Ollama..."' >> /app/start.sh && \
-    echo 'docker pull ollama/ollama || echo "Failed to pull Ollama image, continuing..."' >> /app/start.sh && \
-    echo 'docker run -d --name ollama \' >> /app/start.sh && \
-    echo '  -p 11434:11434 \' >> /app/start.sh && \
-    echo '  -v ollama:/root/.ollama \' >> /app/start.sh && \
-    echo '  ollama/ollama || echo "Ollama container already running or failed to start"' >> /app/start.sh && \
-    echo '' >> /app/start.sh && \
-    echo '# Wait a moment for Ollama to initialize' >> /app/start.sh && \
-    echo 'sleep 5' >> /app/start.sh && \
-    echo '' >> /app/start.sh && \
-    echo '# Start NestJS application' >> /app/start.sh && \
-    echo 'echo "Starting NestJS application..."' >> /app/start.sh && \
-    echo 'npm run start:dev' >> /app/start.sh && \
-    chmod +x /app/start.sh
-
-CMD ["/app/start.sh"]
+# Use production start command
+CMD ["npm", "run", "start:prod"]

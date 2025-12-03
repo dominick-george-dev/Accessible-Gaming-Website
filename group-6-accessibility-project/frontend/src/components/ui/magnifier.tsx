@@ -9,10 +9,9 @@ interface MagnifierProps {
 export function Magnifier({ isActive, magnification = 2, size = 200 }: MagnifierProps) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [showMagnifier, setShowMagnifier] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationFrameRef = useRef<number>();
-  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationFrameRef = useRef<number | undefined>(undefined);
+  const refreshTimeoutRef = useRef<number | null>(null);
 
   // Throttled refresh function to prevent too many updates
   const throttledRefresh = () => {
@@ -238,9 +237,8 @@ function MagnifiedView({
   magnifierX: number;
   magnifierY: number;
   refreshKey: number;
-}) {
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+}) {  const overlayRef = useRef<HTMLDivElement>(null);
+  const updateTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!overlayRef.current) return;
@@ -280,11 +278,9 @@ function MagnifiedView({
       cloneWrapper.style.left = `${-documentX * magnification + size / 2}px`;
       cloneWrapper.style.top = `${-documentY * magnification + size / 2}px`;
       cloneWrapper.style.width = `${document.documentElement.scrollWidth}px`;
-      cloneWrapper.style.height = `${document.documentElement.scrollHeight}px`;
-      cloneWrapper.style.pointerEvents = 'none';
+      cloneWrapper.style.height = `${document.documentElement.scrollHeight}px`;      cloneWrapper.style.pointerEvents = 'none';
       
-      // Copy all body styles
-      const bodyStyles = window.getComputedStyle(document.body);
+      // Set body clone styles
       bodyClone.style.margin = '0';
       bodyClone.style.padding = '0';
       bodyClone.style.position = 'absolute';
