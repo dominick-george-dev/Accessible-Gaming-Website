@@ -6,6 +6,7 @@ A modern, production-ready, full-stack web application for accessible gaming, bu
 
 ## 📚 Table of Contents
 - [Project Overview](#project-overview)
+- [CI/CD Pipeline](#ci-cd-pipeline)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
 - [Repository Structure](#repository-structure)
@@ -29,6 +30,17 @@ This platform enables users to discover, review, and interact with accessible ga
 - AWS S3 for asset storage (with optional CloudFront CDN)
 - Dockerized for easy local and production deployment
 - Role-based authentication and protected routes
+
+---
+
+## CI/CD Pipeline
+
+This Terraform VM deploys a Jenkins server which creates the automated pipeline which triggers after each build of the main branch.
+
+A more detailed explanation of how to get it running can be seen in the below README:
+See the Jenkins-specific README for full CI/CD setup and usage:
+
+- [Jenkins CI/CD Setup](./Jenkins_README.md) — Detailed instructions to provision the Terraform VM, install and configure Jenkins, create and manage pipeline jobs, store credentials/secrets, and verify automated builds on the main branch. Includes Terraform examples, deployment commands, and troubleshooting tips.
 
 ---
 
