@@ -4,6 +4,7 @@ pipeline {
     environment {
         GO111MODULE = 'on'
         DOCKER_BUILDKIT = '1'
+        FLOATING_IP = ''
     }
 
     stages {
@@ -11,6 +12,14 @@ pipeline {
             steps {
                 script {
                     echo 'Setting up environment...'
+                    // Get the floating IP dynamically
+                    def floatingIP = sh(
+                        script: 'curl -s ifconfig.me || hostname -I | awk \'{print $1}\'',
+                        returnStdout: true
+                    ).trim()
+                    
+                    env.FLOATING_IP = floatingIP
+                    echo "Detected floating IP: ${env.FLOATING_IP}"
                     sh '''
                         echo "Current directory: $(pwd)"
                         ls -la
@@ -23,11 +32,20 @@ pipeline {
                             cat group-6-accessibility-project/.env | grep -v SECRET | head -3
                         else
                             echo "Warning: Environment file not found at /var/lib/jenkins/workspace-env/.env"
-                                echo "Checking if Jenkins has environment variables..."
-                                ls -la /var/lib/jenkins/workspace-env/ || echo "Directory not found"
+                            echo "Creating basic .env file..."
+                            touch group-6-accessibility-project/.env
                         fi
                         
-                        cd group-6-accessibility-project/backend
+                        # Add floating IP to environment file
+                        cd group-6-accessibility-project
+                        echo "FLOATING_IP=${FLOATING_IP}" >> .env
+                        echo "VITE_API_URL=http://${FLOATING_IP}:3000" >> .env
+                        
+                        echo "Environment variables configured:"
+                        cat .env | grep -E "(FLOATING_IP|VITE_API_URL)" || echo "No IP variables found"
+                        
+                        # Setup backend dependencies
+                        cd backend
                         npm ci || npm install
                         npm install prisma@6.19.0 --save-dev || true
                     '''
@@ -70,6 +88,11 @@ pipeline {
                         cd group-6-accessibility-project
                         echo "Starting services..."
                         docker-compose -f docker-compose.yml up -d || echo "Deployment completed with warnings"
+                        
+                        echo "Application URLs:"
+                        echo "Frontend: http://${FLOATING_IP}:3001"
+                        echo "Backend: http://${FLOATING_IP}:3000"
+                        echo "Jenkins: http://${FLOATING_IP}:8080"
                     '''
                 }
             }

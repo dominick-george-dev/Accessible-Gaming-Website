@@ -18,6 +18,11 @@ output "password_command" {
   description = "Command to retrieve Jenkins admin password"
 }
 
+output "jenkins_floating_ip" {
+  value = openstack_networking_floatingip_v2.floating_ip.address
+  description = "Floating IP address of Jenkins server"
+}
+
 output "deployment_info" {
   value = <<-EOT
   

@@ -4,9 +4,11 @@ node_modules
 build
 coverage
 
-# terraform
+# terraform + jenkins
 /jenkins/.terraform
 /jenkins/.terraform.lock.hcl
+/jenkins/jenkins-env.tpl
+/jenkins/jenkins-floating-ip.txt
 
 # Keys
 /jenkins/project.key
