@@ -14,7 +14,7 @@ services:
       CLOUDFRONT_URL: "${CLOUDFRONT_URL}"
       NODE_ENV: production  # Add this for production mode
     ports:
-      - "8080:3000"
+      - "3000:3000"
 
   frontend:
     build: ./frontend
@@ -31,7 +31,7 @@ services:
             - VITE_API_URL=http://${FLOATING_IP}:8080   # passed at build time
         restart: always
         ports:
-          - "8081:80"
+          - "3001:80"
         depends_on:
           - backend
         environment:
