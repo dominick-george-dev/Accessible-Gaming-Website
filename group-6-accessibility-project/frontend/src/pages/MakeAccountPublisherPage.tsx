@@ -70,8 +70,10 @@ export function MakeAccountPublisherPage() {
         
         // Update user role in localStorage
         const updatedUser = { ...user, role: 'PUBLISHER' };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        localStorage.setItem('userData', JSON.stringify(updatedUser));
         setUser(updatedUser);
+
+        await refreshAuthToken(updatedUser);
         
         // Redirect to publisher dashboard after 3 seconds
         setTimeout(() => {
@@ -89,8 +91,31 @@ export function MakeAccountPublisherPage() {
   };
 
   const handleCancel = () => {
-    window.location.href = '/games/1';
+    window.location.href = '/';
   };
+
+  const refreshAuthToken = async (userData: any) => {
+  try {
+    const response = await fetch('http://localhost:3000/auth/refresh-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+      },
+      body: JSON.stringify({ userId: userData.id })
+    });
+
+    if (response.ok) {
+      const { access_token } = await response.json();
+      localStorage.setItem('access_token', access_token);
+    }
+  } catch (error) {
+    console.error('Failed to refresh token:', error);
+    // Force re-login if token refresh fails
+    localStorage.clear();
+    window.location.href = '/login';
+  }
+};
 
   // Not logged in
   if (!user) {
