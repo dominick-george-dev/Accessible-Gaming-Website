@@ -8,7 +8,7 @@ import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Settings, Eye, Ear, Hand, Brain, Minus, Plus, Type, Contrast, Palette, Search, Undo, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAccessibility, type ColorblindFilter, type ThemeMode } from '../contexts/AccessibilityContext';
+import { useAccessibility, type ColorblindFilter, type ThemeMode } from '../context/AccessibilityContext';
 import { AccessibilityComponents } from '../components/accessibility/AccessibilityComponents';
 
 // ===== TYPES =====
@@ -59,8 +59,10 @@ export default function ProfilePageStandalone() {
     setLoading(false);
   }, [preferences]);
   // Update preferences handler
+
   const handleUpdatePreferences = async (newPrefs: User['accessibilityPreferences']) => {
     if (!user) return;
+    console.log('Test %^*£$%^"%"*');
     setUser(prev => prev ? { ...prev, accessibilityPreferences: newPrefs } : null);
     await updatePreferences(newPrefs);
   };

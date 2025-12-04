@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSpeechInput } from "../../hooks/useSpeechInput";
 import { speak } from "../../utils/textToSpeech";
-import { useAccessibility } from "../../contexts/AccessibilityContext";
+import { useAccessibility } from "../../context/AccessibilityContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 

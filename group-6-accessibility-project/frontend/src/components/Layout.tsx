@@ -7,7 +7,7 @@ import { UndoButton } from './UndoButton';
 import { toast } from 'sonner';
 import { addUndoAction, undoManager } from '../utils/undoManager';
 import { useAuth } from '../hooks/useAuth';
-import { useAccessibility } from '../contexts/AccessibilityContext';
+import { useAccessibility } from '../context/AccessibilityContext';
 import { Magnifier } from './ui/magnifier';
 import { applyDyslexiaFont } from '../utils/applyAccessibilitySettings';
 import { AidenChatPanel } from './AidenChatPanel';
