@@ -45,7 +45,7 @@ Core elements include:
 All Functional, Non-Functional, and Data requirements are documented clearly in the project Wiki.
 
 **Requirements Wiki:**  
-https://gitlab.com/your-group/your-project/-/wikis/Requirements  
+https://git.cardiff.ac.uk/c23069362/team-6-accessible-gaming-website/-/wikis/Requirements
 
 ---
 
