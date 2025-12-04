@@ -1,36 +1,30 @@
-# Use a base image that supports running multiple services
-FROM node:20-alpine
-
-# Install Docker CLI to manage Ollama container
-RUN apk add --no-cache docker-cli curl
-
+FROM node:20-bullseye
+ 
 WORKDIR /app
-
-# Copy package files
+ 
+# Install basic tools required by Ollama install script
+RUN apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    bash \
+ && rm -rf /var/lib/apt/lists/*
+ 
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | bash
+ 
+# Install backend dependencies
 COPY package*.json ./
 RUN npm install
-
-# Copy source code
+ 
+# Copy backend source
 COPY . .
-
-# Copy environment file from parent directory
-COPY ../.env .env
-
-# Generate Prisma client
+ 
+# Prisma
 RUN npx prisma generate
-
-# Build the NestJS app
-RUN npm run build
-
-# Install production dependencies only
-RUN npm ci --only=production && npm cache clean --force
-
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
-USER nestjs
-
-# Expose the backend port and Ollama port
-EXPOSE 3000
-
-# Use production start command
-CMD ["npm", "run", "start:prod"]
+ 
+EXPOSE 3000 11434
+ 
+# Start Ollama daemon + backend
+CMD ["bash", "-lc", "ollama daemon & npm run start:dev"]

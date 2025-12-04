@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Settings, Eye, Ear, Hand, Brain, Minus, Plus, Type, Contrast, Palette, Search, Undo, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AccessibilityComponents } from '../components/accessibility/AccessibilityComponents';
-import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../context/AccessibilityContext';
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter, type ColorblindFilter, type ThemeMode } from '../context/AccessibilityContext';
 
 // ===== TYPES =====
 
