@@ -101,6 +101,12 @@ The following assumptions guided the system’s design:
 
 ---
 
+# Libraries Used
+
+Visit: https://git.cardiff.ac.uk/c23069362/team-6-accessible-gaming-website/-/wikis/Libraries
+
+---
+
 ## 🏗️ Architecture
 ```
 ┌─────────────────────────────┐
