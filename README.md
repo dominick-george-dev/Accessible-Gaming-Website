@@ -250,7 +250,10 @@ docker compose up --build
 
 ## 🐳 Running with Docker Compose
 Start the full stack:
+
+Download Docker Desktop via: https://www.docker.com/get-started/ 
 ```sh
+cd group-6-accessibility-project
 docker compose up --build
 ```
 This launches:
