@@ -19,7 +19,6 @@ A modern, production-ready, full-stack web application for accessible gaming, bu
 - [Database (Prisma + Neon)](#database-prisma--neon)
 - [AWS S3 and CloudFront](#aws-s3-and-cloudfront)
 - [Testing](#testing)
-- [Production Deployment](#production-deployment)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 
@@ -320,7 +319,7 @@ This has already been set up however if you would like to create your own:
 - Create a feature branch
 - Follow code style and conventions
 - Submit a pull request
-- Await review and approve
+- Await review and approval
 
 ---
 
