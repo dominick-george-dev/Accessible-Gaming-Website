@@ -8,8 +8,8 @@ import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Settings, Eye, Ear, Hand, Brain, Minus, Plus, Type, Contrast, Palette, Search, Undo, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAccessibility, type ColorblindFilter, type ThemeMode } from '../context/AccessibilityContext';
 import { AccessibilityComponents } from '../components/accessibility/AccessibilityComponents';
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../context/AccessibilityContext';
 
 // ===== TYPES =====
 
@@ -40,32 +40,64 @@ interface User {
 export default function ProfilePageStandalone() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();  const { 
-    preferences, 
-    updatePreferences, 
-    adjustTextSize
-  } = useAccessibility();
+  const navigate = useNavigate();
+  const [preferences, setPreferences] = useState<User['accessibilityPreferences'] | null>(null);
+
   // Fetch user and accessibility settings on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('userData');
-    console.log('User in localStorage on ProfilePage load:', storedUser);
-    if (!storedUser) {
+    const fetchUserAndPreferences = async () => {
+      const storedUser = localStorage.getItem('userData');
+      if (!storedUser) {
+        setLoading(false);
+        return;
+      }
+      const parsedUser = JSON.parse(storedUser);
+      try {
+        const response = await fetch(`http://localhost:3000/api/accessibility-settings/${parsedUser.id}`);
+        if (response.ok) {
+          const prefs = await response.json();
+          setPreferences(prefs);
+          setUser({ ...parsedUser, accessibilityPreferences: prefs });
+        } else {
+          setUser({ ...parsedUser, accessibilityPreferences: parsedUser.accessibilityPreferences });
+        }
+      } catch (error) {
+        setUser({ ...parsedUser, accessibilityPreferences: parsedUser.accessibilityPreferences });
+      }
       setLoading(false);
-      return;
-    }
-    const parsedUser = JSON.parse(storedUser);
-    // The accessibility context will handle loading the settings
-    setUser({ ...parsedUser, accessibilityPreferences: preferences });
-    setLoading(false);
-  }, [preferences]);
-  // Update preferences handler
+    };
+    fetchUserAndPreferences();
+  }, []);
 
+  useEffect(() => {
+    if (preferences) {
+      applyTheme(preferences.theme, preferences.highContrast);
+      applyTextSize(preferences.textSize);
+      applyDyslexiaFont(preferences.dyslexiaFont);
+      applyColorblindFilter(preferences.colorblindFilter);
+    }
+  }, [preferences]);
+
+  // Update preferences handler
   const handleUpdatePreferences = async (newPrefs: User['accessibilityPreferences']) => {
     if (!user) return;
-    console.log('Test %^*£$%^"%"*');
     setUser(prev => prev ? { ...prev, accessibilityPreferences: newPrefs } : null);
-    await updatePreferences(newPrefs);
+    setPreferences(newPrefs);
+    try {
+      const response = await fetch(`http://localhost:3000/api/accessibility-settings/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPrefs),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update preferences');
+      }
+      console.log('Preferences updated in database');
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+    }
   };
+
   // Preference change handler
   const handlePreferenceChange = (
     category: keyof User['accessibilityPreferences'],
@@ -82,7 +114,9 @@ export default function ProfilePageStandalone() {
 
   // Text size adjustment
   const handleTextSizeChange = (increment: number) => {
-    adjustTextSize(increment);
+    if (!preferences) return;
+    const newSize = Math.min(32, Math.max(10, preferences.textSize + increment));
+    handlePreferenceChange('textSize', newSize);
   };
 
   // Keyboard handler for text size buttons
@@ -92,6 +126,7 @@ export default function ProfilePageStandalone() {
       handleTextSizeChange(increment);
     }
   };
+
   // Preference options
   const accessibilityOptions = [
     { id: 'visual', icon: Eye, label: 'Visual Accessibility' },

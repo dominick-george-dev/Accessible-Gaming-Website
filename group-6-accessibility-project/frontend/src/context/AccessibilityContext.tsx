@@ -174,7 +174,7 @@ export function useAccessibility() {
 
 // ===== HELPER FUNCTIONS =====
 
-function applyTheme(theme: ThemeMode, highContrast: boolean) {
+export function applyTheme(theme: ThemeMode, highContrast: boolean) {
   const html = document.documentElement;
   
   // Remove all theme classes
@@ -193,11 +193,11 @@ function applyTheme(theme: ThemeMode, highContrast: boolean) {
   }
 }
 
-function applyTextSize(size: number) {
+export function applyTextSize(size: number) {
   document.documentElement.style.setProperty('--font-size', `${size}px`);
 }
 
-function applyDyslexiaFont(enabled: boolean) {
+export function applyDyslexiaFont(enabled: boolean) {
   if (enabled) {
     document.body.classList.add('dyslexia-font');
   } else {
@@ -205,7 +205,7 @@ function applyDyslexiaFont(enabled: boolean) {
   }
 }
 
-function applyColorblindFilter(filter: ColorblindFilter) {
+export function applyColorblindFilter(filter: ColorblindFilter) {
   const body = document.body;
   
   // Remove all filter classes

@@ -6,6 +6,7 @@ import App from "./App.tsx";
 import { UserProvider } from "./context/UserContext.tsx";
 import { GamesProvider } from "./context/GamesContext.tsx";
 import { FavoritesProvider } from "./context/FavoritesContext.tsx";
+import { AccessibilityProvider } from "./context/AccessibilityContext";
 
 import "./index.css";
 
@@ -15,7 +16,9 @@ createRoot(document.getElementById("root")!).render(
       <UserProvider>
         <GamesProvider>
           <FavoritesProvider>
-            <App />
+            <AccessibilityProvider>
+              <App />
+            </AccessibilityProvider>
           </FavoritesProvider>
         </GamesProvider>
       </UserProvider>
