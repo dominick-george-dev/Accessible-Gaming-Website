@@ -231,9 +231,9 @@ docker compose up --build
      npm install
      ```
 
-4. **Pull the Ollama model**
+4. **Pull the Ollama model (In root terminal)**
    ```sh
-   Ollama pull llama3.2:1b
+   ollama pull llama3.2:1b
    ```
 5. **Run the backend:**
    ```sh
