@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, ChevronLeft, ChevronRight, ArrowRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from "../context/AccessibilityContext";
 
 // Hook to get user from localStorage
 function useUser() {
@@ -38,6 +39,57 @@ export function HomePage() {
   const [topShownCount, setTopShownCount] = useState<number>(3);
 
   const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:3000";
+
+  // Apply accessibility settings on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem("userData");
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        const prefs = user.accessibilityPreferences;
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      } catch {}
+    }
+  }, []);
+
+  // Fetch and apply accessibility settings from backend on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem("userData");
+    if (!storedUser) return;
+    const parsedUser = JSON.parse(storedUser);
+    const fetchAndApplyPrefs = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/accessibility-settings/${parsedUser.id}`);
+        let prefs;
+        if (response.ok) {
+          prefs = await response.json();
+        } else {
+          prefs = parsedUser.accessibilityPreferences;
+        }
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      } catch (error) {
+        // fallback to localStorage prefs
+        const prefs = parsedUser.accessibilityPreferences;
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      }
+    };
+    fetchAndApplyPrefs();
+  }, []);
 
   // Fetch user's favorites
   useEffect(() => {

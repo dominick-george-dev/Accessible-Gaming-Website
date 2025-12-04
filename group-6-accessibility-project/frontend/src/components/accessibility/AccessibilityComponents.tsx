@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { Magnifier } from '../ui/magnifier';
-import { AccessibilityContext } from '../../contexts/AccessibilityContext';
+import { AccessibilityContext } from '../../context/AccessibilityContext';
 
 export function AccessibilityComponents() {
   const context = useContext(AccessibilityContext);

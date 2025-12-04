@@ -17,19 +17,38 @@ import { PublisherDashboard } from './pages/PublisherDashboard'
 import { Toaster } from "./components/ui/sonner";
 import { AdminDashboard } from './pages/AdminDashboard'
 import { useEffect } from 'react'
-import { AccessibilityProvider } from './contexts/AccessibilityContext';
 
 function App() {
   return (
-    <AccessibilityProvider>
-      <AppContent />
-    </AccessibilityProvider>
+    <AppContent />
   );
 }
 
 function AppContent() {
   const { setLoginState } = useAuth();
   const navigate = useNavigate();
+
+  // Handler to update accessibility preferences in the database
+  const updatePreferenceHandler = async (userId: number, newPreferences: any) => {
+    console.log('updatePreferenceHandler called with:', { userId, newPreferences });
+    try {
+      const response = await fetch(`http://localhost:3000/api/accessibility-settings/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPreferences),
+      });
+      console.log('updatePreferenceHandler fetch response:', response);
+      if (!response.ok) {
+        throw new Error('Failed to update preferences');
+      }
+      // Optionally handle success (e.g., show a toast)
+      // toast.success('Preferences updated');
+    } catch (error) {
+      // Optionally handle error (e.g., show a toast)
+      // toast.error('Failed to update preferences');
+      console.error('Error updating preferences:', error);
+    }
+  };
 
   useEffect(() => {
     document.title = "Accessplay Gaming";

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
@@ -17,6 +17,7 @@ import {
   Command,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../context/AccessibilityContext';
 
 // ============================================
 // TYPE DEFINITIONS
@@ -140,6 +141,40 @@ export function AccessibilityPage() {
   const [issueReport, setIssueReport] = useState('');
   const user = JSON.parse(localStorage.getItem('userData') || '{}');  
   const userId = user?.id;
+
+  useEffect(() => {
+    // Fetch and apply accessibility settings from backend on mount
+    const storedUser = localStorage.getItem('userData');
+    if (!storedUser) return;
+    const parsedUser = JSON.parse(storedUser);
+    const fetchAndApplyPrefs = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/accessibility-settings/${parsedUser.id}`);
+        let prefs;
+        if (response.ok) {
+          prefs = await response.json();
+        } else {
+          prefs = parsedUser.accessibilityPreferences;
+        }
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      } catch (error) {
+        // fallback to localStorage prefs
+        const prefs = parsedUser.accessibilityPreferences;
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      }
+    };
+    fetchAndApplyPrefs();
+  }, []);
 
   const handleReportIssue = async () => {
     if (issueReport.trim() === '') {

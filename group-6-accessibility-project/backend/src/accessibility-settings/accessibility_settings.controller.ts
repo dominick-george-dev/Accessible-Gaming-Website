@@ -17,11 +17,13 @@ export class AccessibilitySettingsController {
     @Param('userId') userId: string,
     @Body() settings: any
   ) {
-    console.log('\n=== ACCESSIBILITY SETTINGS UPDATE ===');
-    console.log('📝 Controller: Update request received');
-    console.log('👤 User ID:', userId);
-    console.log('📊 Raw settings data received:');
-    console.log(JSON.stringify(settings, null, 2));
+    // console.log('\n=== ACCESSIBILITY SETTINGS UPDATE ===');
+    // console.log('📝 Controller: Update request received');
+    // console.log('👤 User ID:', userId);
+    // console.log('📊 Raw settings data received:');
+    // console.log(JSON.stringify(settings, null, 2));
+        console.log('Test');
+
     
     try {
       console.log('⚙️  Controller: Calling service.updateSettings...');

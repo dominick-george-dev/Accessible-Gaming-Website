@@ -7,6 +7,7 @@ import { Card } from "../components/ui/card";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "../components/ui/input";
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../context/AccessibilityContext';
 
 // Hook to get user from localStorage
 function useUser() {
@@ -41,6 +42,40 @@ export function MyFavoritesPage() {
   const [loadingFavorites, setLoadingFavorites] = useState(false);
 
   const { user, loading: loadingUser } = useUser();
+
+  // Fetch and apply accessibility settings from backend on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('userData');
+    if (!storedUser) return;
+    const parsedUser = JSON.parse(storedUser);
+    const fetchAndApplyPrefs = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/accessibility-settings/${parsedUser.id}`);
+        let prefs;
+        if (response.ok) {
+          prefs = await response.json();
+        } else {
+          prefs = parsedUser.accessibilityPreferences;
+        }
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      } catch (error) {
+        // fallback to localStorage prefs
+        const prefs = parsedUser.accessibilityPreferences;
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      }
+    };
+    fetchAndApplyPrefs();
+  }, []);
 
   // Fetch user's favorites from backend
   useEffect(() => {
