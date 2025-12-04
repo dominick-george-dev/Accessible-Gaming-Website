@@ -302,22 +302,6 @@ This has already been set up however if you would like to create your own:
 
 ---
 
-## 🚀 Production Deployment
-- **Option A — Docker Compose (recommended):**
-  ```sh
-  docker compose -f docker-compose.prod.yml up --build -d
-  ```
-- **Option B — Render / Railway / Fly.io:**
-  - Deploy backend container
-  - Use Neon database
-  - Point frontend env → backend API
-- **Option C — AWS EC2 / Lightsail:**
-  - Install Docker
-  - Clone repo
-  - Run Docker Compose as above
-
----
-
 ## ❗ Troubleshooting
 - **JWT issues:** Ensure JwtAuthGuard is used and Authorization header is correct
 - **.env issues:** Check for correct values and Docker context
