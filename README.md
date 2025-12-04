@@ -131,6 +131,9 @@ The following assumptions guided the system’s design:
 │      AWS CloudFront         │
 └─────────────────────────────┘
 ```
+### To find ur C4 Models
+
+Go to: https://git.cardiff.ac.uk/c23069362/team-6-accessible-gaming-website/-/wikis/Architecture-Diagrams
 
 ---
 
