@@ -1,19 +1,23 @@
 # Accessible Gaming Platform — Team 6
 
-A modern, production-ready, full-stack web application for accessible gaming, built with React, NestJS, Prisma, Neon PostgreSQL, AWS S3, CloudFront, and Docker. This document provides clear onboarding, local development, environment configuration, deployment, and operational instructions.
+A modern, production-ready, full-stack web application for accessible gaming, built with React, NestJS, Prisma, Neon PostgreSQL, AWS S3, CloudFront, and Docker. This document provides onboarding, build/run instructions, environment configuration, deployment notes, and key development assumptions.
 
 ---
 
-## 📚 Table of Contents
+## Table of Contents
 - [Project Overview](#project-overview)
+- [Requirements](#requirements)
+- [Important Assumptions](#important-assumptions)
 - [Tech Stack](#tech-stack)
+- [Why These Technologies Were Used](#why-these-technologies-were-used)
 - [Architecture](#architecture)
 - [Repository Structure](#repository-structure)
 - [Environment Variables](#environment-variables)
+- [How to Build / Start / Run / Compile](#how-to-build--start--run--compile)
 - [Local Development](#local-development)
-- [Running with Docker Compose](#running-with-docker-compose)
+- [Running With Docker Compose](#running-with-docker-compose)
 - [Database (Prisma + Neon)](#database-prisma--neon)
-- [AWS S3 & CloudFront](#aws-s3--cloudfront)
+- [AWS S3 and CloudFront](#aws-s3-and-cloudfront)
 - [Testing](#testing)
 - [Production Deployment](#production-deployment)
 - [Troubleshooting](#troubleshooting)
@@ -21,35 +25,79 @@ A modern, production-ready, full-stack web application for accessible gaming, bu
 
 ---
 
-## 🧩 Project Overview
-This platform enables users to discover, review, and interact with accessible games. It features:
-- High-performance React frontend (Vite, TypeScript, TailwindCSS)
-- Secure, JWT-authenticated NestJS API
-- Neon PostgreSQL database with Prisma ORM
-- AWS S3 for asset storage (with optional CloudFront CDN)
-- Dockerized for easy local and production deployment
-- Role-based authentication and protected routes
+# Project Overview
+
+The Accessible Gaming Platform enables users to discover, filter, review, and interact with accessible mobile games. It integrates accessibility-first design through WCAG 2.1 AA standards, voice navigation, keyboard/switch input, captions/transcripts, and personal accessibility preferences.
+
+Core elements include:
+
+- React frontend (Vite + TypeScript + TailwindCSS)
+- NestJS backend with JWT authentication
+- Neon PostgreSQL database
+- Prisma ORM
+- AWS S3 for media storage
+- Dockerised workflows for local and production environments
 
 ---
 
-## 🛠️ Tech Stack
-**Frontend:**
+# Requirements
+
+All Functional, Non-Functional, and Data requirements are documented clearly in the project Wiki.
+
+**Requirements Wiki:**  
+https://gitlab.com/your-group/your-project/-/wikis/Requirements  
+
+---
+
+# Important Assumptions
+
+The following assumptions guided the system’s design:
+
+1. Admin users are trusted internal users with elevated access.
+2. Neon PostgreSQL is the primary database and assumed to remain available.
+3. Voice navigation relies on the browser’s SpeechRecognition API, which varies by device.
+4. All uploaded media (images / trailers) are expected to be accessible and captioned.
+5. The platform focuses on mobile games; console and PC support may be extended later.
+6. Keyboard and switch navigation are primary accessibility considerations.
+7. The architecture must support future scalability (community features, developer dashboards).
+8. All users are authenticated before performing personalised actions (reviews, favourites).
+
+---
+
+# Tech Stack
+
+### Frontend
 - React (Vite)
 - TypeScript
 - TailwindCSS
-- Axios
 
-**Backend:**
-- Node.js + NestJS
+### Backend
+- NestJS (Node.js)
 - Prisma ORM
-- Passport + JWT Auth
+- Passport + JWT Authentication
 - Class Validator / Transformer
 
-**Infrastructure:**
-- Neon PostgreSQL (cloud-hosted)
-- AWS S3 (assets)
+### Infrastructure
+- Neon PostgreSQL
+- AWS S3 (media storage)
 - AWS CloudFront (optional CDN)
 - Docker + Docker Compose
+
+---
+
+# Why These Technologies Were Used
+
+| Technology | Documentation | Purpose |
+|-----------|--------------|---------|
+| React | https://react.dev/ | Fast UI + excellent accessibility features |
+| Vite | https://vitejs.dev/ | Fast development server and build system |
+| TypeScript | https://www.typescriptlang.org/ | Type safety and maintainability |
+| TailwindCSS | https://tailwindcss.com/ | Rapid styling and reusable accessibility-friendly UI |
+| NestJS | https://nestjs.com/ | Scalable, modular backend with built-in security |
+| Prisma | https://www.prisma.io/ | Type-safe, modern ORM with clean schema design |
+| Neon PostgreSQL | https://neon.tech/ | Serverless cloud Postgres with branching support |
+| AWS S3 | https://aws.amazon.com/s3/ | Reliable, scalable asset storage |
+| Docker | https://www.docker.com/ | Reproducible environments for dev and production |
 
 ---
 
@@ -124,7 +172,30 @@ AWS_S3_BUCKET=my-bucket
 AWS_REGION=eu-north-1
 AWS_CLOUDFRONT_URL=https://xxxx.cloudfront.net
 ```
+---
+## How to Build / Start / Run / Compile
+Frontend
+```
+cd frontend
+npm install
+npm run dev
+npm run build
+npm run preview
+```
 
+Backend
+```
+cd backend
+npm install
+npm run start:dev
+npm run build
+npm run start:prod
+```
+
+Entire stack via Docker Compose
+```
+docker compose up --build
+```
 ---
 
 ## 💻 Local Development
