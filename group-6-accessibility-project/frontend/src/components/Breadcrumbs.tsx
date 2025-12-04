@@ -188,10 +188,9 @@ export function Breadcrumbs({ selectedGameName, selectedPublisherName, className
       event.preventDefault();
       navigate(path);
     }
-  };
-  return (
+  };  return (
     <div className={`fixed top-16 left-0 right-0 z-35 bg-card border-b px-4 lg:px-6 py-2 transition-all duration-300 ${
-      isSidebarOpen ? 'lg:ml-48' : 'lg:ml-0'
+      isSidebarOpen ? 'lg:pl-52' : 'lg:pl-20'
     } ${className || ''}`}>
       <div className="max-w-full">
         <Breadcrumb>

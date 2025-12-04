@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import type { Game, Review } from "../types/game";
 import { useParams, useNavigate } from "react-router-dom";
 import { addUndoAction } from "../utils/undoManager";
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../context/AccessibilityContext';
 
 // Helper function to get category color and icon
 const getCategoryStyle = (category: string) => {
@@ -76,12 +77,9 @@ export function GameDetailPage() {
   const [reviewText, setReviewText] = useState("");
   const [selectedAccessibilityTags, setSelectedAccessibilityTags] = useState<string[]>([]);
   const hasLoggedView = useRef(false);
-  const headingRef = useRef<HTMLHeadingElement | null>(null);
-
-  const isLoggedIn = JSON.parse(localStorage.getItem("isLoggedIn") || "false");
+  const headingRef = useRef<HTMLHeadingElement | null>(null);  const isLoggedIn = JSON.parse(localStorage.getItem("isLoggedIn") || "false");
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const [loadingFavorites, setLoadingFavorites] = useState(false);
+  const [_favorites, setFavorites] = useState<number[]>([]);
 
 
   // Hook to get user from localStorage (add this function)
@@ -112,10 +110,7 @@ export function GameDetailPage() {
 
   // Add this useEffect for fetching favorites:
   useEffect(() => {
-    if (!user) return;
-
-    const fetchFavorites = async () => {
-      setLoadingFavorites(true);
+    if (!user) return;    const fetchFavorites = async () => {
       try {
         const response = await fetch(`http://localhost:3000/favorites/${user.id}`);
         if (response.ok) {
@@ -127,11 +122,8 @@ export function GameDetailPage() {
           if (game) {
             setIsFavorite(gameIds.includes(Number(game.id)));
           }
-        }
-      } catch (error) {
+        }      } catch (error) {
         console.error('Error fetching favorites:', error);
-      } finally {
-        setLoadingFavorites(false);
       }
     };
 
@@ -231,6 +223,40 @@ export function GameDetailPage() {
       setTimeout(() => headingRef.current?.focus(), 50);
     }
   }, [game]);
+
+  useEffect(() => {
+    // Fetch and apply accessibility settings from backend on mount
+    const storedUser = localStorage.getItem('userData');
+    if (!storedUser) return;
+    const parsedUser = JSON.parse(storedUser);
+    const fetchAndApplyPrefs = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/accessibility-settings/${parsedUser.id}`);
+        let prefs;
+        if (response.ok) {
+          prefs = await response.json();
+        } else {
+          prefs = parsedUser.accessibilityPreferences;
+        }
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      } catch (error) {
+        // fallback to localStorage prefs
+        const prefs = parsedUser.accessibilityPreferences;
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      }
+    };
+    fetchAndApplyPrefs();
+  }, []);
 
   console.log('reviews:', reviews);
 
@@ -586,34 +612,29 @@ export function GameDetailPage() {
         <div className="space-y-4 lg:space-y-6">
           <div>
             <div className="flex items-start justify-between gap-3 mb-2 lg:mb-3">
-              <h1 className="flex-1">{game.title}</h1>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onToggleFavorite}
-                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                aria-pressed={isFavorite}
-                className="flex-shrink-0"
-              >
-                <Heart
-                  className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`}
-                />
-              </Button>
+              <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold">
+                {game.title}
+              </h1>
+              {game.verified && (
+                <span
+                  className="ml-2 bg-primary text-primary-foreground rounded-full px-3 py-1 flex items-center gap-2"
+                  role="status"
+                  aria-label="Verified accessible game"
+                >
+                  <Check className="w-4 h-4" />
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 lg:gap-4 flex-wrap mb-3 lg:mb-4">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" aria-hidden="true" />
-                <span>{Number(game.rating).toFixed(1)}</span>
-                <span className="text-muted-foreground">({reviews.length})</span>
-              </div>
-              <Separator orientation="vertical" className="h-6 hidden sm:block" />
-              <div className="flex gap-2 flex-wrap">
-                {game.genre.map((genre) => (
-                  <Badge key={genre} variant="outline">
-                    {genre}
-                  </Badge>
+              {Array.isArray(game.genres) &&
+                game.genres.map((genre: string) => (
+                  <Badge key={genre}>{genre}</Badge>
                 ))}
-              </div>
+              <Separator orientation="vertical" className="h-6 hidden sm:block" />
+              {Array.isArray(game.platforms) &&
+                game.platforms.map((platform: string) => (
+                  <Badge key={platform}>{platform}</Badge>
+                ))}
             </div>
             <p className="text-muted-foreground">
               <strong>Developer:</strong> {game.developer}

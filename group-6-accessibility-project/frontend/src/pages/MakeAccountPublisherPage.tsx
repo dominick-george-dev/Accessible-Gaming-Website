@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { AlertCircle, CheckCircle, User, Building } from 'lucide-react';
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../context/AccessibilityContext';
 
 export function MakeAccountPublisherPage() {
   const [user, setUser] = useState<any>(null);
@@ -29,7 +30,41 @@ export function MakeAccountPublisherPage() {
       // Pre-fill display name with username (only if not already a publisher)
       setDisplayName(userData.username);
     }
-}, []);
+  }, []);
+
+  useEffect(() => {
+    // Fetch and apply accessibility settings from backend on mount
+    const storedUser = localStorage.getItem('userData');
+    if (!storedUser) return;
+    const parsedUser = JSON.parse(storedUser);
+    const fetchAndApplyPrefs = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/accessibility-settings/${parsedUser.id}`);
+        let prefs;
+        if (response.ok) {
+          prefs = await response.json();
+        } else {
+          prefs = parsedUser.accessibilityPreferences;
+        }
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      } catch (error) {
+        // fallback to localStorage prefs
+        const prefs = parsedUser.accessibilityPreferences;
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      }
+    };
+    fetchAndApplyPrefs();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,8 +105,10 @@ export function MakeAccountPublisherPage() {
         
         // Update user role in localStorage
         const updatedUser = { ...user, role: 'PUBLISHER' };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        localStorage.setItem('userData', JSON.stringify(updatedUser));
         setUser(updatedUser);
+
+        await refreshAuthToken(updatedUser);
         
         // Redirect to publisher dashboard after 3 seconds
         setTimeout(() => {
@@ -89,8 +126,31 @@ export function MakeAccountPublisherPage() {
   };
 
   const handleCancel = () => {
-    window.location.href = '/games/1';
+    window.location.href = '/';
   };
+
+  const refreshAuthToken = async (userData: any) => {
+  try {
+    const response = await fetch('http://localhost:3000/auth/refresh-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+      },
+      body: JSON.stringify({ userId: userData.id })
+    });
+
+    if (response.ok) {
+      const { access_token } = await response.json();
+      localStorage.setItem('access_token', access_token);
+    }
+  } catch (error) {
+    console.error('Failed to refresh token:', error);
+    // Force re-login if token refresh fails
+    localStorage.clear();
+    window.location.href = '/login';
+  }
+};
 
   // Not logged in
   if (!user) {

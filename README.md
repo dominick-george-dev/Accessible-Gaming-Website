@@ -8,6 +8,7 @@ A modern, production-ready, full-stack web application for accessible gaming, bu
 - [Project Overview](#project-overview)
 - [Requirements](#requirements)
 - [Important Assumptions](#important-assumptions)
+- [CI/CD Pipeline](#ci-cd-pipeline)
 - [Tech Stack](#tech-stack)
 - [Why These Technologies Were Used](#why-these-technologies-were-used)
 - [Architecture](#architecture)
@@ -60,6 +61,17 @@ The following assumptions guided the system’s design:
 6. Keyboard and switch navigation are primary accessibility considerations.
 7. The architecture must support future scalability (community features, developer dashboards).
 8. All users are authenticated before performing personalised actions (reviews, favourites).
+
+---
+
+## CI/CD Pipeline
+
+This Terraform VM deploys a Jenkins server which creates the automated pipeline which triggers after each build of the main branch.
+
+A more detailed explanation of how to get it running can be seen in the below README:
+See the Jenkins-specific README for full CI/CD setup and usage:
+
+- [Jenkins CI/CD Setup](./Jenkins_README.md) — Detailed instructions to provision the Terraform VM, install and configure Jenkins, create and manage pipeline jobs, store credentials/secrets, and verify automated builds on the main branch. Includes Terraform examples, deployment commands, and troubleshooting tips.
 
 ---
 

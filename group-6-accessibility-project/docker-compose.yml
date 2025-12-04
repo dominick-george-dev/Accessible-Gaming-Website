@@ -12,7 +12,7 @@ services:
       CLOUDFRONT_URL: "${CLOUDFRONT_URL}"
     ports:
       - "3000:3000"
-
+ 
   frontend:
     build: ./frontend
     restart: always
@@ -20,6 +20,5 @@ services:
       - "5173:80"
     depends_on:
       - backend
-
 volumes:
   postgres_data:

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
@@ -17,6 +17,7 @@ import {
   Command,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../context/AccessibilityContext';
 
 // ============================================
 // TYPE DEFINITIONS
@@ -102,15 +103,13 @@ const VOICE_COMMANDS: VoiceCommandCategory[] = [
       { phrase: 'Browse games', description: 'Go to the browse page' },
       { phrase: 'My favorites', description: 'View your favorite games' },
       { phrase: 'Open profile', description: 'Go to your profile page' },
-      { phrase: 'Show accessibility', description: 'View accessibility information' },
     ],
   },
   {
     category: 'Actions',
     commands: [
-      { phrase: 'Add to favorites', description: 'Add the current game to favorites' },
-      { phrase: 'Search for [game name]', description: 'Search for a specific game' },
-      { phrase: 'Filter by [category]', description: 'Filter games by accessibility category' },
+      { phrase: 'Undo my last action', description: 'Undoes last action' },
+      { phrase: 'Show me games with visual accessibility', description: 'Filter games by visual accessibility' },
       { phrase: 'Sort by rating', description: 'Sort games by their rating' },
     ],
   },
@@ -140,8 +139,42 @@ const VOICE_COMMANDS: VoiceCommandCategory[] = [
 export function AccessibilityPage() {
     
   const [issueReport, setIssueReport] = useState('');
-  const user = JSON.parse(localStorage.getItem('user') || '{}');  
+  const user = JSON.parse(localStorage.getItem('userData') || '{}');  
   const userId = user?.id;
+
+  useEffect(() => {
+    // Fetch and apply accessibility settings from backend on mount
+    const storedUser = localStorage.getItem('userData');
+    if (!storedUser) return;
+    const parsedUser = JSON.parse(storedUser);
+    const fetchAndApplyPrefs = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/accessibility-settings/${parsedUser.id}`);
+        let prefs;
+        if (response.ok) {
+          prefs = await response.json();
+        } else {
+          prefs = parsedUser.accessibilityPreferences;
+        }
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      } catch (error) {
+        // fallback to localStorage prefs
+        const prefs = parsedUser.accessibilityPreferences;
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      }
+    };
+    fetchAndApplyPrefs();
+  }, []);
 
   const handleReportIssue = async () => {
     if (issueReport.trim() === '') {

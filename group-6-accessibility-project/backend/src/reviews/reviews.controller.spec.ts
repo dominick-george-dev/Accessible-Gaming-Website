@@ -22,6 +22,10 @@ describe('ReviewsController', () => {
         game: { connect: { id: 1 } },
       }]),
       findAll: jest.fn().mockResolvedValue([{ id: 1, userName: 'testuser', comment: 'Great game!', rating: 5 }]),
+      findAllByGameId: jest.fn(),
+      findOne: jest.fn(),
+      update: jest.fn(),
+      remove: jest.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ReviewsController],
@@ -82,5 +86,82 @@ describe('ReviewsController', () => {
       accessibilityFeedback: ['Easy to Read', 'Colorblind Friendly'],
       game: { connect: { id: 1 } },
     }]);
+  });
+
+  it('should fetch all reviews for a specific game', async () => {
+    const reviewsService = controller['reviewsService'];
+    const mockReviews = [{
+      id: 1,
+      gameId: 1,
+      userId: 1,
+      rating: 5,
+      comment: 'Great game!',
+      createdAt: time,
+      updatedAt: time,
+      accessibilityFeedback: ['Easy to Read', 'Colorblind Friendly'],
+      helpful: 0,
+      userName: 'testuser',
+    }];
+    jest.spyOn(reviewsService, 'findAllByGameId').mockResolvedValueOnce(mockReviews);
+    await expect(controller.findAllByGameId('1')).resolves.toEqual(mockReviews);
+    expect(reviewsService.findAllByGameId).toHaveBeenCalledWith(1);
+  });
+
+  it('should fetch a single review by id', async () => {
+    const reviewsService = controller['reviewsService'];
+    const mockReview = {
+      id: 1,
+      gameId: 1,
+      userId: 1,
+      rating: 5,
+      comment: 'Great game!',
+      createdAt: time,
+      updatedAt: time,
+      accessibilityFeedback: ['Easy to Read', 'Colorblind Friendly'],
+      helpful: 0,
+      userName: 'testuser',
+    };
+    jest.spyOn(reviewsService, 'findOne').mockResolvedValueOnce(mockReview);
+    await expect(controller.findOne('1')).resolves.toEqual(mockReview);
+    expect(reviewsService.findOne).toHaveBeenCalledWith(1);
+  });
+
+  it('should update a review by id', async () => {
+    const reviewsService = controller['reviewsService'];
+    const updateDto = { comment: 'Updated comment', rating: 4 };
+    const updatedReview = {
+      id: 1,
+      gameId: 1,
+      userId: 1,
+      rating: 4,
+      comment: 'Updated comment',
+      createdAt: time,
+      updatedAt: time,
+      accessibilityFeedback: ['Easy to Read', 'Colorblind Friendly'],
+      helpful: 0,
+      userName: 'testuser',
+    };
+    jest.spyOn(reviewsService, 'update').mockResolvedValueOnce(updatedReview);
+    await expect(controller.update('1', updateDto)).resolves.toEqual(updatedReview);
+    expect(reviewsService.update).toHaveBeenCalledWith(1, updateDto);
+  });
+
+  it('should delete a review by id', async () => {
+    const reviewsService = controller['reviewsService'];
+    const deletedReview = {
+      id: 1,
+      gameId: 1,
+      userId: 1,
+      rating: 5,
+      comment: 'Great game!',
+      createdAt: time,
+      updatedAt: time,
+      accessibilityFeedback: ['Easy to Read', 'Colorblind Friendly'],
+      helpful: 0,
+      userName: 'testuser',
+    };
+    jest.spyOn(reviewsService, 'remove').mockResolvedValueOnce(deletedReview);
+    await expect(controller.remove('1')).resolves.toEqual(deletedReview);
+    expect(reviewsService.remove).toHaveBeenCalledWith(1);
   });
 });

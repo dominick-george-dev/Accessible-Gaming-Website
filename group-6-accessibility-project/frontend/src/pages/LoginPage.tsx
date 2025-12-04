@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner'; 
 import { useAuth } from '../hooks/useAuth';
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../utils/applyAccessibilitySettings';
 
 interface LoginPageProps {
   onLogin: (userData: { username: string; email: string; isAdmin?: boolean; isPublisher?: boolean; role?: string }) => void;
@@ -70,21 +71,8 @@ export function LoginPage({ onLogin, onNavigateToSignup }: LoginPageProps) {
       const data = await response.json();      
       if (response.ok) {
         localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('userData', JSON.stringify(data.user));
         toast.success('Login successful! Welcome back.');
-        // Fetch and apply accessibility settings after login
-        try {
-          const settingsRes = await fetch(`http://localhost:3000/api/accessibility-settings/${data.user.id}`);
-          const settings = await settingsRes.json();
-          if (settings) {
-            applyTheme(settings.theme, settings.highContrast);
-            applyTextSize(settings.textSize);
-            applyDyslexiaFont(settings.dyslexiaFont);
-            applyColorblindFilter(settings.colorblindFilter);
-          }
-        } catch (err) {
-          console.error('Failed to fetch/apply accessibility settings after login:', err);
-        }
         onLogin(data.user);
       } else {
         // Handle API errors

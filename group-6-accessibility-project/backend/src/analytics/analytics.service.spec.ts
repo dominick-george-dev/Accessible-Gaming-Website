@@ -40,6 +40,9 @@ describe('AnalyticsService', () => {
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    
+    // Mock console.error to prevent test output noise
+    jest.spyOn(console, 'error').mockImplementation(() => {});
 
     db = createMockDB();
 
@@ -253,6 +256,51 @@ describe('AnalyticsService', () => {
       expect(err).toBeInstanceOf(InternalServerErrorException);
     }
   });
+
+  it('should call DB with correct publisherId', async () => {
+    mockAllDB();
+    await service.getPublisherAnalytics(publisherId);
+    expect(db.game.count).toHaveBeenCalled();
+    expect(db.game.findMany).toHaveBeenCalled();
+    expect(db.view.groupBy).toHaveBeenCalled();
+    expect(db.gameAccessibilityTags.findMany).toHaveBeenCalled();
+    expect(db.favourites.findMany).toHaveBeenCalled();
+  });
+
+  it('should handle games with no reviews gracefully', async () => {
+    mockAllDB();
+    mockGames[0].reviews = [];
+    mockGames[0].rating = 0;
+    mockGames[0]._count.reviews = 0; // Ensure totalReviews is 0
+    const result = await service.getPublisherAnalytics(publisherId);
+    const gameA = result.games.find(g => g.gameId === 1);
+    expect(gameA?.avgRating ?? 0).toBe(0);
+    expect(gameA?.totalReviews ?? 0).toBe(0);
+  });
+
+  it('should handle games with no views gracefully', async () => {
+    mockAllDB();
+    db.view.findMany.mockResolvedValue([]);
+    const result = await service.getPublisherAnalytics(publisherId);
+    const gameA = result.games.find(g => g.gameId === 1);
+    expect(gameA?.dailyViews ?? []).toEqual([]);
+    expect(gameA?.totalViews ?? 0).toBe(5); // still from _count
+  });
+
+  it('should return 0 for avgTotalRating if all ratings are null', async () => {
+    db.game.count.mockResolvedValue(2);
+    db.game.aggregate.mockResolvedValue({ _avg: { rating: null } });
+    db.game.findMany.mockResolvedValue(mockGames);
+    db.view.groupBy.mockResolvedValue(mockTopViewed);
+    db.gameAccessibilityTags.findMany.mockResolvedValue(mockAccessibility);
+    db.review.aggregate.mockResolvedValue({ _avg: { rating: null } });
+    db.review.groupBy.mockResolvedValue(mockTopRated);
+    db.view.findMany.mockResolvedValue(mockDailyViews);
+    db.favourites.findMany.mockResolvedValue(mockFavourites);
+    db.favourites.count.mockResolvedValue(0);
+    const result = await service.getPublisherAnalytics(publisherId);
+    expect(result.avgTotalRating).toBe(0);
+  });
 });
 
 
@@ -263,6 +311,10 @@ describe("AnalyticsService Security & Sanitization", () => {
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    
+    // Mock console.error to prevent test output noise
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    
     db = createMockDB();
 
     const module: TestingModule = await Test.createTestingModule({

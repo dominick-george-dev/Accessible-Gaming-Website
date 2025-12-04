@@ -7,10 +7,9 @@ import { Separator } from '../components/ui/separator';
 import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Settings, Eye, Ear, Hand, Brain, Minus, Plus, Type, Contrast, Palette, Search, Undo, Moon } from 'lucide-react';
-import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { useAccessibility, type ColorblindFilter, type ThemeMode } from '../contexts/AccessibilityContext';
 import { AccessibilityComponents } from '../components/accessibility/AccessibilityComponents';
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter, type ColorblindFilter, type ThemeMode } from '../context/AccessibilityContext';
 
 // ===== TYPES =====
 
@@ -36,61 +35,69 @@ interface User {
   };
 }
 
-// ===== MOCK USER FOR FALLBACK =====
-const MOCK_USER: User = {
-  id: '0',
-  name: 'Mock User',
-  email: 'mockuser@email.com',
-  favorites: [],
-  isAdmin: false,
-  isPublisher: false,
-  accessibilityPreferences: {
-    visual: false,
-    hearing: false,
-    dexterity: false,
-    cognitive: false,
-    textSize: 16,
-    highContrast: false,
-    dyslexiaFont: false,
-    colorblindFilter: 'none',
-    theme: 'light',
-    fontFamily: 'default',
-  },
-};
-
 // ===== MAIN COMPONENT =====
 
 export default function ProfilePageStandalone() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { 
-    preferences, 
-    magnifierEnabled, 
-    updatePreferences, 
-    toggleMagnifier, 
-    adjustTextSize,
-    isLoading: accessibilityLoading 
-  } = useAccessibility();
+  const [preferences, setPreferences] = useState<User['accessibilityPreferences'] | null>(null);
+
   // Fetch user and accessibility settings on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    console.log('User in localStorage on ProfilePage load:', storedUser);
-    if (!storedUser) {
+    const fetchUserAndPreferences = async () => {
+      const storedUser = localStorage.getItem('userData');
+      if (!storedUser) {
+        setLoading(false);
+        return;
+      }
+      const parsedUser = JSON.parse(storedUser);
+      try {
+        const response = await fetch(`http://localhost:3000/api/accessibility-settings/${parsedUser.id}`);
+        if (response.ok) {
+          const prefs = await response.json();
+          setPreferences(prefs);
+          setUser({ ...parsedUser, accessibilityPreferences: prefs });
+        } else {
+          setUser({ ...parsedUser, accessibilityPreferences: parsedUser.accessibilityPreferences });
+        }
+      } catch (error) {
+        setUser({ ...parsedUser, accessibilityPreferences: parsedUser.accessibilityPreferences });
+      }
       setLoading(false);
-      return;
+    };
+    fetchUserAndPreferences();
+  }, []);
+
+  useEffect(() => {
+    if (preferences) {
+      applyTheme(preferences.theme, preferences.highContrast);
+      applyTextSize(preferences.textSize);
+      applyDyslexiaFont(preferences.dyslexiaFont);
+      applyColorblindFilter(preferences.colorblindFilter);
     }
-    const parsedUser = JSON.parse(storedUser);
-    // The accessibility context will handle loading the settings
-    setUser({ ...parsedUser, accessibilityPreferences: preferences });
-    setLoading(false);
   }, [preferences]);
+
   // Update preferences handler
   const handleUpdatePreferences = async (newPrefs: User['accessibilityPreferences']) => {
     if (!user) return;
     setUser(prev => prev ? { ...prev, accessibilityPreferences: newPrefs } : null);
-    await updatePreferences(newPrefs);
+    setPreferences(newPrefs);
+    try {
+      const response = await fetch(`http://localhost:3000/api/accessibility-settings/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPrefs),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update preferences');
+      }
+      console.log('Preferences updated in database');
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+    }
   };
+
   // Preference change handler
   const handlePreferenceChange = (
     category: keyof User['accessibilityPreferences'],
@@ -107,7 +114,9 @@ export default function ProfilePageStandalone() {
 
   // Text size adjustment
   const handleTextSizeChange = (increment: number) => {
-    adjustTextSize(increment);
+    if (!preferences) return;
+    const newSize = Math.min(32, Math.max(10, preferences.textSize + increment));
+    handlePreferenceChange('textSize', newSize);
   };
 
   // Keyboard handler for text size buttons
@@ -117,20 +126,7 @@ export default function ProfilePageStandalone() {
       handleTextSizeChange(increment);
     }
   };
-  // Toggle magnifier
-  const handleToggleMagnifier = () => {
-    // Check if any colorblind filter is active
-    const isColorblindModeActive = user?.accessibilityPreferences.colorblindFilter && 
-                                  user.accessibilityPreferences.colorblindFilter !== 'none';
-    
-    if (isColorblindModeActive && !magnifierEnabled) {
-      // Show toast notification if trying to enable magnifier while colorblind mode is on
-      toast.error('Magnifier cannot be enabled while colorblind mode is on');
-      return;
-    }
-    
-    toggleMagnifier();
-  };
+
   // Preference options
   const accessibilityOptions = [
     { id: 'visual', icon: Eye, label: 'Visual Accessibility' },
@@ -365,34 +361,7 @@ export default function ProfilePageStandalone() {
                 Simulates colors for different types of color vision deficiency
               </p>
             </div>
-          </div>
-
-          <Separator />
-
-          {/* Screen Magnifier */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4 flex-1">
-                <Search className="w-6 h-6 text-primary flex-shrink-0" aria-hidden="true" />
-                <div className="flex-1">
-                  <Label htmlFor="magnifier" className="cursor-pointer">
-                    Screen Magnifier
-                  </Label>
-                  <p className="text-muted-foreground mt-1">
-                    Shows a magnified view of content under your cursor (2x zoom)
-                  </p>
-                </div>
-              </div>
-              <Switch
-                id="magnifier"
-                checked={Boolean(magnifierEnabled)}
-                onCheckedChange={handleToggleMagnifier}
-                aria-label={`${magnifierEnabled ? 'Disable' : 'Enable'} Screen Magnifier`}
-              />
-            </div>
-          </div>
-
-          <Separator />
+          </div>          <Separator />
             {/* Accessibility Category Toggles */}
           {accessibilityOptions.map((pref) => {
             const Icon = pref.icon;
@@ -453,15 +422,9 @@ export default function ProfilePageStandalone() {
               <Badge variant="secondary" className="px-3 py-1">
                 Text Size: {user?.accessibilityPreferences.textSize}px
               </Badge>
-            )}
-            {user?.accessibilityPreferences.colorblindFilter !== 'none' && (
+            )}            {user?.accessibilityPreferences.colorblindFilter !== 'none' && (
               <Badge variant="secondary" className="px-3 py-1">
                 {colorblindFilters.find(f => f.value === user?.accessibilityPreferences.colorblindFilter)?.label}
-              </Badge>
-            )}
-            {magnifierEnabled && (
-              <Badge variant="secondary" className="px-3 py-1">
-                Magnifier Enabled
               </Badge>
             )}
           </div>
@@ -477,6 +440,11 @@ export default function ProfilePageStandalone() {
             <div>
               <span className="font-medium text-foreground">Undo Button:</span> Located at the bottom-right of the screen to undo your last action
             </div>
+          </li>          <li className="flex items-start gap-3">
+            <Search className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
+            <div>
+              <span className="font-medium text-foreground">Screen Magnifier:</span> Click the magnifier button in the top header to enable/disable screen magnification
+            </div>
           </li>
           <li className="flex items-start gap-3">
             <Search className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
@@ -489,7 +457,7 @@ export default function ProfilePageStandalone() {
             <div>
               <span className="font-medium text-foreground">Breadcrumb Navigation:</span> Click on breadcrumbs at the top of pages to navigate quickly
             </div>
-          </li>        </ul>
+          </li></ul>
       </Card>      {/* Accessibility Components */}
       <AccessibilityComponents />
     </div>

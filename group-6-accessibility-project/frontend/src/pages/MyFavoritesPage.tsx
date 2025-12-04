@@ -7,6 +7,7 @@ import { Card } from "../components/ui/card";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "../components/ui/input";
+import { applyTheme, applyTextSize, applyDyslexiaFont, applyColorblindFilter } from '../context/AccessibilityContext';
 
 // Hook to get user from localStorage
 function useUser() {
@@ -41,6 +42,40 @@ export function MyFavoritesPage() {
   const [loadingFavorites, setLoadingFavorites] = useState(false);
 
   const { user, loading: loadingUser } = useUser();
+
+  // Fetch and apply accessibility settings from backend on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('userData');
+    if (!storedUser) return;
+    const parsedUser = JSON.parse(storedUser);
+    const fetchAndApplyPrefs = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/accessibility-settings/${parsedUser.id}`);
+        let prefs;
+        if (response.ok) {
+          prefs = await response.json();
+        } else {
+          prefs = parsedUser.accessibilityPreferences;
+        }
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      } catch (error) {
+        // fallback to localStorage prefs
+        const prefs = parsedUser.accessibilityPreferences;
+        if (prefs) {
+          applyTheme(prefs.theme, prefs.highContrast);
+          applyTextSize(prefs.textSize);
+          applyDyslexiaFont(prefs.dyslexiaFont);
+          applyColorblindFilter(prefs.colorblindFilter);
+        }
+      }
+    };
+    fetchAndApplyPrefs();
+  }, []);
 
   // Fetch user's favorites from backend
   useEffect(() => {
@@ -145,9 +180,19 @@ const handleToggleFavorite = async (gameId: number) => {
 
   if (!user) {
     return (
-      <div className="px-4 py-12 text-center space-y-4">
-        <p>You need to log in to view and favorite games.</p>
-        <Button onClick={() => navigate("/login")}>Go to Login</Button>
+      <div className="flex items-center justify-center min-h-[60vh] w-full">
+        <div className="bg-white dark:bg-gray-900 shadow-lg rounded-lg p-8 flex flex-col items-center border border-gray-200 dark:border-gray-700 max-w-md w-full">
+          <h2 className="text-3xl font-bold mb-4 text-primary">Favourites</h2>
+          <p className="mb-6 text-lg text-gray-700 dark:text-gray-200 text-center">
+            You must be logged in to save favourites.
+          </p>
+          <button
+            className="px-6 py-2 bg-primary text-white rounded-lg font-semibold shadow hover:bg-primary-foreground transition-colors duration-200"
+            onClick={() => navigate('/login')}
+          >
+            Go to Login
+          </button>
+        </div>
       </div>
     );
   }

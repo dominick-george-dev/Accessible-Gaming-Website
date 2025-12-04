@@ -85,11 +85,16 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
       setIsLoading(false);
     }
   }, []);
-
   // Initialize preferences on mount
   useEffect(() => {
     initializePreferences();
   }, [initializePreferences]);
+  // Cleanup magnifier on unmount
+  useEffect(() => {
+    return () => {
+      // Cleanup handled by Magnifier component
+    };
+  }, [magnifierEnabled]);
 
   const updatePreferences = async (newPreferences: Partial<AccessibilityPreferences>) => {
     const updatedPreferences = {
@@ -117,11 +122,10 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
       toast.error('Failed to update preferences');
       console.error('Failed to save accessibility settings:', error);
     }
-  };
-
-  const toggleMagnifier = () => {
-    setMagnifierEnabled(prev => !prev);
-    toast.success(magnifierEnabled ? 'Magnifier disabled' : 'Magnifier enabled');
+  };  const toggleMagnifier = () => {
+    const newState = !magnifierEnabled;
+    setMagnifierEnabled(newState);
+    toast.success(`Magnifier ${newState ? 'enabled' : 'disabled'}`);
   };
 
   const adjustTextSize = (increment: number) => {
